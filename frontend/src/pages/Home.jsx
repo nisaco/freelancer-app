@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import PayButton from '../components/PayButton';
 
 const Home = () => {
   return (
@@ -57,6 +58,7 @@ const Home = () => {
           />
         </div>
       </header>
+
 
       {/* 3. HOW IT WORKS SECTION */}
       <section className="py-20 bg-gray-50">

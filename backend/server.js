@@ -3,7 +3,7 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path'); // <--- REQUIRED FOR THE GLUE
-
+const paymentRoutes = require('./routes/paymentRoutes');
 // Load env vars
 dotenv.config();
 
@@ -32,6 +32,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/artisan', require('./routes/artisanRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/jobs', require('./routes/jobRoutes'));
+app.use('/api/payment', paymentRoutes);
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 
 
