@@ -4,7 +4,7 @@ import axios from 'axios';
 const api = axios.create({
     //  // This points to your Node server
   //...baseURL: 'http://localhost:5000/api',
-    baseURL: 'https://hireme-bk0l.onrender.com/api', // <--- NEW LIVE URL
+    baseURL: '/api', // <--- NEW LIVE URL
 
   headers: {
     'Content-Type': 'application/json',
