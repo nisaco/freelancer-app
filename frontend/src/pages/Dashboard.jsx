@@ -5,10 +5,9 @@ import JobItem from '../components/JobItem';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
-  const [category, setCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [loading, setLoading] = useState(true);
 
   const API_BASE_URL = window.location.hostname === 'localhost' 
@@ -16,11 +15,10 @@ const Dashboard = () => {
     : 'https://hireme-bk0l.onrender.com/api';
 
   useEffect(() => {
-    const loggedInUser = localStorage.getItem('user');
-    if (!loggedInUser) {
+    const user = localStorage.getItem('user');
+    if (!user) {
       navigate('/login');
     } else {
-      setUser(JSON.parse(loggedInUser));
       fetchJobs();
     }
   }, [navigate]);
@@ -31,71 +29,66 @@ const Dashboard = () => {
       setJobs(response.data);
       setFilteredJobs(response.data);
     } catch (error) {
-      console.error("Error fetching jobs:", error);
+      console.error("Fetch Error:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle Category Filtering
-  useEffect(() => {
-    if (category === 'All') {
+  const categories = ['All', 'Plumber', 'Electrician', 'Carpenter', 'Mason', 'Painter', 'Mechanic'];
+
+  const filterCategory = (cat) => {
+    setSelectedCategory(cat);
+    if (cat === 'All') {
       setFilteredJobs(jobs);
     } else {
-      setFilteredJobs(jobs.filter(job => job.category === category));
+      setFilteredJobs(jobs.filter(j => j.category?.toLowerCase() === cat.toLowerCase()));
     }
-  }, [category, jobs]);
-
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    navigate('/login');
   };
 
-  if (loading) return <div className="p-10 text-center">Loading Artisans...</div>;
+  if (loading) return <div className="p-10 text-center font-bold text-blue-600">Loading HireMe Dashboard...</div>;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
-      <nav className="bg-white shadow-md px-6 py-4 flex justify-between items-center">
-        <h1 className="text-2xl font-black text-blue-600">HIREME</h1>
-        <div className="flex items-center gap-4">
-          <span className="font-medium text-gray-700">Hi, {user?.name}</span>
-          <button onClick={handleLogout} className="text-red-500 text-sm font-bold border border-red-500 px-3 py-1 rounded hover:bg-red-50">Logout</button>
-        </div>
+      {/* Header */}
+      <nav className="bg-white shadow-sm px-8 py-4 flex justify-between items-center sticky top-0 z-10">
+        <h1 className="text-2xl font-black text-blue-600 tracking-tighter">HIREME</h1>
+        <button 
+          onClick={() => { localStorage.clear(); navigate('/login'); }}
+          className="text-gray-500 hover:text-red-500 font-semibold text-sm transition"
+        > Logout </button>
       </nav>
 
       <div className="max-w-6xl mx-auto p-6">
-        {/* Category Header */}
-        <div className="mb-8">
-          <h2 className="text-xl font-bold mb-4">Find an Artisan</h2>
-          <div className="flex gap-3 overflow-x-auto pb-2">
-            {['All', 'Plumber', 'Electrician', 'Carpenter', 'Mason', 'Painter'].map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setCategory(cat)}
-                className={`px-6 py-2 rounded-full font-medium transition ${
-                  category === cat ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+        <h2 className="text-3xl font-extrabold text-gray-900 mb-6">Find an Artisan</h2>
+        
+        {/* Category Chips */}
+        <div className="flex gap-3 overflow-x-auto pb-6 no-scrollbar">
+          {categories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => filterCategory(cat)}
+              className={`px-6 py-2 rounded-full font-bold whitespace-nowrap transition-all ${
+                selectedCategory === cat 
+                ? 'bg-blue-600 text-white shadow-md scale-105' 
+                : 'bg-white text-gray-500 border border-gray-200 hover:border-blue-400'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
 
-        {/* Results */}
-        {filteredJobs.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-xl border">
-            <p className="text-gray-400">No {category} artisans found.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredJobs.map((job) => (
-              <JobItem key={job._id} job={job} />
-            ))}
-          </div>
-        )}
+        {/* Artisan Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filteredJobs.length > 0 ? (
+            filteredJobs.map(job => <JobItem key={job._id} job={job} />)
+          ) : (
+            <div className="col-span-full py-20 text-center">
+              <p className="text-gray-400 text-lg italic">No artisans found in this category.</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

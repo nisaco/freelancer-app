@@ -2,65 +2,53 @@ import React, { useState } from 'react';
 import PayButton from './PayButton';
 
 const JobItem = ({ job }) => {
-  const [isBooking, setIsBooking] = useState(false);
-
-  // --- LOGIC: Deposit Calculation ---
-  const minimumHours = 2; 
+  const [showBooking, setShowBooking] = useState(false);
+  
   const hourlyRate = job.price || 0;
-  const depositAmount = hourlyRate * minimumHours;
-
-  // Get user email from storage for Paystack
+  const depositAmount = hourlyRate * 2; // Fixed 2-hour deposit
   const user = JSON.parse(localStorage.getItem('user'));
-  const userEmail = user?.email || "guest@hireme.com";
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all my-4">
-      {/* Job Details */}
-      <div className="mb-4">
-        <div className="flex justify-between items-start">
-          <h3 className="text-xl font-bold text-gray-900">{job.title}</h3>
-          <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">
-            GHS {hourlyRate}/hr
-          </span>
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow duration-300">
+      <div className="p-6">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <span className="text-xs font-bold text-blue-500 uppercase tracking-widest">{job.category}</span>
+            <h3 className="text-xl font-bold text-gray-900">{job.title}</h3>
+          </div>
+          <div className="text-right">
+            <p className="text-lg font-black text-gray-900">GHS {hourlyRate}</p>
+            <p className="text-xs text-gray-400">per hour</p>
+          </div>
         </div>
-        <p className="text-gray-600 mt-2 text-sm">{job.description}</p>
-        {job.location && <p className="text-gray-400 text-xs mt-1">📍 {job.location}</p>}
-      </div>
 
-      <div className="border-t border-gray-100 pt-4">
-        {!isBooking ? (
+        <p className="text-gray-600 text-sm mb-6 line-clamp-2">{job.description}</p>
+
+        {!showBooking ? (
           <button 
-            onClick={() => setIsBooking(true)}
-            className="w-full bg-black text-white font-medium py-3 rounded-lg hover:bg-gray-800 transition"
+            onClick={() => setShowBooking(true)}
+            className="w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-blue-600 transition-colors"
           >
             Book Now
           </button>
         ) : (
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <h4 className="font-bold text-gray-800 text-sm mb-2">Booking Deposit</h4>
-            <p className="text-xs text-gray-500 mb-4">
-              Pay for the first {minimumHours} hours to secure this artisan.
-            </p>
-
-            <div className="bg-white p-3 rounded border mb-4 shadow-sm">
-              <div className="flex justify-between text-sm text-gray-500">
-                <span>Rate ({hourlyRate} x {minimumHours}hrs)</span>
-                <span className="font-bold text-gray-900">GHS {depositAmount}</span>
-              </div>
+          <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-sm font-bold text-blue-800">2-Hour Deposit:</span>
+              <span className="text-lg font-black text-blue-900">GHS {depositAmount}</span>
             </div>
-
-            <div className="space-y-2">
-              <PayButton 
-                amount={depositAmount} 
-                email={userEmail} 
-              />
-              <button 
-                onClick={() => setIsBooking(false)}
-                className="w-full text-gray-400 text-xs hover:text-red-500 py-1"
-              >
-                Cancel
-              </button>
-            </div>
+            
+            <PayButton 
+              amount={depositAmount} 
+              email={user?.email || "customer@hireme.com"} 
+            />
+            
+            <button 
+              onClick={() => setShowBooking(false)}
+              className="w-full mt-2 text-xs text-blue-400 font-semibold hover:text-red-500"
+            >
+              Cancel
+            </button>
           </div>
         )}
       </div>
