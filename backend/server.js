@@ -63,7 +63,7 @@ app.get('/debug-email', async (req, res) => {
     // DO NOT LOG THE PASSWORD
 
     await sendEmail({
-      to: 'YOUR_PERSONAL_EMAIL@gmail.com', // <--- HARDCODE YOUR REAL EMAIL HERE
+      to: 'jnkpappoe@gmail.com', // <--- HARDCODE YOUR REAL EMAIL HERE
       subject: 'Debug Test from Live Server',
       html: '<h1>If you see this, the server is working!</h1>'
     });
