@@ -1,17 +1,16 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import api from '../services/api';
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 
 const Login = () => {
-  const navigate = useNavigate();
-
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
 
   const { email, password } = formData;
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const onChange = (e) => {
     setFormData((prevState) => ({
@@ -22,70 +21,90 @@ const Login = () => {
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
-      const response = await api.post('/auth/login', formData);
+      // --- IMPORTANT: CHECK THIS URL ---
+      // If running locally, use: 'http://localhost:5000/api/auth/login'
+      // If deploying, use your Render URL: 'https://hireme-bk0l.onrender.com/api/auth/login'
+      
+      const API_URL = 'https://hireme-bk0l.onrender.com/api/auth/login'; 
 
-      // --- CRITICAL STEP ---
-      // Save the token and user info to the browser's storage
-      localStorage.setItem('user', JSON.stringify(response.data));
-      localStorage.setItem('token', response.data.token);
+      const response = await axios.post(
+        API_URL, 
+        { email, password }, // The data payload
+        { headers: { 'Content-Type': 'application/json' } } // Explicitly tell server it's JSON
+      );
 
-      toast.success('Login Successful!');
-      navigate('/dashboard'); // Go to the private area
+      if (response.data) {
+        // Save the token and user data
+        localStorage.setItem('user', JSON.stringify(response.data));
+        
+        // If your backend sends a token separately:
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token);
+        }
+
+        alert('Login Successful! Welcome back.');
+        navigate('/'); // Go to Dashboard/Home
+      }
     } catch (error) {
-      const message = error.response?.data?.message || 'Login failed';
-      toast.error(message);
+      console.error('Login Error:', error.response?.data || error.message);
+      
+      const message = 
+        (error.response && error.response.data && error.response.data.message) || 
+        'Login failed. Please check your email and password.';
+        
+      alert(message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+    <div className="flex justify-center items-center h-screen bg-gray-100">
+      <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
+        <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Login</h2>
         
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-primary">Welcome Back</h2>
-          <p className="text-gray-500 mt-2">Login to manage your account</p>
-        </div>
-
-        <form onSubmit={onSubmit} className="space-y-6">
-          <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">Email Address</label>
+        <form onSubmit={onSubmit}>
+          <div className="mb-4">
+            <label className="block text-gray-700 font-bold mb-2">Email</label>
             <input
               type="email"
               name="email"
               value={email}
               onChange={onChange}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
-              placeholder="john@example.com"
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter your email"
               required
             />
           </div>
 
-          <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">Password</label>
+          <div className="mb-6">
+            <label className="block text-gray-700 font-bold mb-2">Password</label>
             <input
               type="password"
               name="password"
               value={password}
               onChange={onChange}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
-              placeholder="••••••••"
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter your password"
               required
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-primary text-white font-bold py-3 rounded-lg hover:opacity-90 transition duration-300"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300"
           >
-            Login
+            {loading ? 'Logging In...' : 'Login'}
           </button>
         </form>
-
-        <p className="mt-6 text-center text-gray-600">
+        
+        <p className="mt-4 text-center text-gray-600 text-sm">
           Don't have an account?{' '}
-          <Link to="/register" className="text-secondary font-bold hover:underline">
+          <Link to="/register" className="text-blue-600 hover:underline">
             Register
           </Link>
         </p>
