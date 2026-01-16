@@ -46,7 +46,7 @@ const Login = () => {
         }
 
         alert('Login Successful! Welcome back.');
-        navigate('/'); // Go to Dashboard/Home
+        navigate('/dashboard'); // Go to Dashboard/Home
       }
     } catch (error) {
       console.error('Login Error:', error.response?.data || error.message);
