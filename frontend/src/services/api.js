@@ -2,7 +2,10 @@ import axios from 'axios';
 
 // Create a central instance
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api', // This points to your Node server
+    //  // This points to your Node server
+  //...baseURL: 'http://localhost:5000/api',
+    baseURL: 'https://hireme-bk0l.onrender.com/api', // <--- NEW LIVE URL
+
   headers: {
     'Content-Type': 'application/json',
   },
