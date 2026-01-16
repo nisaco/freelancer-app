@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import api from '../services/api';
 import BookingModal from '../components/BookingModal';
 import ReviewModal from '../components/ReviewModal';
-
+import JobItem from '../components/JobItem'; // <--- THIS is the connection to your Payment Button
 const Dashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
