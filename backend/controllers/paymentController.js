@@ -1,53 +1,45 @@
 const axios = require('axios');
 
 exports.initializePayment = async (req, res) => {
-  const { email, amount } = req.body;
+    const { email, amount } = req.body;
 
-  // Paystack expects amount in kobo (Result * 100)
-  // Example: 10 GHS = 1000 kobo
-  const params = {
-    email: email,
-    amount: amount * 100, 
-    currency: 'GHS',
-    callback_url: "https://hireme-bk0l.onrender.com/payment/callback" // We will build this later
-  };
+    // 1. SAFETY CHECK: Is the key actually loading?
+    if (!process.env.PAYSTACK_SECRET_KEY) {
+        console.error("CRITICAL: PAYSTACK_SECRET_KEY is missing from environment variables!");
+        return res.status(500).json({ error: 'Server Configuration Error: Missing API Key' });
+    }
 
-  try {
-    const response = await axios.post(
-      'https://api.paystack.co/transaction/initialize',
-      params,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+    // 2. DATA CHECK: Paystack needs email and an integer amount > 0
+    if (!email || !amount || amount <= 0) {
+        return res.status(400).json({ error: 'Valid email and amount are required' });
+    }
 
-    // Send the authorization URL back to the frontend
-    res.status(200).json(response.data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Payment initialization failed' });
-  }
-};
+    const params = {
+        email: email,
+        amount: Math.round(amount * 100), // Ensure it is an integer (Pesewas)
+        currency: 'GHS',
+        callback_url: "https://hireme-bk0l.onrender.com/payment/callback"
+    };
 
-exports.verifyPayment = async (req, res) => {
-  const { reference } = req.query;
+    try {
+        const response = await axios.post(
+            'https://api.paystack.co/transaction/initialize',
+            params,
+            {
+                headers: {
+                    Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY.trim()}`, // .trim() removes accidental spaces
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache'
+                }
+            }
+        );
 
-  try {
-    const response = await axios.get(
-      `https://api.paystack.co/transaction/verify/${reference}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
-        }
-      }
-    );
-
-    res.status(200).json(response.data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Payment verification failed' });
-  }
+        res.status(200).json(response.data);
+    } catch (error) {
+        // This will print the EXACT reason from Paystack in your Render Logs
+        console.error("Paystack Error Details:", error.response?.data || error.message);
+        
+        const errorMessage = error.response?.data?.message || 'Payment initialization failed';
+        res.status(error.response?.status || 500).json({ error: errorMessage });
+    }
 };
