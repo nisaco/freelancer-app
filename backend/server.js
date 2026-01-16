@@ -48,7 +48,7 @@ if (process.env.NODE_ENV === 'production') {
 
   // 2. The Catch-All Route
   // If the request is NOT an API route, send the React index.html
-  app.get('*', (req, res) => {
+  app.get('/.*/', (req, res) => {
     res.sendFile(path.resolve(__dirname, '../frontend', 'dist', 'index.html'));
   });
 
