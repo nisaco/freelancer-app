@@ -39,24 +39,19 @@ app.use('/api/reviews', require('./routes/reviewRoutes'));
 //  THE GLUE CODE (Production Mode)
 // =================================================================
 
-// 1. Serve static assets (CSS, Images, JS) if in production
 if (process.env.NODE_ENV === 'production') {
   
-  // Set the static folder to the Vite build output
-  // Note: This assumes your folder structure is backend/ and frontend/ side-by-side
+  // 1. Serve static assets (CSS, Images, JS)
   app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
-  // 2. The Catch-All Route
-  // If the request is NOT an API route, send the React index.html
-  app.get('/.*/', (req, res) => {
+  // 2. The Catch-All Route (Using 'use' instead of 'get' to bypass parser errors)
+  app.use((req, res) => {
     res.sendFile(path.resolve(__dirname, '../frontend', 'dist', 'index.html'));
   });
 
 } else {
-  // Simple message for local development if you aren't building the frontend
   app.get('/', (req, res) => res.send('Please set to production'));
 }
-
 // =================================================================
 
 const PORT = process.env.PORT || 5000;
