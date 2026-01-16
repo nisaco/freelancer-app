@@ -52,7 +52,28 @@ if (process.env.NODE_ENV === 'production') {
 } else {
   app.get('/', (req, res) => res.send('Please set to production'));
 }
-// =================================================================
+
+
+// --- TEMPORARY DEBUG ROUTE ---
+app.get('/debug-email', async (req, res) => {
+  const sendEmail = require('./utils/sendEmail');
+  try {
+    console.log("Debug Route: Attempting to send...");
+    console.log("Using User:", process.env.BREVO_USER); // Log the USER (safe to see)
+    // DO NOT LOG THE PASSWORD
+
+    await sendEmail({
+      to: 'YOUR_PERSONAL_EMAIL@gmail.com', // <--- HARDCODE YOUR REAL EMAIL HERE
+      subject: 'Debug Test from Live Server',
+      html: '<h1>If you see this, the server is working!</h1>'
+    });
+    res.send('Email sent! Check logs for details.');
+  } catch (error) {
+    console.error("Debug Route Failed:", error);
+    res.status(500).send('Failed: ' + error.message);
+  }
+});
+// -----------------------------
 
 const PORT = process.env.PORT || 5000;
 
