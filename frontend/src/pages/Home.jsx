@@ -1,119 +1,67 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
-import PayButton from '../components/PayButton';
 
 const Home = () => {
   return (
-    <div className="font-sans text-gray-800">
-      
-      {/* 1. NAVIGATION BAR (Public) */}
-      <nav className="flex justify-between items-center p-6 max-w-7xl mx-auto">
-        <div className="text-2xl font-bold text-secondary">
-          Artisan<span className="text-gray-800">Connect</span>
-        </div>
-        <div className="space-x-6">
-          <Link to="/login" className="font-medium hover:text-secondary">Login</Link>
-          <Link to="/register" className="bg-secondary text-white px-5 py-2.5 rounded-full font-bold hover:bg-blue-700 transition">
-            Join Now
-          </Link>
+    <div className="min-h-screen bg-white font-sans">
+      {/* --- HERO SECTION --- */}
+      <nav className="flex justify-between items-center px-8 py-6 max-w-7xl mx-auto">
+        <h1 className="text-2xl font-black text-blue-600 tracking-tighter">HIREME</h1>
+        <div className="space-x-4">
+          <Link to="/login" className="text-gray-600 font-bold hover:text-blue-600 transition">Login</Link>
+          <Link to="/register" className="bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition">Get Started</Link>
         </div>
       </nav>
 
-      {/* 2. HERO SECTION */}
-      <header className="relative bg-white overflow-hidden">
-        <div className="max-w-7xl mx-auto">
-          <div className="relative z-10 pb-8 bg-white sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32">
-            
-            <main className="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
-              <div className="sm:text-center lg:text-left">
-                <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-                  <span className="block xl:inline">Find reliable artisans</span>{' '}
-                  <span className="block text-secondary">for your home needs</span>
-                </h1>
-                <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
-                  Don't stress over broken pipes or faulty wiring. Connect with verified carpenters, plumbers, and electricians in your area instantly.
-                </p>
-                <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
-                  <div className="rounded-md shadow">
-                    <Link to="/register" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-secondary hover:bg-blue-700 md:py-4 md:text-lg md:px-10">
-                      Get Started
-                    </Link>
-                  </div>
-                  <div className="mt-3 sm:mt-0 sm:ml-3">
-                    <Link to="/login" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-secondary bg-blue-100 hover:bg-blue-200 md:py-4 md:text-lg md:px-10">
-                      Login
-                    </Link>
-                  </div>
-                </div>
+      <main className="max-w-7xl mx-auto px-8 py-20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <span className="bg-blue-50 text-blue-600 px-4 py-1 rounded-full text-sm font-bold mb-6 inline-block">
+            📍 Available across Ghana
+          </span>
+          <h2 className="text-6xl font-black text-gray-900 leading-tight mb-6">
+            Expert Artisans, <br />
+            <span className="text-blue-600">On Demand.</span>
+          </h2>
+          <p className="text-xl text-gray-500 mb-10 leading-relaxed">
+            Stop searching for reliable help. From Plumbers to Electricians, book verified experts and pay securely with Paystack.
+          </p>
+          
+          <div className="flex gap-4">
+            <Link to="/register" className="bg-gray-900 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-gray-800 transition shadow-xl">
+              Find an Artisan
+            </Link>
+            <div className="flex items-center gap-3 px-6">
+              <div className="flex -space-x-3">
+                {[1,2,3].map(i => (
+                  <div key={i} className="w-10 h-10 rounded-full bg-gray-200 border-2 border-white shadow-sm" />
+                ))}
               </div>
-            </main>
-          </div>
-        </div>
-        
-        {/* Hero Image Side */}
-        <div className="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
-          <img
-            className="h-56 w-full object-cover sm:h-72 md:h-96 lg:w-full lg:h-full"
-            src="https://images.unsplash.com/photo-1581578731117-10d75d5ce3a2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
-            alt="Artisan working"
-          />
-        </div>
-      </header>
-
-
-      {/* 3. HOW IT WORKS SECTION */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-base text-secondary font-semibold tracking-wide uppercase">How It Works</h2>
-            <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-              Easy as 1-2-3
-            </p>
-          </div>
-
-          <div className="mt-10">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Step 1 */}
-              <div className="bg-white p-6 rounded-lg shadow text-center">
-                <div className="text-4xl mb-4">🔍</div>
-                <h3 className="text-lg font-medium text-gray-900">Search</h3>
-                <p className="mt-2 text-gray-500">
-                  Browse profiles of skilled carpenters, masons, and plumbers near you.
-                </p>
-              </div>
-
-              {/* Step 2 */}
-              <div className="bg-white p-6 rounded-lg shadow text-center">
-                <div className="text-4xl mb-4">📅</div>
-                <h3 className="text-lg font-medium text-gray-900">Book</h3>
-                <p className="mt-2 text-gray-500">
-                  Select a date and describe your problem. Send a request instantly.
-                </p>
-              </div>
-
-              {/* Step 3 */}
-              <div className="bg-white p-6 rounded-lg shadow text-center">
-                <div className="text-4xl mb-4">✅</div>
-                <h3 className="text-lg font-medium text-gray-900">Get it Done</h3>
-                <p className="mt-2 text-gray-500">
-                  The artisan accepts the job, fixes the issue, and you relax.
-                </p>
-              </div>
+              <p className="text-sm font-bold text-gray-400">500+ Pros in Accra</p>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* 4. FOOTER */}
-      <footer className="bg-gray-800 text-white py-10">
-        <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
-          <p>© 2026 ArtisanConnect. All rights reserved.</p>
-          <div className="space-x-4">
-            <a href="#" className="hover:text-gray-400">Privacy</a>
-            <a href="#" className="hover:text-gray-400">Terms</a>
+        {/* --- VISUAL DECORATION --- */}
+        <div className="relative">
+          <div className="bg-blue-600 w-full h-[500px] rounded-[40px] shadow-2xl relative overflow-hidden rotate-2">
+             <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-blue-700 opacity-90 flex items-center justify-center p-12">
+                <div className="text-white">
+                  <p className="text-3xl font-black mb-2 italic">"The best way to hire in Ghana."</p>
+                  <p className="text-blue-200 opacity-80">— Reliable Service Guaranteed</p>
+                </div>
+             </div>
+          </div>
+          <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-3xl shadow-2xl border border-gray-100 flex items-center gap-4">
+             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+               ✅
+             </div>
+             <div>
+               <p className="font-black text-gray-900">Verified Pros</p>
+               <p className="text-xs text-gray-400">Background Checked</p>
+             </div>
           </div>
         </div>
-      </footer>
-
+      </main>
     </div>
   );
 };

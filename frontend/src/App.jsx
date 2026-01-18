@@ -6,6 +6,7 @@ import PaymentCallback from './pages/PaymentCallback'; // <--- Import
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Navbar from './components/Navbar';
 import ProfileSetup from './pages/ProfileSetup';
 import Home from './pages/Home'; // <--- IMPORT HOME
 
