@@ -1,130 +1,141 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify'; // For the popup alerts
-import api from '../services/api'; // Our central API handler
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const Register = () => {
-  const navigate = useNavigate();
-  
-  // 1. STATE: This holds what the user types
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
-    role: 'client', // Default is client
+    role: 'client', // Default role
   });
 
   const { username, email, password, role } = formData;
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
-  // 2. LOGIC: Update state when user types
   const onChange = (e) => {
-    setFormData((prevState) => ({
-      ...prevState,
-      [e.target.name]: e.target.value,
-    }));
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 3. LOGIC: Send data to backend when "Submit" is clicked
   const onSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
-      // The actual API call
-      const response = await api.post('/auth/register', formData);
+      const API_URL = window.location.hostname === 'localhost' 
+        ? 'http://localhost:5000/api/auth/register' 
+        : 'https://hireme-bk0l.onrender.com/api/auth/register';
 
-      // If successful:
-      toast.success('Registration Successful! Please Login.');
-      navigate('/login'); // Send them to login page
+      const response = await axios.post(API_URL, formData);
+
+      if (response.data) {
+        toast.success('Registration Successful!');
+        
+        // Save user data and token immediately so they stay logged in
+        localStorage.setItem('user', JSON.stringify(response.data.user || response.data));
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token);
+        }
+
+        // --- DIRECTION LOGIC ---
+        if (role === 'artisan') {
+          // Send artisans to upload their Ghana Card and Bio
+          navigate('/profile-setup');
+        } else {
+          // Send clients to the marketplace
+          navigate('/dashboard');
+        }
+      }
     } catch (error) {
-      // If error (e.g., email already taken):
-      const message = error.response?.data?.message || 'Registration failed';
+      const message = error.response?.data?.message || 'Registration failed.';
       toast.error(message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-        
-        {/* Header */}
+    <div className="min-h-screen flex justify-center items-center bg-gray-50 py-12 px-4">
+      <div className="w-full max-w-lg bg-white p-10 rounded-3xl shadow-xl border border-gray-100">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-primary">Create Account</h2>
-          <p className="text-gray-500 mt-2">Join as a client or artisan</p>
+          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase">Join HireMe</h2>
+          <p className="text-gray-500 font-medium">Create your account to get started</p>
         </div>
 
-        {/* Form */}
         <form onSubmit={onSubmit} className="space-y-6">
-          
-          {/* Username */}
-          <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">Full Name</label>
+          {/* --- ROLE SELECTOR --- */}
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, role: 'client' })}
+              className={`p-4 rounded-2xl border-2 transition-all text-center ${
+                role === 'client' 
+                ? 'border-blue-600 bg-blue-50 text-blue-600' 
+                : 'border-gray-100 text-gray-400'
+              }`}
+            >
+              <div className="text-2xl mb-1">🏠</div>
+              <div className="font-bold text-xs uppercase">I want to Hire</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, role: 'artisan' })}
+              className={`p-4 rounded-2xl border-2 transition-all text-center ${
+                role === 'artisan' 
+                ? 'border-blue-600 bg-blue-50 text-blue-600' 
+                : 'border-gray-100 text-gray-400'
+              }`}
+            >
+              <div className="text-2xl mb-1">🛠️</div>
+              <div className="font-bold text-xs uppercase">I'm an Artisan</div>
+            </button>
+          </div>
+
+          <div className="space-y-4">
             <input
               type="text"
               name="username"
               value={username}
               onChange={onChange}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
-              placeholder="John Doe"
+              className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Full Name"
               required
             />
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">Email Address</label>
             <input
               type="email"
               name="email"
               value={email}
               onChange={onChange}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
-              placeholder="john@example.com"
+              className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Email Address"
               required
             />
-          </div>
-
-          {/* Password */}
-          <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">Password</label>
             <input
               type="password"
               name="password"
               value={password}
               onChange={onChange}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
-              placeholder="••••••••"
+              className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Create Password"
               required
             />
           </div>
 
-          {/* Role Selection (Crucial for your app) */}
-          <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">I want to...</label>
-            <select
-              name="role"
-              value={role}
-              onChange={onChange}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary bg-white"
-            >
-              <option value="client">Hire Artisan (I am a Client)</option>
-              <option value="artisan">Find Work (I am an Artisan)</option>
-            </select>
-          </div>
-
-          {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-secondary text-white font-bold py-3 rounded-lg hover:bg-blue-600 transition duration-300"
+            disabled={loading}
+            className="w-full bg-gray-900 text-white font-black py-4 rounded-2xl hover:bg-blue-600 transition shadow-lg disabled:bg-gray-400"
           >
-            Register
+            {loading ? 'CREATING ACCOUNT...' : 'REGISTER NOW'}
           </button>
         </form>
 
-        {/* Footer Link */}
-        <p className="mt-6 text-center text-gray-600">
+        <p className="mt-8 text-center text-gray-500 text-sm">
           Already have an account?{' '}
-          <Link to="/login" className="text-secondary font-bold hover:underline">
-            Login
+          <Link to="/login" className="text-blue-600 font-bold hover:underline">
+            Login here
           </Link>
         </p>
       </div>

@@ -22,6 +22,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile-setup" element={<ProfileSetup />} />
+        <Route path="/artisan-dashboard" element={<ArtisanDashboard />} />
         <Route path="/payment/callback" element={<PaymentCallback />} />
       </Routes>
     </Router>
