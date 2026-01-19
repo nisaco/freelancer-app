@@ -1,17 +1,20 @@
 const Job = require('../models/Job');
 const User = require('../models/User');
 
-// @desc    Get all artisans for the Dashboard (Verified first)
+// @desc    Get all artisans for the Dashboard (Verified first, but shows all)
 // @route   GET /api/jobs/available
 // @access  Private
 exports.getAvailableArtisans = async (req, res) => {
   try {
+    // We fetch EVERYONE with the role 'artisan'
+    // We sort by isVerified (true first) then by most recently created
     const artisans = await User.find({ role: 'artisan' })
-      .select('username category bio price profilePic isVerified location') // Explicitly leave out ghanaCard details
+      .select('username category bio price profilePic isVerified location') 
       .sort({ isVerified: -1, createdAt: -1 });
 
     res.status(200).json(artisans);
   } catch (error) {
+    console.error("Fetch Artisans Error:", error);
     res.status(500).json({ message: 'Error fetching artisans' });
   }
 };
@@ -32,6 +35,7 @@ exports.createJob = async (req, res) => {
     }
 
     // 2. Conflict Check (Double Booking)
+    // Checks if this specific artisan has a job on this date that isn't rejected
     const conflict = await Job.findOne({
       artisan: artisanId,
       date: requestedDate,
@@ -39,7 +43,7 @@ exports.createJob = async (req, res) => {
     });
 
     if (conflict) {
-      return res.status(400).json({ message: 'This artisan is already booked at this time.' });
+      return res.status(400).json({ message: 'This artisan is already booked for this time slot.' });
     }
 
     // 3. Create Job
@@ -48,47 +52,55 @@ exports.createJob = async (req, res) => {
       artisan: artisanId,
       serviceType: serviceType || artisan.category,
       description,
-      date
+      date: requestedDate
     });
 
     res.status(201).json(job);
   } catch (error) {
     console.error("Create Job Error:", error);
-    res.status(500).json({ message: 'Failed to create job' });
+    res.status(500).json({ message: 'Failed to create job request' });
   }
 };
 
-// @desc    Get jobs for the logged-in user
+// @desc    Get jobs for the logged-in user (Artisan sees their tasks, Client sees their bookings)
+// @route   GET /api/jobs/my-jobs
 exports.getMyJobs = async (req, res) => {
   try {
     const jobs = await Job.find({
       $or: [{ client: req.user.id }, { artisan: req.user.id }]
     })
     .populate('client', 'username email')
-    .populate('artisan', 'username email category profilePic isVerified')
+    .populate('artisan', 'username email category profilePic isVerified location')
     .sort({ createdAt: -1 });
 
-    res.json(jobs);
+    res.status(200).json(jobs);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch jobs' });
+    console.error("Get My Jobs Error:", error);
+    res.status(500).json({ message: 'Failed to fetch your job history' });
   }
 };
 
-// @desc    Update job status
+// @desc    Update job status (Accepted / Rejected / Completed)
+// @route   PUT /api/jobs/:id
+// @access  Private (Artisan only)
 exports.updateJobStatus = async (req, res) => {
   try {
     const { status } = req.body;
     let job = await Job.findById(req.params.id);
 
     if (!job) return res.status(404).json({ message: 'Job not found' });
+
+    // Ensure only the artisan assigned to this job can change the status
     if (job.artisan.toString() !== req.user.id) {
-      return res.status(401).json({ message: 'Not authorized' });
+      return res.status(401).json({ message: 'Not authorized to update this job' });
     }
 
     job.status = status;
     await job.save();
-    res.json(job);
+
+    res.status(200).json(job);
   } catch (error) {
-    res.status(500).json({ message: 'Update failed' });
+    console.error("Update Job Error:", error);
+    res.status(500).json({ message: 'Status update failed' });
   }
 };
