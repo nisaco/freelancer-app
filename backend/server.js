@@ -46,9 +46,9 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static(buildPath));
 
   // 2. The Catch-All Route: This handles React Router refreshes
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../frontend', 'dist', 'index.html'));
-  });
+ app.get(/^\/(?!api).*/, (req, res) => {
+  res.sendFile(path.resolve(__dirname, '../frontend', 'dist', 'index.html'));
+});
 } else {
   app.get('/', (req, res) => res.send('API is running in Development Mode...'));
 }
