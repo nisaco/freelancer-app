@@ -26,16 +26,21 @@ const Dashboard = () => {
   }, [navigate]);
 
   const fetchJobs = async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/jobs`);
-      setJobs(response.data);
-      setFilteredJobs(response.data);
-    } catch (error) {
-      console.error("Dashboard Fetch Error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const token = localStorage.getItem('token'); // Get the token
+    const response = await axios.get(`${API_BASE_URL}/jobs`, {
+      headers: { 
+        Authorization: `Bearer ${token}` // Send it to the server
+      }
+    });
+    setJobs(response.data);
+    setFilteredJobs(response.data);
+  } catch (error) {
+    console.error("Dashboard Fetch Error:", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // --- LOGIC: Handle Category & Search Together ---
   useEffect(() => {
