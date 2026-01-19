@@ -8,6 +8,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Navbar from './components/Navbar';
 import ProfileSetup from './pages/ProfileSetup';
+import ArtisanDashboard from './pages/ArtisanDashboard';
 import Home from './pages/Home'; // <--- IMPORT HOME
 
 function App() {
