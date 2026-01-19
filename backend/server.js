@@ -2,8 +2,9 @@ const express = require('express');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const path = require('path'); // <--- REQUIRED FOR THE GLUE
+const path = require('path');
 const paymentRoutes = require('./routes/paymentRoutes');
+
 // Load env vars
 dotenv.config();
 
@@ -11,8 +12,8 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(cors());
 
 // Connect to Database
@@ -30,32 +31,28 @@ connectDB();
 // --- API ROUTES ---
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/artisan', require('./routes/artisanRoutes'));
-app.use('/api/upload', require('./routes/uploadRoutes'));
+app.use('/api/upload', require('./routes/uploadRoutes')); // Matches your file name
 app.use('/api/jobs', require('./routes/jobRoutes'));
 app.use('/api/payment', paymentRoutes);
 app.use('/api/reviews', require('./routes/reviewRoutes'));
-
-
 
 // =================================================================
 //  THE GLUE CODE (Production Mode)
 // =================================================================
 
 if (process.env.NODE_ENV === 'production') {
-  
-  // 1. Serve static assets (CSS, Images, JS)
-  app.use(express.static(path.join(__dirname, '../frontend/dist')));
+  // 1. Point to the dist folder
+  const buildPath = path.join(__dirname, '../frontend/dist');
+  app.use(express.static(buildPath));
 
-  // 2. The Catch-All Route (Using 'use' instead of 'get' to bypass parser errors)
-  app.use((req, res) => {
+  // 2. The Catch-All Route: This handles React Router refreshes
+  app.get('*', (req, res) => {
     res.sendFile(path.resolve(__dirname, '../frontend', 'dist', 'index.html'));
   });
-
 } else {
-  app.get('/', (req, res) => res.send('Please set to production'));
+  app.get('/', (req, res) => res.send('API is running in Development Mode...'));
 }
 
 // -----------------------------
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));

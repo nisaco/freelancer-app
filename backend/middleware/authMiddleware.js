@@ -4,19 +4,19 @@ const User = require('../models/User');
 const protect = async (req, res, next) => {
   let token;
 
-  // Check if the "Authorization" header exists and starts with "Bearer"
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
-      // Get token from header (Format: "Bearer <token>")
       token = req.headers.authorization.split(' ')[1];
-
-      // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      // Get user from the token ID and attach it to the request object
+      
+      // Attach the user to the request
       req.user = await User.findById(decoded.id).select('-password');
 
-      next(); // Allow them to proceed to the controller
+      if (!req.user) {
+        return res.status(401).json({ message: 'User not found' });
+      }
+
+      next();
     } catch (error) {
       console.error(error);
       res.status(401).json({ message: 'Not authorized, token failed' });
@@ -28,4 +28,17 @@ const protect = async (req, res, next) => {
   }
 };
 
-module.exports = { protect };
+// --- NEW: AUTHORIZE ROLES ---
+// This allows you to restrict routes to 'artisan' or 'admin' only
+const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ 
+        message: `Role (${req.user.role}) is not authorized to access this resource` 
+      });
+    }
+    next();
+  };
+};
+
+module.exports = { protect, authorize };
