@@ -24,37 +24,45 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // --- IMPORTANT: CHECK THIS URL ---
-      // If running locally, use: 'http://localhost:5000/api/auth/login'
-      // If deploying, use your Render URL: 'https://hireme-bk0l.onrender.com/api/auth/login'
-      
-      const API_URL = 'https://hireme-bk0l.onrender.com/api/auth/login'; 
+      // Logic to auto-switch URL based on where the app is running
+      const API_URL = window.location.hostname === 'localhost' 
+        ? 'http://localhost:5000/api/auth/login' 
+        : 'https://hireme-bk0l.onrender.com/api/auth/login';
 
       const response = await axios.post(
         API_URL, 
-        { email, password }, // The data payload
-        { headers: { 'Content-Type': 'application/json' } } // Explicitly tell server it's JSON
+        { email, password },
+        { headers: { 'Content-Type': 'application/json' } }
       );
 
       if (response.data) {
-        // Save the token and user data
-        localStorage.setItem('user', JSON.stringify(response.data));
-        
-        // If your backend sends a token separately:
-        if (response.data.token) {
-          localStorage.setItem('token', response.data.token);
+        const userData = response.data.user || response.data; // Handle different backend response structures
+        const token = response.data.token;
+
+        // 1. Save critical data
+        localStorage.setItem('user', JSON.stringify(userData));
+        if (token) {
+          localStorage.setItem('token', token);
         }
 
-        alert('Login Successful! Welcome back.');
-        navigate('/dashboard'); // Go to Dashboard/Home
+        // 2. --- ROLE-BASED REDIRECTION LOGIC ---
+        // We check if the user is an artisan or a client (passenger)
+        if (userData.role === 'artisan') {
+          // If the artisan hasn't finished their profile (category is missing), send to setup
+          if (!userData.category) {
+            navigate('/profile-setup');
+          } else {
+            // Otherwise, send them to their specific Artisan Portal
+            navigate('/artisan-dashboard');
+          }
+        } else {
+          // Regular clients go to the marketplace dashboard
+          navigate('/dashboard');
+        }
       }
     } catch (error) {
       console.error('Login Error:', error.response?.data || error.message);
-      
-      const message = 
-        (error.response && error.response.data && error.response.data.message) || 
-        'Login failed. Please check your email and password.';
-        
+      const message = error.response?.data?.message || 'Login failed. Please check your credentials.';
       alert(message);
     } finally {
       setLoading(false);
@@ -62,33 +70,36 @@ const Login = () => {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Login</h2>
+    <div className="flex justify-center items-center h-screen bg-gray-50">
+      <div className="w-full max-w-md bg-white p-10 rounded-3xl shadow-xl border border-gray-100">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase">HireMe</h2>
+          <p className="text-gray-500 font-medium">Welcome back, login to continue</p>
+        </div>
         
-        <form onSubmit={onSubmit}>
-          <div className="mb-4">
-            <label className="block text-gray-700 font-bold mb-2">Email</label>
+        <form onSubmit={onSubmit} className="space-y-5">
+          <div>
+            <label className="block text-gray-700 font-bold mb-2 text-sm">Email Address</label>
             <input
               type="email"
               name="email"
               value={email}
               onChange={onChange}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter your email"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              placeholder="name@company.com"
               required
             />
           </div>
 
-          <div className="mb-6">
-            <label className="block text-gray-700 font-bold mb-2">Password</label>
+          <div>
+            <label className="block text-gray-700 font-bold mb-2 text-sm">Password</label>
             <input
               type="password"
               name="password"
               value={password}
               onChange={onChange}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter your password"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              placeholder="••••••••"
               required
             />
           </div>
@@ -96,18 +107,20 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300"
+            className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl hover:bg-blue-700 transition duration-300 shadow-lg shadow-blue-100 disabled:bg-blue-300"
           >
-            {loading ? 'Logging In...' : 'Login'}
+            {loading ? 'Verifying...' : 'LOGIN'}
           </button>
         </form>
         
-        <p className="mt-4 text-center text-gray-600 text-sm">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-blue-600 hover:underline">
-            Register
-          </Link>
-        </p>
+        <div className="mt-8 text-center">
+          <p className="text-gray-500 text-sm font-medium">
+            New to HireMe?{' '}
+            <Link to="/register" className="text-blue-600 font-bold hover:underline">
+              Create an account
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
