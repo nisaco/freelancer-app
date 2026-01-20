@@ -18,7 +18,10 @@ const Dashboard = () => {
 
   useEffect(() => {
     const user = localStorage.getItem('user');
-    if (!user) {
+    const token = localStorage.getItem('token');
+
+    // FIX: Strict check for both user and token before fetching
+    if (!user || !token) {
       navigate('/login');
     } else {
       fetchJobs();
@@ -27,7 +30,6 @@ const Dashboard = () => {
 
   const fetchJobs = async () => {
     try {
-      // --- THE FIX: ADD AUTH TOKEN ---
       const token = localStorage.getItem('token');
       
       const response = await axios.get(`${API_BASE_URL}/jobs/available`, {
@@ -39,21 +41,24 @@ const Dashboard = () => {
       setFilteredJobs(response.data);
     } catch (error) {
       console.error("Dashboard Fetch Error:", error);
+      // FIX: Handle 401 Unauthorized by clearing storage and redirecting
+      if (error.response && error.response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // --- LOGIC: Handle Category & Search Together ---
   useEffect(() => {
     let result = jobs;
 
-    // Filter by Category
     if (selectedCategory !== 'All') {
       result = result.filter(job => job.category?.toLowerCase() === selectedCategory.toLowerCase());
     }
 
-    // Filter by Search Term (Title or Description)
     if (searchTerm) {
       result = result.filter(job => 
         job.username?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -79,8 +84,6 @@ const Dashboard = () => {
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        {/* --- HERO SECTION --- */}
         <div className="bg-blue-600 rounded-3xl p-8 mb-6 text-white shadow-xl relative overflow-hidden">
           <div className="relative z-10 max-w-2xl">
             <h2 className="text-4xl font-extrabold mb-2 tracking-tight">Expert Artisans</h2>
@@ -89,7 +92,6 @@ const Dashboard = () => {
           <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-blue-500 rounded-full opacity-30"></div>
         </div>
 
-        {/* --- SEARCH BAR --- */}
         <div className="relative -mt-10 mb-10 max-w-xl mx-auto z-20">
           <div className="bg-white rounded-2xl shadow-xl p-2 flex items-center border border-gray-100">
             <div className="p-3 text-gray-400">
@@ -107,7 +109,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* --- DYNAMIC CATEGORY SCROLL --- */}
         <div className="mb-10">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Categories</h3>
@@ -131,11 +132,9 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* --- ARTISAN GRID --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredJobs.length > 0 ? (
             filteredJobs.map(job => (
-              // Note: passing as 'artisan' prop to match your JobItem
               <JobItem key={job._id} artisan={job} /> 
             ))
           ) : (
@@ -145,7 +144,6 @@ const Dashboard = () => {
             </div>
           )}
         </div>
-
       </main>
     </div>
   );
