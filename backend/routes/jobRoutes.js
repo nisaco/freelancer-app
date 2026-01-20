@@ -1,19 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const { createJob, getMyJobs, updateJobStatus } = require('../controllers/jobController');
+// Ensure the names here match the "exports.name" in jobController.js exactly
+const { 
+    getAvailableArtisans, 
+    createJob, 
+    getMyJobs, 
+    updateJobStatus 
+} = require('../controllers/jobController');
 const { protect } = require('../middleware/authMiddleware');
 
-// Route to Create a Job (Client)
-router.post('/', protect, createJob);
-// The route Dashboard.jsx is calling
+// Dashboard route
 router.get('/available', protect, getAvailableArtisans);
 
-// Route to Get My Jobs (Client & Artisan)
-router.get('/', protect, getMyJobs);
-
-// --- THIS WAS LIKELY MISSING ---
-// Route to Update Job Status (Artisan)
+// Booking and management routes
+router.post('/', protect, createJob);
+router.get('/my-jobs', protect, getMyJobs);
 router.put('/:id', protect, updateJobStatus);
-// -------------------------------
 
 module.exports = router;
