@@ -1,16 +1,29 @@
 const Job = require('../models/Job');
 const User = require('../models/User');
+const ArtisanProfile = require('../models/ArtisanProfile');
 
 // @desc    Get all artisans for the Dashboard (Verified first, but shows all)
 // @route   GET /api/jobs/available
 // @access  Private
 exports.getAvailableArtisans = async (req, res) => {
   try {
-    // We fetch EVERYONE with the role 'artisan'
-    // We sort by isVerified (true first) then by most recently created
-    const artisans = await User.find({ role: 'artisan' })
-      .select('username category bio price profilePic isVerified location') 
-      .sort({ isVerified: -1, createdAt: -1 });
+    // 1. Fetch from ArtisanProfile to get category, price, and bio
+    // 2. Populate the 'user' field to get username and verification status
+    const profiles = await ArtisanProfile.find()
+      .populate('user', 'username profilePic isVerified location')
+      .sort({ createdAt: -1 });
+
+    // 3. Format the data to match what Dashboard.jsx and JobItem.jsx expect
+    const artisans = profiles.map(profile => ({
+      _id: profile.user ? profile.user._id : profile._id,
+      username: profile.user ? profile.user.username : 'Unknown Artisan',
+      category: profile.serviceCategory, // Mapping serviceCategory to category
+      bio: profile.bio,
+      price: profile.startingPrice,
+      profilePic: profile.profileImage,
+      isVerified: profile.user ? profile.user.isVerified : false,
+      location: profile.location
+    }));
 
     res.status(200).json(artisans);
   } catch (error) {
@@ -35,7 +48,6 @@ exports.createJob = async (req, res) => {
     }
 
     // 2. Conflict Check (Double Booking)
-    // Checks if this specific artisan has a job on this date that isn't rejected
     const conflict = await Job.findOne({
       artisan: artisanId,
       date: requestedDate,
@@ -62,7 +74,7 @@ exports.createJob = async (req, res) => {
   }
 };
 
-// @desc    Get jobs for the logged-in user (Artisan sees their tasks, Client sees their bookings)
+// @desc    Get jobs for the logged-in user
 // @route   GET /api/jobs/my-jobs
 exports.getMyJobs = async (req, res) => {
   try {
@@ -80,7 +92,7 @@ exports.getMyJobs = async (req, res) => {
   }
 };
 
-// @desc    Update job status (Accepted / Rejected / Completed)
+// @desc    Update job status
 // @route   PUT /api/jobs/:id
 // @access  Private (Artisan only)
 exports.updateJobStatus = async (req, res) => {
@@ -90,7 +102,6 @@ exports.updateJobStatus = async (req, res) => {
 
     if (!job) return res.status(404).json({ message: 'Job not found' });
 
-    // Ensure only the artisan assigned to this job can change the status
     if (job.artisan.toString() !== req.user.id) {
       return res.status(401).json({ message: 'Not authorized to update this job' });
     }
