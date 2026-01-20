@@ -1,13 +1,40 @@
 const ArtisanProfile = require('../models/ArtisanProfile');
 const User = require('../models/User');
 
-// @desc    Get current logged-in artisan's profile with LIVE verification status
+// @desc    Create or Update Artisan Profile
+// @route   POST /api/artisan/profile
+exports.updateProfile = async (req, res) => {
+  const { serviceCategory, bio, location, phoneNumber, startingPrice, profileImage, workingDays, workStartTime, workEndTime } = req.body;
+  const profileFields = { user: req.user.id, serviceCategory, bio, location, phoneNumber, startingPrice, profileImage, workingDays, workStartTime, workEndTime };
+  try {
+    let profile = await ArtisanProfile.findOneAndUpdate(
+      { user: req.user.id }, 
+      { $set: profileFields }, 
+      { new: true, upsert: true }
+    );
+    res.json(profile);
+  } catch (error) {
+    res.status(500).send('Server Error');
+  }
+};
+
+// @desc    Get all artisans
+// @route   GET /api/artisan
+exports.getArtisans = async (req, res) => {
+  try {
+    const profiles = await ArtisanProfile.find(req.query.category ? { serviceCategory: req.query.category } : {}).populate('user', 'username email isVerified');
+    res.json(profiles);
+  } catch (error) {
+    res.status(500).send('Server Error');
+  }
+};
+
+// @desc    Get current logged-in artisan's profile
+// @route   GET /api/artisan/me
 exports.getCurrentProfile = async (req, res) => {
   try {
-    const profile = await ArtisanProfile.findOne({ user: req.user.id })
-      .populate('user', 'username email isVerified');
-
-    // If no profile exists yet, return a skeleton object so the frontend doesn't crash
+    const profile = await ArtisanProfile.findOne({ user: req.user.id }).populate('user', 'username email isVerified');
+    
     if (!profile) {
       const user = await User.findById(req.user.id).select('username email isVerified');
       return res.json({
@@ -20,9 +47,6 @@ exports.getCurrentProfile = async (req, res) => {
 
     res.json(profile);
   } catch (error) {
-    console.error(error.message);
     res.status(500).send('Server Error');
   }
 };
-
-// ... keep updateProfile and getArtisans the same ...
