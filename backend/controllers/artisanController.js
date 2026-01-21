@@ -5,21 +5,23 @@ const User = require('../models/User');
 // @route   GET /api/artisan/me
 exports.getCurrentProfile = async (req, res) => {
   try {
+    // 1. Look for the professional profile and pull live User data (for verification status)
     const profile = await ArtisanProfile.findOne({ user: req.user.id })
       .populate('user', 'username email isVerified role');
 
+    // 2. If NO profile exists in the database, send the skeleton object
     if (!profile) {
-      // Return a basic object instead of a 404 to keep the user on the dashboard
       const user = await User.findById(req.user.id).select('username email isVerified role');
       return res.json({
         user: user,
-        isNewArtisan: true, 
+        isNewArtisan: true, // This tells the dashboard to show the setup prompt
         serviceCategory: '',
         bio: '',
         startingPrice: 0
       });
     }
 
+    // 3. If it exists, send the full profile (Standard Dashboard View)
     res.json(profile);
   } catch (error) {
     console.error(error.message);
@@ -27,16 +29,15 @@ exports.getCurrentProfile = async (req, res) => {
   }
 };
 
-// @desc    Create or Update Artisan Profile
-// @route   POST /api/artisan/profile
+// @desc    Update or Create Profile
 exports.updateProfile = async (req, res) => {
   const { serviceCategory, bio, location, phoneNumber, startingPrice, profileImage, workingDays, workStartTime, workEndTime } = req.body;
   try {
     const profileFields = { user: req.user.id, serviceCategory, bio, location, phoneNumber, startingPrice, profileImage, workingDays, workStartTime, workEndTime };
     let profile = await ArtisanProfile.findOneAndUpdate(
-      { user: req.user.id }, 
-      { $set: profileFields }, 
-      { new: true, upsert: true }
+      { user: req.user.id },
+      { $set: profileFields },
+      { new: true, upsert: true } // This creates the document so the user is no longer "New"
     );
     res.json(profile);
   } catch (error) {
@@ -44,7 +45,6 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
-// @desc    Get all artisans
 exports.getArtisans = async (req, res) => {
   try {
     const profiles = await ArtisanProfile.find(req.query.category ? { serviceCategory: req.query.category } : {}).populate('user', 'username email isVerified');
