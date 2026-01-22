@@ -45,16 +45,10 @@ const Login = () => {
           localStorage.setItem('token', token);
         }
 
-        // 2. --- ROLE-BASED REDIRECTION LOGIC ---
-        // We check if the user is an artisan or a client (passenger)
+        // 2. --- FIXED REDIRECTION LOGIC ---
+        // If the user is an artisan, send them STRAIGHT to the ArtisanDashboard
         if (userData.role === 'artisan') {
-          // If the artisan hasn't finished their profile (category is missing), send to setup
-          if (!userData.category) {
-            navigate('/profile-setup');
-          } else {
-            // Otherwise, send them to their specific Artisan Portal
-            navigate('/artisan-dashboard');
-          }
+          navigate('/artisan-dashboard');
         } else {
           // Regular clients go to the marketplace dashboard
           navigate('/dashboard');
