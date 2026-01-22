@@ -61,7 +61,7 @@ const ArtisanDashboard = () => {
         HIRE<span className="text-blue-600">ME</span>
         <motion.span
           animate={{ opacity: [0, 1, 0] }}
-          transition={{ duration: 1, repeat: Infinity }}
+          transition={{ duration: 2, repeat: Infinity }}
         >
           ...
         </motion.span>
