@@ -166,25 +166,35 @@ const Dashboard = () => {
             </motion.h1>
           </div>
 
-          {/* Liquid Category Dock */}
-          <div className="flex justify-center mb-20 overflow-x-auto no-scrollbar py-4">
-            <div className="bg-white/80 backdrop-blur-2xl p-2 rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-white flex gap-1">
-              {categories.map((cat) => (
-                <button
-                  key={cat.name}
-                  onClick={() => handleFilter(cat)}
-                  className={`relative z-10 px-6 md:px-8 py-3 md:py-4 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                    filter === cat.name ? 'text-white' : 'text-gray-400 hover:text-black'
-                  }`}
-                >
-                  <span className="mr-2">{cat.icon}</span> {cat.name}
-                  {filter === cat.name && (
-                    <motion.div layoutId="liquid-pill" className="absolute inset-0 -z-10 rounded-full" style={{ backgroundColor: cat.color }} transition={{ type: "spring", bounce: 0.3, duration: 0.6 }} />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
+  {/* --- LIQUID CATEGORY DOCK --- */}
+<div className="flex justify-center mb-20 px-4">
+  <motion.div 
+    className="bg-white/70 backdrop-blur-2xl p-2 rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-white flex flex-nowrap overflow-x-auto no-scrollbar max-w-full gap-1 relative"
+  >
+    {categories.map((cat) => (
+      <motion.button
+        key={cat.name}
+        onClick={() => handleFilter(cat)}
+        // flex-shrink-0 is the secret sauce here!
+        className={`relative z-10 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-colors duration-500 flex-shrink-0 ${
+          filter === cat.name ? 'text-white' : 'text-gray-400 hover:text-gray-900'
+        }`}
+      >
+        <span className="mr-2">{cat.icon}</span>
+        {cat.name}
+        
+        {filter === cat.name && (
+          <motion.div 
+            layoutId="liquid-bg"
+            className="absolute inset-0 -z-10 rounded-full"
+            style={{ backgroundColor: cat.color }}
+            transition={{ type: "spring", bounce: 0.4, duration: 0.6 }}
+          />
+        )}
+      </motion.button>
+    ))}
+  </motion.div>
+</div>
 
           {/* Responsive Bento Grid */}
           <motion.div layout className="grid grid-cols-1 md:grid-cols-4 auto-rows-[340px] md:auto-rows-[360px] gap-8 md:gap-10">
