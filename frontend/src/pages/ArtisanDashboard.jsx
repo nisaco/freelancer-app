@@ -5,9 +5,10 @@ import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
 
 const ArtisanDashboard = () => {
-  const [profile, setProfile] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Get the logged-in user data (which contains category, bio, etc.)
   const user = JSON.parse(localStorage.getItem('user'));
 
   const API_URL = window.location.hostname === 'localhost' 
@@ -15,74 +16,91 @@ const ArtisanDashboard = () => {
     : 'https://hireme-bk0l.onrender.com/api';
 
   useEffect(() => {
-    fetchData();
+    fetchBookings();
   }, []);
 
-  const fetchData = async () => {
+  const fetchBookings = async () => {
     try {
       const token = localStorage.getItem('token');
-      const profileRes = await axios.get(`${API_URL}/artisan/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setProfile(profileRes.data);
-
       const jobsRes = await axios.get(`${API_URL}/jobs/my-jobs`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      // Filter jobs where this user is the artisan
       setBookings(jobsRes.data.filter(job => job.artisan._id === user._id));
     } catch (err) {
-      toast.error("Dashboard failed to load");
+      toast.error("Could not load bookings");
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) return <div className="p-10 text-center font-bold">Loading...</div>;
+  if (loading) return <div className="p-10 text-center font-bold">Loading Portal...</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navbar />
       <div className="max-w-6xl mx-auto px-4 pt-10">
         
-        {/* VIEW A: NEW USER SKELETON (Show this if no profile exists) */}
-        {profile?.isNewArtisan ? (
+        {/* --- DYNAMIC VIEW LOGIC --- */}
+        {/* If category is missing from the User object, show the setup box */}
+        {!user.category ? (
           <div className="bg-white rounded-3xl p-10 border-2 border-dashed border-blue-200 text-center mb-10">
             <h2 className="text-2xl font-black text-gray-900 mb-2">Almost there, {user.username}!</h2>
-            <p className="text-gray-500 mb-6">You need to set up your professional profile before you can receive bookings.</p>
-            <Link to="/setup-profile" className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-blue-700 transition shadow-lg">
+            <p className="text-gray-500 mb-6">Complete your professional profile to appear in the marketplace.</p>
+            <Link to="/profile-setup" className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-blue-700 transition shadow-lg inline-block">
               Finish Profile Setup
             </Link>
           </div>
         ) : (
-          /* VIEW B: FULL ACTUAL DASHBOARD (Show this if profile is complete) */
+          /* --- FULL ACTUAL DASHBOARD --- */
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
             <div className="bg-blue-600 rounded-3xl p-8 text-white shadow-xl">
               <p className="text-blue-100 text-xs font-bold uppercase mb-1">Service</p>
-              <h2 className="text-2xl font-black mb-4">{profile.serviceCategory}</h2>
-              <p className="text-blue-100 text-xs font-bold uppercase mb-1">Rate</p>
-              <h2 className="text-2xl font-black">GHS {profile.startingPrice}</h2>
+              <h2 className="text-2xl font-black mb-4">{user.category}</h2>
+              <p className="text-blue-100 text-xs font-bold uppercase mb-1">Price</p>
+              <h2 className="text-2xl font-black">GHS {user.price || 0}</h2>
             </div>
-            {/* Add more stat cards here for the full dashboard */}
+            
+            <div className="lg:col-span-2 bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
+               <h3 className="font-bold text-gray-900 mb-2">Professional Bio</h3>
+               <p className="text-gray-500 text-sm">{user.bio || "No bio set."}</p>
+            </div>
           </div>
         )}
 
-        {/* SHARED HEADER (Verification Status) */}
+        {/* --- HEADER (Using your actual isVerified field) --- */}
         <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center mb-10">
           <div>
             <h1 className="text-3xl font-black text-gray-900">Portal</h1>
-            <p className="text-gray-500 font-medium">Status: {profile?.user?.isVerified ? "Verified ✅" : "Pending Approval ⏳"}</p>
-          </div>
-          <div className="mt-4 md:mt-0">
-             {profile?.user?.isVerified ? (
-               <span className="bg-blue-50 text-blue-700 px-4 py-2 rounded-full font-bold text-xs">🛡️ VERIFIED BUSINESS</span>
-             ) : (
-               <span className="bg-amber-50 text-amber-700 px-4 py-2 rounded-full font-bold text-xs uppercase">⏳ Verification Pending</span>
-             )}
+            <p className="text-gray-500 font-medium">
+              Status: {user.isVerified ? "Verified ✅" : "Pending Approval ⏳"}
+            </p>
           </div>
         </div>
 
-        {/* Bookings Section (Visible to both) */}
-        {/* ... bookings mapping code ... */}
+        {/* --- BOOKINGS --- */}
+        <div className="mt-10">
+          <h3 className="text-xl font-black text-gray-900 mb-6">Recent Job Requests</h3>
+          {bookings.length > 0 ? (
+            <div className="space-y-4">
+              {bookings.map(job => (
+                <div key={job._id} className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex justify-between items-center">
+                   <div>
+                     <p className="font-bold">{job.client.username}</p>
+                     <p className="text-sm text-gray-400">{new Date(job.date).toLocaleDateString()}</p>
+                   </div>
+                   <span className="px-4 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-bold uppercase">
+                     {job.status}
+                   </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-10 bg-white rounded-3xl border-2 border-dashed border-gray-100">
+               <p className="text-gray-400 italic">No job requests yet.</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
