@@ -10,6 +10,7 @@ import Navbar from './components/Navbar';
 import ProfileSetup from './pages/ProfileSetup';
 import ArtisanDashboard from './pages/ArtisanDashboard';
 import Home from './pages/Home'; // <--- IMPORT HOME
+import ProtectedRoute from './components/ProtectedRoute';
 import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
