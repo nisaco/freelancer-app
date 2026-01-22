@@ -17,35 +17,35 @@ const ArtisanDashboard = () => {
     fetchDashboardData();
   }, []);
 
-  const fetchDashboardData = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      
-      // 1. Fetch LATEST data from User model via the /me endpoint
-      const userRes = await axios.get(`${API_BASE}/artisan/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+// Inside ArtisanDashboard.jsx - update fetchDashboardData
+const fetchDashboardData = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const API_BASE = window.location.hostname === 'localhost' 
+      ? 'http://localhost:5000/api' 
+      : 'https://hireme-bk0l.onrender.com/api';
 
-      // 2. Set the state with fresh DB data (this hides the skeleton if category exists)
-      setCurrentUser(userRes.data);
+    // 1. Get live user data from DB
+    const userRes = await axios.get(`${API_BASE}/artisan/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-      // 3. Update localStorage so the rest of the app is also updated
-      localStorage.setItem('user', JSON.stringify(userRes.data));
+    // 2. Refresh local data
+    setCurrentUser(userRes.data);
+    localStorage.setItem('user', JSON.stringify(userRes.data));
 
-      // 4. Fetch Job History (Bookings)
-      const jobsRes = await axios.get(`${API_BASE}/jobs/my-jobs`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      // Filter to show jobs assigned to this specific artisan
-      setBookings(jobsRes.data.filter(job => job.artisan._id === userRes.data._id));
+    // 3. Fetch Bookings
+    const jobsRes = await axios.get(`${API_BASE}/jobs/my-jobs`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setBookings(jobsRes.data.filter(job => job.artisan._id === userRes.data._id));
 
-    } catch (err) {
-      console.error("Sync Error:", err);
-      toast.error("Failed to sync your profile data");
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   if (loading) return <div className="p-10 text-center font-bold">Syncing Portal...</div>;
 
