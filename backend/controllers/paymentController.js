@@ -4,7 +4,7 @@ const Job = require('../models/Job'); // Ensure you have this model!
 // --- 1. INITIALIZE PAYMENT ---
 exports.initializePayment = async (req, res) => {
     // 1. Get ALL the data from the frontend
-    const { artisanId, amount, date, description } = req.body;
+    const { artisanId, amount, date, description, category } = req.body;
     const email = req.user.email; // Taken from 'protect' middleware
 
     if (!process.env.PAYSTACK_SECRET_KEY) {
@@ -21,6 +21,7 @@ exports.initializePayment = async (req, res) => {
             amount: amount,
             date: date,
             description: description,
+            serviceType: category || 'General Service', // Fixes the validation error
             status: 'pending_payment'
         });
 

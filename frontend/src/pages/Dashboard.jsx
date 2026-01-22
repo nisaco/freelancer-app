@@ -27,7 +27,8 @@ const BookingModal = ({ artisan, onClose, themeColor }) => {
         artisanId: artisan._id,
         amount: artisan.price, 
         date: bookingData.date,
-        description: bookingData.description
+        description: bookingData.description,
+        category: artisan.category // ADD THIS LINE
       }, { headers: { Authorization: `Bearer ${token}` } });
       
       if (res.data.authorization_url) {
