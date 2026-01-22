@@ -1,23 +1,45 @@
 const axios = require('axios');
+const Job = require('../models/Job'); // Ensure you have this model!
 
 // --- 1. INITIALIZE PAYMENT ---
 exports.initializePayment = async (req, res) => {
-    const { email, amount } = req.body;
+    // 1. Get ALL the data from the frontend
+    const { artisanId, amount, date, description } = req.body;
+    const email = req.user.email; // Taken from 'protect' middleware
 
-    // Check if the secret key is loaded from Render env
     if (!process.env.PAYSTACK_SECRET_KEY) {
-        console.error("CRITICAL ERROR: PAYSTACK_SECRET_KEY is missing in environment variables!");
-        return res.status(500).json({ error: 'Internal Server Configuration Error' });
+        console.error("CRITICAL ERROR: PAYSTACK_SECRET_KEY is missing!");
+        return res.status(500).json({ error: 'Server Configuration Error' });
     }
 
-    const params = {
-        email: email,
-        amount: Math.round(amount * 100), // Convert GHS to Pesewas
-        currency: 'GHS',
-        callback_url: "https://hireme-bk0l.onrender.com/payment/callback"
-    };
-
     try {
+        // 2. CREATE A PENDING JOB IN YOUR DB FIRST
+        // This ensures the date/description are saved before redirecting to Paystack
+        const newJob = await Job.create({
+            client: req.user._id,
+            artisan: artisanId,
+            amount: amount,
+            date: date,
+            description: description,
+            status: 'pending_payment'
+        });
+
+        // 3. PREPARE PAYSTACK PARAMS
+        const params = {
+            email: email,
+            amount: Math.round(amount * 100), // GHS to Pesewas
+            currency: 'GHS',
+            callback_url: "https://hireme-bk0l.onrender.com/payment/callback",
+            // Use metadata to keep track of the Job ID during payment
+            metadata: {
+                jobId: newJob._id,
+                custom_fields: [
+                    { display_name: "Service Date", variable_name: "date", value: date },
+                    { display_name: "Description", variable_name: "desc", value: description }
+                ]
+            }
+        };
+
         const response = await axios.post(
             'https://api.paystack.co/transaction/initialize',
             params,
@@ -29,16 +51,11 @@ exports.initializePayment = async (req, res) => {
             }
         );
 
-        // Success: Send the Paystack authorization URL to the frontend
-        res.status(200).json(response.data);
+        // 4. Send the full data (including authorization_url) back to frontend
+        res.status(200).json(response.data.data);
     } catch (error) {
-        // This log is for you to see in Render Dashboard -> Logs
         console.error("PAYSTACK INITIALIZE ERROR:", error.response?.data || error.message);
-        
-        res.status(500).json({ 
-            error: 'Payment initialization failed',
-            details: error.response?.data?.message || error.message 
-        });
+        res.status(500).json({ error: 'Payment initialization failed' });
     }
 };
 
@@ -46,21 +63,22 @@ exports.initializePayment = async (req, res) => {
 exports.verifyPayment = async (req, res) => {
     const { reference } = req.query;
 
-    if (!reference) {
-        return res.status(400).json({ error: 'Transaction reference is required' });
-    }
-
     try {
         const response = await axios.get(
             `https://api.paystack.co/transaction/verify/${reference}`,
             {
-                headers: {
-                    Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY.trim()}`
-                }
+                headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY.trim()}` }
             }
         );
 
-        // This sends the full verification status back to your frontend
+        const data = response.data.data;
+
+        // 5. UPDATE JOB STATUS ON SUCCESS
+        if (data.status === 'success') {
+            const jobId = data.metadata.jobId;
+            await Job.findByIdAndUpdate(jobId, { status: 'paid' });
+        }
+
         res.status(200).json(response.data);
     } catch (error) {
         console.error("PAYSTACK VERIFY ERROR:", error.response?.data || error.message);

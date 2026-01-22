@@ -1,19 +1,22 @@
 const express = require('express');
 const router = express.Router();
-
-// 1. BE CAREFUL HERE: Ensure the path to your controller is 100% correct
 const paymentController = require('../controllers/paymentController');
+const { protect } = require('../middleware/authMiddleware'); // Added security
 
-// 2. Add a console log to see if the functions actually exist during startup
-console.log("Loading Payment Routes...");
-console.log("initializePayment function exists:", typeof paymentController.initializePayment === 'function');
-console.log("verifyPayment function exists:", typeof paymentController.verifyPayment === 'function');
+// Added detailed logging to help you debug during deployment
+console.log("--- Payment Routes Loading ---");
+if (!paymentController.initializePayment) {
+    console.error("CRITICAL: initializePayment is UNDEFINED in paymentController.js");
+}
+if (!paymentController.verifyPayment) {
+    console.error("CRITICAL: verifyPayment is UNDEFINED in paymentController.js");
+}
 
-// 3. Define the routes
-router.post('/pay', paymentController.initializePayment);
+// 1. MATCH THE FRONTEND: Changed '/pay' to '/initialize' 
+// 2. ADD PROTECT: So the backend knows WHO is paying
+router.post('/initialize', protect, paymentController.initializePayment);
 
-// This is line 10 - the one causing the crash. 
-// We must ensure verifyPayment is a real function.
+// 3. Callback for Paystack to redirect back to
 router.get('/callback', paymentController.verifyPayment); 
 
 module.exports = router;
