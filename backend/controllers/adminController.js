@@ -8,11 +8,11 @@ exports.getPendingArtisans = async (req, res) => {
       .select('username email category location ghanaCardNumber ghanaCardImage');
     res.json(pending);
   } catch (error) {
-    res.status(500).send('Server Error');
+    res.status(500).json({ message: 'Server Error' });
   }
 };
 
-// @desc    Verify or Reject an Artisan
+// @desc    Approve or Reject an Artisan
 // @route   PUT /api/admin/verify/:id
 exports.verifyArtisan = async (req, res) => {
   const { status } = req.body; // 'approve' or 'reject'
@@ -24,12 +24,12 @@ exports.verifyArtisan = async (req, res) => {
       user.isVerified = true;
       user.isPending = false;
     } else {
-      user.isPending = false; // Rejection clears pending but leaves verified false
+      user.isPending = false; 
     }
 
     await user.save();
     res.json({ message: `Artisan ${status}d successfully` });
   } catch (error) {
-    res.status(500).send('Server Error');
+    res.status(500).json({ message: 'Server Error' });
   }
 };

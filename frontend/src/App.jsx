@@ -10,6 +10,7 @@ import Navbar from './components/Navbar';
 import ProfileSetup from './pages/ProfileSetup';
 import ArtisanDashboard from './pages/ArtisanDashboard';
 import Home from './pages/Home'; // <--- IMPORT HOME
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route path="/profile-setup" element={<ProfileSetup />} />
         <Route path="/artisan-dashboard" element={<ArtisanDashboard />} />
         <Route path="/payment/callback" element={<PaymentCallback />} />
+        <Route path="/admin-dashboard" element={<ProtectedRoute role="admin"> <AdminDashboard /> </ProtectedRoute>} />
       </Routes>
     </Router>
   );

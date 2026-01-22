@@ -47,12 +47,14 @@ const Login = () => {
 
         // 2. --- FIXED REDIRECTION LOGIC ---
         // If the user is an artisan, send them STRAIGHT to the ArtisanDashboard
-        if (userData.role === 'artisan') {
-          navigate('/artisan-dashboard');
-        } else {
-          // Regular clients go to the marketplace dashboard
-          navigate('/dashboard');
-        }
+       // Inside the onSubmit function after successful login
+if (userData.role === 'admin') {
+    navigate('/admin-dashboard');
+} else if (userData.role === 'artisan') {
+    navigate('/artisan-dashboard');
+} else {
+    navigate('/dashboard');
+}
       }
     } catch (error) {
       console.error('Login Error:', error.response?.data || error.message);

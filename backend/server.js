@@ -35,7 +35,7 @@ app.use('/api/upload', require('./routes/uploadRoutes')); // Matches your file n
 app.use('/api/jobs', require('./routes/jobRoutes'));
 app.use('/api/payment', paymentRoutes);
 app.use('/api/reviews', require('./routes/reviewRoutes'));
-
+app.use('/api/admin', require('./routes/adminRoutes'));
 // =================================================================
 //  THE GLUE CODE (Production Mode)
 // =================================================================
