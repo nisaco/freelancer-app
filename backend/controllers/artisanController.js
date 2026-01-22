@@ -54,3 +54,29 @@ exports.getCurrentProfile = async (req, res) => {
     res.status(500).json({ message: 'Server Error' });
   }
 };
+
+// @desc    Update Artisan Profile (Excludes identity documents)
+// @route   PATCH /api/artisan/profile/edit
+exports.editProfile = async (req, res) => {
+  const { serviceCategory, bio, location, phoneNumber, startingPrice } = req.body;
+
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        $set: {
+          category: serviceCategory,
+          bio,
+          location,
+          phoneNumber,
+          price: startingPrice
+        }
+      },
+      { new: true }
+    ).select('-password');
+
+    res.json(updatedUser);
+  } catch (error) {
+    res.status(500).send('Server Error');
+  }
+};
