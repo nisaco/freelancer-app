@@ -7,8 +7,8 @@ const {
 } = require('../controllers/artisanController');
 const { protect } = require('../middleware/authMiddleware');
 
-// Fixed imports to prevent ReferenceError/TypeError
-router.get('/me', protect, getCurrentProfile);
+// Fixed imports to prevent TypeError
+router.get('/me', protect, getCurrentProfile); // Line 13
 router.post('/profile', protect, updateProfile);
 router.get('/', getArtisans);
 

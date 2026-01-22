@@ -5,18 +5,17 @@ const User = require('../models/User');
 exports.updateProfile = async (req, res) => {
   try {
     const { 
-      category, bio, location, price, ghanaCardNumber 
+      serviceCategory, bio, location, startingPrice, ghanaCardNumber 
     } = req.body;
 
-    // We update the User document directly
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
       {
         $set: {
-          category,
+          category: serviceCategory,
           bio,
           location,
-          price,
+          price: startingPrice,
           ghanaCardNumber,
           isPending: true // Mark as awaiting admin approval
         }
@@ -26,15 +25,30 @@ exports.updateProfile = async (req, res) => {
 
     res.json(updatedUser);
   } catch (error) {
-    console.error(error);
+    console.error("Update Profile Error:", error.message);
     res.status(500).json({ message: 'Server Error' });
   }
 };
 
-// @desc    Get current user (Source of truth for Dashboard)
+// @desc    Get all artisans for marketplace
+exports.getArtisans = async (req, res) => {
+  try {
+    const { category } = req.query;
+    let query = { role: 'artisan' };
+    if (category) query.category = category;
+
+    const artisans = await User.find(query).select('-password');
+    res.json(artisans);
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @desc    Get current logged-in user (Source of truth for Dashboard)
 exports.getCurrentProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
