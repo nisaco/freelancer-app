@@ -39,14 +39,51 @@ const ArtisanDashboard = () => {
   }, [API_BASE]);
 
   if (loading) return (
-    <div className="h-screen flex items-center justify-center bg-gray-50">
+  <div className="h-screen flex flex-col items-center justify-center bg-[#f8fafc]">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="flex flex-col items-center"
+    >
+      {/* The Text Animation */}
+      <motion.h1 
+        animate={{ 
+          scale: [1, 1.1, 1],
+          opacity: [0.5, 1, 0.5]
+        }}
+        transition={{ 
+          duration: 1.5, 
+          repeat: Infinity, 
+          ease: "easeInOut" 
+        }}
+        className="text-4xl font-black tracking-tighter text-gray-900"
+      >
+        HIRE<span className="text-blue-600">ME</span>
+        <motion.span
+          animate={{ opacity: [0, 1, 0] }}
+          transition={{ duration: 1, repeat: Infinity }}
+        >
+          ...
+        </motion.span>
+      </motion.h1>
+      
+      {/* Subtle Progress Bar Underneath */}
       <motion.div 
-        animate={{ rotate: 360 }} 
-        transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-        className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full"
-      />
-    </div>
-  );
+        className="w-24 h-1 bg-gray-100 mt-4 rounded-full overflow-hidden"
+      >
+        <motion.div 
+          animate={{ x: [-100, 100] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+          className="w-full h-full bg-blue-600"
+        />
+      </motion.div>
+      
+      <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mt-6">
+        Syncing your workspace
+      </p>
+    </motion.div>
+  </div>
+);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20 overflow-hidden">
