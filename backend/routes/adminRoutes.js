@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { getPendingArtisans, verifyArtisan } = require('../controllers/adminController');
+const { getAdminStats, verifyArtisan } = require('../controllers/adminController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
-// Only users with 'admin' role can access these
-router.get('/pending', protect, authorize('admin'), getPendingArtisans);
+// Get all stats and pending list
+router.get('/stats', protect, authorize('admin'), getAdminStats);
+// Verify/Reject route
 router.put('/verify/:id', protect, authorize('admin'), verifyArtisan);
 
 module.exports = router;
