@@ -19,6 +19,10 @@ const userSchema = new mongoose.Schema({
     enum: ['client', 'artisan', 'admin'], 
     default: 'client' 
   },
+  phone: { 
+    type: String, 
+    default: "" 
+  },
   profilePic: {
     type: String, 
     default: ""

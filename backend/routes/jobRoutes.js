@@ -1,19 +1,41 @@
-// backend/routes/jobRoutes.js
 const express = require('express');
 const router = express.Router();
 const Job = require('../models/Job');
 const { protect } = require('../middleware/authMiddleware');
 
-// Get jobs for the logged-in artisan
+// --- 1. FOR ARTISANS: GET JOBS ASSIGNED TO ME ---
 router.get('/artisan', protect, async (req, res) => {
   try {
     const jobs = await Job.find({ artisan: req.user._id })
-      .populate('client', 'username email') // Adds client name to the response
+      .populate('client', 'username email') 
       .sort({ createdAt: -1 });
     res.json(jobs);
   } catch (err) {
-    res.status(500).json({ message: "Error fetching jobs" });
+    res.status(500).json({ message: "Error fetching artisan jobs" });
   }
+});
+
+// --- 2. FOR CLIENTS: GET JOBS I HAVE BOOKED ---
+// GET jobs for the logged-in client
+router.get('/client', protect, async (req, res) => {
+  try {
+    const jobs = await Job.find({ client: req.user._id })
+      .populate('artisan', 'username category price phone') // <--- ADD 'phone' HERE
+      .sort({ createdAt: -1 });
+    res.json(jobs);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching your bookings" });
+  }
+});
+// --- 3. OPTIONAL: UPDATE JOB STATUS (Mark as Done) ---
+router.put('/:id/status', protect, async (req, res) => {
+    try {
+        const { status } = req.body;
+        const job = await Job.findByIdAndUpdate(req.params.id, { status }, { new: true });
+        res.json(job);
+    } catch (err) {
+        res.status(500).json({ message: "Update failed" });
+    }
 });
 
 module.exports = router;

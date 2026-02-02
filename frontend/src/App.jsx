@@ -32,6 +32,7 @@ const AnimatedRoutes = () => {
         <Route path="/admin-dashboard" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
         
         <Route path="/payment/callback" element={<PaymentCallback />} />
+        <Route path="/my-bookings" element={<MyBookings />} />
       </Routes>
     </AnimatePresence>
   );
