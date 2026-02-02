@@ -1,47 +1,48 @@
 const express = require('express');
 const router = express.Router();
-const { 
-  updateProfile, 
-  getArtisans, 
-  getCurrentProfile 
-} = require('../controllers/artisanController');
+const User = require('../models/User');
 const { protect } = require('../middleware/authMiddleware');
 
-// backend/routes/artisanRoutes.js
+// @desc    Update Artisan Profile
+// @route   PUT /api/artisan/update-profile
+// @access  Private (Artisan only)
 router.put('/update-profile', protect, async (req, res) => {
   try {
     const { phone, bio, price, location, profilePic } = req.body;
-    const user = await User.findById(req.user._id);
 
-    if (!user) return res.status(404).json({ message: "User not found" });
+    // 1. Ensure price is handled as a number to prevent Schema 'CastError'
+    const numericPrice = price === "" ? 0 : Number(price);
 
-    user.phone = phone || user.phone;
-    user.bio = bio || user.bio;
-    user.location = location || user.location;
-    user.profilePic = profilePic || user.profilePic;
+    // 2. Update only the allowed fields defined in your User.js
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      { 
+        $set: { 
+          phone: phone || "", 
+          bio: bio || "", 
+          location: location || "", 
+          profilePic: profilePic || "",
+          price: numericPrice
+        } 
+      },
+      { new: true, runValidators: true } // 'new' returns the updated doc
+    ).select("-password");
 
-    // FORCIBLY CONVERT TO NUMBER TO MATCH SCHEMA
-    if (price !== undefined && price !== "") {
-      user.price = Number(price); 
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    const updatedUser = await user.save();
-    
-    // Send back the user without the password
-    const userObject = updatedUser.toObject();
-    delete userObject.password;
-
-    res.json({ user: userObject });
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: updatedUser
+    });
   } catch (error) {
-    console.error("UPDATE ERROR:", error); // Check your Render/Terminal logs for this!
-    res.status(500).json({ message: "Server Error", error: error.message });
+    console.error("Profile Update Error:", error.message);
+    res.status(500).json({ 
+      message: "Database update failed", 
+      error: error.message 
+    });
   }
 });
-
-
-// Fixed imports to prevent TypeError
-router.get('/me', protect, getCurrentProfile); // Line 13
-router.post('/profile', protect, updateProfile);
-router.get('/', getArtisans);
 
 module.exports = router;
