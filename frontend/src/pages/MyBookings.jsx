@@ -76,7 +76,8 @@ const BookingTicket = ({ booking }) => {
     const message = encodeURIComponent(`Hello ${name}, I just booked your service on HireMe for ${booking.date}.`);
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
   };
-
+// Add this right above the return statement in BookingTicket
+console.log("Status:", booking.status, "Phone:", booking.artisan?.phone);
   return (
     <motion.div 
       layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
