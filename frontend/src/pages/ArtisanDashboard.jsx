@@ -41,21 +41,33 @@ const ArtisanDashboard = () => {
     fetchArtisanData();
   }, []);
 
-  const handleUpdateProfile = async (e) => {
-    e.preventDefault();
-    try {
-      const token = localStorage.getItem('token');
-      const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://hireme-bk0l.onrender.com/api';
-      
-      const res = await axios.put(`${API_BASE}/artisan/update-profile`, editData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      setUser(res.data.user);
-      toast.success("Profile fully synced!");
-    } catch (err) { toast.error("Update failed"); }
+ const handleUpdateProfile = async (e) => {
+  e.preventDefault();
+  
+  // Create a clean payload
+  const payload = {
+    ...editData,
+    price: editData.price === "" ? 0 : Number(editData.price) // Force number conversion
   };
+
+  try {
+    const token = localStorage.getItem('token');
+    const API_BASE = window.location.hostname === 'localhost' 
+      ? 'http://localhost:5000/api' 
+      : 'https://hireme-bk0l.onrender.com/api';
+      
+    const res = await axios.put(`${API_BASE}/artisan/update-profile`, payload, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    localStorage.setItem('user', JSON.stringify(res.data.user));
+    setUser(res.data.user);
+    toast.success("Profile fully synced!");
+  } catch (err) {
+    console.error(err);
+    toast.error(err.response?.data?.message || "Server Error: Check logs");
+  }
+};
 
   if (loading) return <div className="h-screen flex items-center justify-center font-black uppercase text-blue-600 animate-pulse tracking-widest">Updating Cockpit...</div>;
 
