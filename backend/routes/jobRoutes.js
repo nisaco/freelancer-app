@@ -35,6 +35,38 @@ router.put('/:id/finish', protect, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+//ARTISAN: PAYOUT REQUEST
+// backend/routes/jobRoutes.js
+router.put('/:id/finish', protect, async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id).populate('artisan');
+    
+    if (job.status !== 'paid') return res.status(400).json({ message: "Job must be paid first" });
+
+    // THE AUTOMATION LOGIC
+    const artisan = await User.findById(job.artisan._id);
+    const amountToMove = job.amount * 0.90;
+
+    if (artisan.isVerified) {
+      // Move from Pending to Withdrawable
+      artisan.pendingBalance -= amountToMove;
+      artisan.walletBalance += amountToMove;
+      job.status = 'completed';
+    } else {
+      // If not verified, job finishes but money stays in 'Pending' 
+      // until Admin verifies the account
+      job.status = 'completed';
+      return res.json({ message: "Job done, but funds held until account verification." });
+    }
+
+    await artisan.save();
+    await job.save();
+    res.json({ message: "Funds released to wallet!" });
+  } catch (err) {
+    res.status(500).json({ message: "Automation Error" });
+  }
+});
+
 // --- 2. FOR CLIENTS: GET JOBS I HAVE BOOKED ---
 // GET jobs for the logged-in client
 router.get('/client', protect, async (req, res) => {

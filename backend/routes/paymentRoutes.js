@@ -3,6 +3,14 @@ const router = express.Router();
 const paymentController = require('../controllers/paymentController');
 const { protect } = require('../middleware/authMiddleware'); // Added security
 
+// Inside your Paystack Verify Route
+const totalAmount = res.data.data.amount / 100;
+const artisanShare = totalAmount * 0.90; // 90% for them
+
+await User.findByIdAndUpdate(job.artisan, {
+  $inc: { pendingBalance: artisanShare }
+});
+
 // Added detailed logging to help you debug during deployment
 console.log("--- Payment Routes Loading ---");
 if (!paymentController.initializePayment) {
