@@ -15,6 +15,26 @@ router.get('/artisan', protect, async (req, res) => {
   }
 });
 
+// ARTISAN: Mark a job as finished
+router.put('/:id/finish', protect, async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+
+    if (!job) return res.status(404).json({ message: "Job not found" });
+
+    // Ensure only the assigned artisan can finish the job
+    if (job.artisan.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    job.status = 'completed';
+    await job.save();
+
+    res.json({ message: "Job marked as completed!", job });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
 // --- 2. FOR CLIENTS: GET JOBS I HAVE BOOKED ---
 // GET jobs for the logged-in client
 router.get('/client', protect, async (req, res) => {
