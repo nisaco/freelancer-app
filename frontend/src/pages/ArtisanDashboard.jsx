@@ -1,36 +1,32 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import Navbar from '../components/Navbar';
-import PageTransition from '../components/PageTransition'; // Import transition
-import { motion, AnimatePresence } from 'framer-motion'; // For deep animations
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
-import { Link } from 'react-router-dom';
+import Navbar from '../components/Navbar';
+import PageTransition from '../components/PageTransition';
 
 const ArtisanDashboard = () => {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [bookings, setBookings] = useState([]);
+  const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const API_BASE = window.location.hostname === 'localhost' 
-    ? 'http://localhost:5000/api' 
-    : 'https://hireme-bk0l.onrender.com/api';
+  const [stats, setStats] = useState({ earnings: 0, completed: 0 });
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchArtisanData = async () => {
       try {
         const token = localStorage.getItem('token');
-        const userRes = await axios.get(`${API_BASE}/artisan/me`, {
+        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://hireme-bk0l.onrender.com/api';
+        
+        // Fetch Jobs assigned to this artisan
+        const res = await axios.get(`${API_BASE}/jobs/artisan`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setCurrentUser(userRes.data);
-        localStorage.setItem('user', JSON.stringify(userRes.data));
-
-        const jobsRes = await axios.get(`${API_BASE}/jobs/my-jobs`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setBookings(jobsRes.data.filter(job => job.artisan._id === userRes.data._id));
+        setJobs(res.data);
+        
+        // Calculate simple stats
+        const total = res.data.filter(j => j.status === 'paid').reduce((acc, curr) => acc + curr.amount, 0);
+        setStats({ earnings: total, completed: res.data.filter(j => j.status === 'completed').length });
       } catch (err) {
-        toast.error("Dashboard failed to sync");
+        toast.error("Failed to sync dashboard");
       } finally {
         setLoading(false);
       }
@@ -85,121 +81,73 @@ const ArtisanDashboard = () => {
   </div>
 );
 
-  return (
-    <div className="min-h-screen bg-[#f8fafc] pb-20 overflow-hidden">
-      <Navbar />
-      
-      <PageTransition>
-        <div className="max-w-7xl mx-auto px-6 pt-12">
+ return (
+    <PageTransition>
+      <div className="min-h-screen bg-[#F8FAFC] pb-20">
+        <Navbar />
+        <div className="max-w-6xl mx-auto px-6 pt-12">
           
-          {/* --- TOP WELCOME HEADER --- */}
-          <header className="mb-12 flex flex-col md:flex-row justify-between items-end gap-6">
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-              <h1 className="text-5xl font-black text-gray-900 tracking-tighter uppercase leading-none">
-                Artisan <span className="text-blue-600">Portal</span>
-              </h1>
-              <p className="text-gray-400 font-bold mt-2 uppercase tracking-widest text-xs">
-                {currentUser?.isVerified ? "🛡️ Official Verified Business" : "⏳ Verification Pending"}
-              </p>
+          {/* Header Stats - Sophisticated Glass Design */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <motion.div whileHover={{ y: -5 }} className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-blue-100/50 border border-white">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Total Revenue</p>
+              <h2 className="text-4xl font-black text-gray-900">GHS {stats.earnings.toLocaleString()}</h2>
             </motion.div>
-            <div className="flex gap-3">
-               <Link to="/profile-setup" className="bg-white border border-gray-200 px-6 py-3 rounded-2xl font-black text-xs hover:bg-gray-50 transition shadow-sm">EDIT PROFILE</Link>
-            </div>
-          </header>
-
-          {!currentUser?.category ? (
-            /* --- HIGH-END SKELETON SETUP PROMPT --- */
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="bg-white rounded-[3rem] p-16 border border-blue-100 text-center shadow-2xl shadow-blue-100"
-            >
-              <h2 className="text-4xl font-black text-gray-900 mb-4 tracking-tight leading-none">Complete your business.</h2>
-              <p className="text-gray-500 mb-10 text-lg max-w-lg mx-auto leading-relaxed">Your professional profile is the key to winning clients. Set your rates and category now.</p>
-              <Link to="/profile-setup" className="bg-blue-600 text-white px-12 py-5 rounded-[2rem] font-black text-lg hover:bg-blue-700 transition-all hover:px-16 shadow-xl shadow-blue-200 inline-block">
-                Start Setup
-              </Link>
+            <motion.div whileHover={{ y: -5 }} className="bg-blue-600 p-8 rounded-[2.5rem] shadow-xl shadow-blue-200 text-white">
+              <p className="text-[10px] font-black opacity-60 uppercase tracking-widest mb-2">Active Jobs</p>
+              <h2 className="text-4xl font-black">{jobs.filter(j => j.status === 'paid').length}</h2>
             </motion.div>
-          ) : (
-            /* --- MAIN DASHBOARD GRID --- */
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-                {[
-                  { label: 'Profession', val: currentUser.category, color: 'bg-blue-600 text-white' },
-                  { label: 'Hourly Rate', val: `GHS ${currentUser.price}`, color: 'bg-white text-gray-900' },
-                  { label: 'Total Requests', val: bookings.length, color: 'bg-white text-gray-900' }
-                ].map((stat, i) => (
-                  <motion.div 
-                    key={i}
-                    whileHover={{ y: -8 }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    className={`${stat.color} p-10 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/50 flex flex-col justify-between h-48`}
-                  >
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">{stat.label}</p>
-                    <h3 className="text-4xl font-black tracking-tighter">{stat.val}</h3>
-                  </motion.div>
-                ))}
-              </div>
+            <motion.div whileHover={{ y: -5 }} className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-gray-100 border border-white">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Rating</p>
+              <h2 className="text-4xl font-black text-gray-900">5.0 <span className="text-sm text-yellow-400">★★★★★</span></h2>
+            </motion.div>
+          </div>
 
-              {/* --- BOOKINGS LIST --- */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                <div>
-                  <h3 className="text-2xl font-black mb-8 tracking-tighter uppercase italic">Recent Job Requests</h3>
-                  <div className="space-y-4">
-                    <AnimatePresence>
-                      {bookings.map((job, i) => (
-                        <motion.div
-                          key={job._id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: i * 0.1 }}
-                          whileHover={{ x: 10 }}
-                          className="bg-white p-6 rounded-[2rem] border border-gray-100 flex justify-between items-center shadow-sm group hover:border-blue-500 transition-all cursor-pointer"
-                        >
-                          <div className="flex items-center gap-5">
-                            <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-2xl font-black text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                              {job.client?.username.charAt(0)}
-                            </div>
-                            <div>
-                              <p className="font-black text-lg text-gray-900 leading-none mb-1">{job.client?.username}</p>
-                              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{new Date(job.date).toDateString()}</p>
-                            </div>
-                          </div>
-                          <div className="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter">
-                            {job.status}
-                          </div>
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
-                    {bookings.length === 0 && (
-                      <div className="p-10 border-2 border-dashed border-gray-200 rounded-[2rem] text-center text-gray-400 font-bold">
-                        No active jobs found
-                      </div>
-                    )}
-                  </div>
+          {/* Job Management Section */}
+          <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter mb-8 italic">Incoming Requests</h3>
+          <div className="space-y-6">
+            <AnimatePresence>
+              {jobs.length > 0 ? jobs.map((job) => (
+                <JobTicket key={job._id} job={job} />
+              )) : (
+                <div className="text-center py-20 bg-gray-50 rounded-[3rem] border-2 border-dashed border-gray-200">
+                  <p className="font-bold text-gray-400 uppercase text-xs tracking-widest">No active requests yet</p>
                 </div>
-
-                {/* --- BIO & PROFILE SIDEBAR --- */}
-                <motion.div 
-                  initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-                  className="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm self-start"
-                >
-                  <h4 className="text-xs font-black uppercase tracking-[0.3em] text-blue-600 mb-6">Business Profile</h4>
-                  <p className="text-xl text-gray-700 font-medium leading-relaxed italic">"{currentUser.bio}"</p>
-                  <div className="mt-8 pt-8 border-t border-gray-50 flex gap-4">
-                    <div className="px-4 py-2 bg-gray-100 rounded-xl text-[10px] font-black uppercase">{currentUser.location}</div>
-                    <div className="px-4 py-2 bg-gray-100 rounded-xl text-[10px] font-black uppercase">Active</div>
-                  </div>
-                </motion.div>
-              </div>
-            </>
-          )}
+              )}
+            </AnimatePresence>
+          </div>
         </div>
-      </PageTransition>
-    </div>
+      </div>
+    </PageTransition>
   );
 };
+
+const JobTicket = ({ job }) => (
+  <motion.div 
+    layout initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
+    className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6"
+  >
+    <div className="flex items-center gap-6 w-full md:w-auto">
+      <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 font-black text-xl">
+        {job.client?.username?.[0] || 'C'}
+      </div>
+      <div>
+        <h4 className="text-lg font-black text-gray-900 uppercase tracking-tight">{job.description}</h4>
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1 italic">
+          Client: {job.client?.username} • Date: {job.date}
+        </p>
+      </div>
+    </div>
+    <div className="flex items-center gap-8 w-full md:w-auto justify-between md:justify-end">
+      <div className="text-right">
+        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Payout</p>
+        <p className="text-xl font-black text-green-600">GHS {job.amount}</p>
+      </div>
+      <motion.button whileTap={{ scale: 0.9 }} className="bg-gray-900 text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest">
+        Complete
+      </motion.button>
+    </div>
+  </motion.div>
+);
 
 export default ArtisanDashboard;
