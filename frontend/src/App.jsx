@@ -12,7 +12,9 @@ import ProfileSetup from './pages/ProfileSetup';
 import ArtisanDashboard from './pages/ArtisanDashboard';
 import Home from './pages/Home';
 import AdminDashboard from './pages/AdminDashboard';
+import MyBookings from './pages/MyBookings';
 import ProtectedRoute from './components/ProtectedRoute';
+
 
 // <--- FIX 2: Location must be used INSIDE a sub-component or a wrapper
 const AnimatedRoutes = () => {
