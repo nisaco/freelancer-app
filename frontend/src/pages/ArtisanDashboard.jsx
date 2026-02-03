@@ -21,8 +21,9 @@ const ArtisanDashboard = () => {
     const fetchDashboard = async () => {
       try {
         const token = localStorage.getItem('token');
-        
-        // 1. FRESH USER FETCH (Updates Verification & Wallet status)
+        if (!token) return;
+
+        // 1. FRESH USER FETCH (Crucial for Wallet & Verification updates)
         const profileRes = await axios.get(`${API_BASE}/artisan/me`, { 
           headers: { Authorization: `Bearer ${token}` } 
         });
@@ -33,20 +34,23 @@ const ArtisanDashboard = () => {
         const res = await axios.get(`${API_BASE}/jobs/artisan`, { 
           headers: { Authorization: `Bearer ${token}` } 
         });
-        setJobs(res.data);
         
-        // Prepare Chart Data
-        const grouped = res.data.reduce((acc, job) => {
-          if (job.status === 'completed') {
+        // Safety check to ensure res.data is an array
+        const jobsList = Array.isArray(res.data) ? res.data : [];
+        setJobs(jobsList);
+        
+        // Prepare Chart Data safely
+        const grouped = jobsList.reduce((acc, job) => {
+          if (job.status === 'completed' || job.status === 'paid') {
             const date = new Date(job.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            acc[date] = (acc[date] || 0) + job.amount;
+            acc[date] = (acc[date] || 0) + (job.amount || 0);
           }
           return acc;
         }, {});
         setChartData(Object.keys(grouped).map(date => ({ date, amount: grouped[date] })));
       } catch (err) { 
-        console.error(err);
-        toast.error("Sync error"); 
+        console.error("DASHBOARD SYNC ERROR:", err);
+        toast.error("Dashboard sync failed"); 
       } finally { 
         setLoading(false); 
       }
@@ -59,6 +63,7 @@ const ArtisanDashboard = () => {
       const token = localStorage.getItem('token');
       const res = await axios.put(`${API_BASE}/jobs/${id}/finish`, {}, { headers: { Authorization: `Bearer ${token}` } });
       toast.success(res.data.message);
+      // Reload the page to reflect wallet balance changes
       window.location.reload(); 
     } catch (err) { toast.error("Failed to finish job"); }
   };
@@ -85,38 +90,37 @@ const ArtisanDashboard = () => {
             </motion.button>
           </div>
 
-          {/* --- WALLET SECTION (START) --- */}
+          {/* WALLET SECTION (With Safety Guards) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
             
-            {/* AVAILABLE BALANCE CARD */}
+            {/* AVAILABLE BALANCE */}
             <div className="bg-gray-900 p-10 rounded-[3rem] text-white shadow-2xl relative overflow-hidden">
               <p className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-2">Available Balance</p>
-              <h2 className="text-5xl font-black tracking-tighter mb-8">GHS {user.walletBalance?.toFixed(2) || "0.00"}</h2>
+              <h2 className="text-5xl font-black tracking-tighter mb-8">GHS {(user?.walletBalance || 0).toFixed(2)}</h2>
               
-              {user.isVerified ? (
+              {user?.isVerified ? (
                 <button className="w-full py-5 bg-blue-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-white hover:text-black transition-all shadow-xl">
                    Request Withdrawal
                 </button>
               ) : (
                 <div className="bg-white/10 p-5 rounded-2xl flex items-center gap-4 border border-white/5">
                   <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse shrink-0" />
-                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-yellow-500 leading-tight">Verification Required: Your ID must be approved to enable withdrawals.</p>
+                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-yellow-500 leading-tight">Verification Required to enable withdrawals.</p>
                 </div>
               )}
             </div>
 
-            {/* PENDING / ESCROW CARD */}
+            {/* PENDING / ESCROW */}
             <div className="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm flex flex-col justify-center">
               <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2">Escrow (In-Progress)</p>
-              <h2 className="text-5xl font-black text-gray-900 tracking-tighter">GHS {user.pendingBalance?.toFixed(2) || "0.00"}</h2>
-              <p className="text-[9px] text-gray-400 mt-5 italic leading-relaxed">Funds are moved from Escrow to your Available Balance automatically when you mark a paid job as finished.</p>
+              <h2 className="text-5xl font-black text-gray-900 tracking-tighter">GHS {(user?.pendingBalance || 0).toFixed(2)}</h2>
+              <p className="text-[9px] text-gray-400 mt-5 italic leading-relaxed text-center">Funds released automatically upon completion.</p>
             </div>
           </div>
-          {/* --- WALLET SECTION (END) --- */}
 
           {/* REVENUE CHART */}
           <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-white mb-12">
-            <h3 className="text-xl font-black text-gray-900 uppercase italic mb-6 tracking-tight">Financial Performance</h3>
+            <h3 className="text-xl font-black text-gray-900 uppercase italic mb-6 tracking-tight">Earnings Analytics</h3>
             <div className="h-[200px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
@@ -127,7 +131,7 @@ const ArtisanDashboard = () => {
             </div>
           </div>
 
-          {/* JOB CARDS */}
+          {/* JOBS LIST */}
           <h3 className="text-xl font-black text-gray-900 uppercase italic mb-8">Service Requests</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {jobs.length > 0 ? jobs.map(job => (
@@ -155,8 +159,8 @@ const ArtisanDashboard = () => {
                 </div>
               </div>
             )) : (
-              <div className="col-span-full py-20 text-center bg-gray-50 rounded-[3rem] border-2 border-dashed border-gray-200">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">No active jobs found.</p>
+              <div className="col-span-full py-20 text-center bg-gray-50 rounded-[3rem] border-2 border-dashed border-gray-100">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">No service requests yet.</p>
               </div>
             )}
           </div>
@@ -173,18 +177,24 @@ const ArtisanDashboard = () => {
 // --- SETTINGS DRAWER ---
 const SettingsDrawer = ({ user, setUser, onClose, API_BASE }) => {
   const [editData, setEditData] = useState({ 
-    phone: user.phone || '', bio: user.bio || '', price: user.price || 0, 
-    location: user.location || '', momoNumber: user.momoNumber || '', momoNetwork: user.momoNetwork || '' 
+    phone: user?.phone || '', 
+    bio: user?.bio || '', 
+    price: user?.price || 0, 
+    location: user?.location || '', 
+    momoNumber: user?.momoNumber || '', 
+    momoNetwork: user?.momoNetwork || '' 
   });
 
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.put(`${API_BASE}/artisan/update-profile`, editData, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.put(`${API_BASE}/artisan/update-profile`, editData, { 
+        headers: { Authorization: `Bearer ${token}` } 
+      });
       localStorage.setItem('user', JSON.stringify(res.data.user));
       setUser(res.data.user);
-      toast.success("Profile Updated");
+      toast.success("Identity Updated");
       onClose();
     } catch (err) { toast.error("Update failed"); }
   };
@@ -199,11 +209,11 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE }) => {
         </div>
         <form onSubmit={handleUpdate} className="flex-1 space-y-6 overflow-y-auto no-scrollbar pb-10">
           <div className="space-y-1">
-            <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest">Withdrawal Number (MoMo)</label>
-            <input type="text" placeholder="055..." value={editData.momoNumber} className="w-full p-4 bg-gray-50 rounded-2xl outline-none font-bold text-gray-700 focus:ring-2 focus:ring-blue-100" onChange={(e) => setEditData({...editData, momoNumber: e.target.value})} />
+            <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest">Withdrawal MoMo Number</label>
+            <input type="text" value={editData.momoNumber} className="w-full p-4 bg-gray-50 rounded-2xl outline-none font-bold text-gray-700" onChange={(e) => setEditData({...editData, momoNumber: e.target.value})} />
           </div>
           <div className="space-y-1">
-            <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest">MoMo Network</label>
+            <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest">Network</label>
             <select value={editData.momoNetwork} className="w-full p-4 bg-gray-50 rounded-2xl outline-none font-bold text-gray-700" onChange={(e) => setEditData({...editData, momoNetwork: e.target.value})}>
               <option value="">Select Network</option>
               <option value="MTN">MTN</option>
@@ -212,10 +222,10 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE }) => {
             </select>
           </div>
           <div className="space-y-1">
-            <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest">Professional Bio</label>
-            <textarea value={editData.bio} className="w-full p-4 bg-gray-50 rounded-2xl outline-none font-medium text-gray-700 h-32 focus:ring-2 focus:ring-blue-100" onChange={(e) => setEditData({...editData, bio: e.target.value})} />
+            <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest">Bio</label>
+            <textarea value={editData.bio} className="w-full p-4 bg-gray-50 rounded-2xl outline-none font-medium text-gray-700 h-32" onChange={(e) => setEditData({...editData, bio: e.target.value})} />
           </div>
-          <button type="submit" className="w-full bg-blue-600 text-white py-6 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-black transition-all">Save Changes</button>
+          <button type="submit" className="w-full bg-blue-600 text-white py-6 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl">Save & Sync</button>
         </form>
       </motion.div>
     </>
