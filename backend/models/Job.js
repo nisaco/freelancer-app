@@ -11,7 +11,7 @@ const jobSchema = new mongoose.Schema({
   // 2. FIX THE ENUM (Make sure 'pending_payment' is allowed)
   status: { 
     type: String, 
-    enum: ['pending_payment', 'paid', 'completed', 'cancelled', 'pending'], 
+    enum: ['pending_payment', 'awaiting_confirmation', 'paid', 'completed', 'cancelled', 'pending'], 
     default: 'pending_payment' 
   }
 }, { timestamps: true });
