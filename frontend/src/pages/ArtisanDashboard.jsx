@@ -25,24 +25,19 @@ const ArtisanDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       
-      // FETCH FRESH DATA: Both jobs and the updated user profile
-      const [jobRes, userRes] = await Promise.all([
-        axios.get(`${API_BASE}/jobs/my-jobs`, { 
-          headers: { Authorization: `Bearer ${token}` } 
-        }),
-        // Assuming your auth route provides the fresh user profile
-        axios.get(`${API_BASE}/auth/profile`, { 
-          headers: { Authorization: `Bearer ${token}` } 
-        })
-      ]);
+      // STABLE CALL: Only calling the route we KNOW exists
+      const res = await axios.get(`${API_BASE}/jobs/my-jobs`, { 
+        headers: { Authorization: `Bearer ${token}` } 
+      });
       
-      const artisanJobs = jobRes.data;
+      const artisanJobs = res.data;
       setJobs(artisanJobs);
 
-      // SYNC WALLET: Update state and localStorage with fresh database values
-      if (userRes.data) {
-        setUser(userRes.data);
-        localStorage.setItem('user', JSON.stringify(userRes.data));
+      // SYNC WALLET: If the jobs return populated artisan data, use it to update balance
+      if (artisanJobs.length > 0 && artisanJobs[0].artisan) {
+        const freshUser = { ...user, ...artisanJobs[0].artisan };
+        setUser(freshUser);
+        localStorage.setItem('user', JSON.stringify(freshUser));
       }
 
       const grouped = artisanJobs.reduce((acc, job) => {
