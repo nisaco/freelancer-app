@@ -24,6 +24,7 @@ const ArtisanDashboard = () => {
   const fetchArtisanData = async () => {
     try {
       const token = localStorage.getItem('token');
+      // Calling the universal my-jobs route we established
       const res = await axios.get(`${API_BASE}/jobs/my-jobs`, { 
         headers: { Authorization: `Bearer ${token}` } 
       });
@@ -31,7 +32,6 @@ const ArtisanDashboard = () => {
       const artisanJobs = res.data;
       setJobs(artisanJobs);
 
-      // Group revenue for chart
       const grouped = artisanJobs.reduce((acc, job) => {
         if (job.status === 'completed') {
           const date = new Date(job.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -49,18 +49,18 @@ const ArtisanDashboard = () => {
   };
 
   const handleFinishJob = async (jobId) => {
-  try {
-    const token = localStorage.getItem('token');
-    // We send 'awaiting_confirmation' to the backend
-    await axios.put(`${API_BASE}/jobs/${jobId}`, { status: 'awaiting_confirmation' }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    toast.success("Job marked finished! Awaiting client approval.");
-    fetchArtisanData(); // Refresh to see the pulse effect
-  } catch (err) {
-    toast.error("Failed to update status");
-  }
-};
+    try {
+      const token = localStorage.getItem('token');
+      // Sends 'awaiting_confirmation' to the unified job update route
+      await axios.put(`${API_BASE}/jobs/${jobId}`, { status: 'awaiting_confirmation' }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Job marked finished! Awaiting client approval.");
+      fetchArtisanData(); 
+    } catch (err) {
+      toast.error("Failed to update status");
+    }
+  };
 
   if (loading) return (
     <div className="h-screen flex items-center justify-center bg-white font-black uppercase text-blue-600 tracking-widest animate-pulse">
@@ -75,7 +75,6 @@ const ArtisanDashboard = () => {
         
         <div className="max-w-6xl mx-auto px-6 pt-12 relative z-10">
           
-          {/* HEADER */}
           <div className="flex justify-between items-end mb-12">
             <div>
               <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter uppercase">Artisan Cockpit</h1>
@@ -94,13 +93,11 @@ const ArtisanDashboard = () => {
             </motion.button>
           </div>
 
-          {/* FINANCIAL HUB */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             <div className="bg-gray-900 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden">
               <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-2">Available Balance</p>
               <h3 className="text-4xl font-black tracking-tighter">GHS {user.walletBalance || 0}</h3>
               <button className="mt-4 text-[9px] font-black uppercase bg-blue-600 px-4 py-2 rounded-xl hover:bg-white hover:text-black transition-all">Withdraw</button>
-              <div className="absolute -right-4 -bottom-4 opacity-10 w-24 h-24 bg-white rounded-full"></div>
             </div>
 
             <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-xl">
@@ -114,35 +111,10 @@ const ArtisanDashboard = () => {
               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Reputation</p>
               <div className="flex items-center gap-2">
                  <span className="text-3xl font-black text-gray-900">{user.rating || "5.0"}</span>
-                 <div className="flex text-yellow-400">
-                   {[...Array(5)].map((_, i) => (
-                     <svg key={i} className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                   ))}
-                 </div>
               </div>
             </div>
           </div>
 
-          {/* REVENUE CHART */}
-          <div className="bg-white p-10 rounded-[3.5rem] shadow-sm border border-gray-50 mb-12">
-              <h3 className="text-xl font-black text-gray-900 uppercase italic mb-8">Performance Analytics</h3>
-              <div className="h-[200px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
-                    <Tooltip contentStyle={{borderRadius: '20px', border:'none', boxShadow:'0 10px 30px rgba(0,0,0,0.05)'}} />
-                    <Area type="monotone" dataKey="amount" stroke="#2563eb" fill="url(#colorAmt)" strokeWidth={4} />
-                    <defs>
-                      <linearGradient id="colorAmt" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
-                        <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-          </div>
-
-          {/* ENGAGEMENTS */}
           <h3 className="text-xl font-black text-gray-900 uppercase italic mb-8">Live Engagements</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <AnimatePresence>
@@ -173,9 +145,6 @@ const ArtisanDashboard = () => {
                         Mark Finished
                       </button>
                     )}
-                    {job.status === 'awaiting_confirmation' && (
-                      <span className="text-[9px] font-black text-blue-600 animate-pulse italic">Awaiting Client Confirmation...</span>
-                    )}
                   </div>
                 </motion.div>
               )) : (
@@ -187,7 +156,6 @@ const ArtisanDashboard = () => {
           </div>
         </div>
 
-        {/* SETTINGS DRAWER */}
         <AnimatePresence>
           {isSettingsOpen && (
             <SettingsDrawer user={user} setUser={setUser} onClose={() => setIsSettingsOpen(false)} API_BASE={API_BASE} />
@@ -198,6 +166,7 @@ const ArtisanDashboard = () => {
   );
 };
 
+// --- SETTINGS DRAWER (UPDATED) ---
 const SettingsDrawer = ({ user, setUser, onClose, API_BASE }) => {
   const [editData, setEditData] = useState({
     phone: user.phone || '',
@@ -210,15 +179,22 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE }) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.put(`${API_BASE}/users/profile-setup`, editData, {
+      // FIXED ENDPOINT: Using the unified job update route with the User's ID
+      const res = await axios.put(`${API_BASE}/jobs/${user._id}`, editData, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      const updated = { ...user, ...editData };
-      localStorage.setItem('user', JSON.stringify(updated));
-      setUser(updated);
-      toast.success("Profile Synchronized");
+      
+      // Update local memory
+      const updatedUser = { ...user, ...editData };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      
+      toast.success("Identity Synchronized");
       onClose();
-    } catch (err) { toast.error("Update failed"); }
+    } catch (err) { 
+      console.error(err);
+      toast.error("Update failed: Check your connection"); 
+    }
   };
 
   return (

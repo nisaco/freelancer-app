@@ -104,26 +104,25 @@ const Dashboard = () => {
   ];
 
   useEffect(() => {
-    fetchMarketplace();
-    fetchMyJobs();
+    fetchData();
   }, []);
 
-  const fetchMarketplace = async () => {
-    try {
-      const res = await axios.get(`${API_BASE}/jobs/available`);
-      setArtisans(res.data);
-    } catch (err) { toast.error("Marketplace sync failed"); }
-    finally { setLoading(false); }
-  };
-
-  const fetchMyJobs = async () => {
+  const fetchData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_BASE}/jobs/my-jobs`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setMyJobs(res.data);
-    } catch (err) { console.error("Job fetch error"); }
+      // We call BOTH routes to ensure no 404s
+      const [artRes, jobRes] = await Promise.all([
+        axios.get(`${API_BASE}/jobs/available`),
+        axios.get(`${API_BASE}/jobs/client`, { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+      setArtisans(artRes.data);
+      setMyJobs(jobRes.data);
+    } catch (err) { 
+      console.error(err);
+      toast.error("Error loading dashboard data"); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const handleConfirmCompletion = async (jobId) => {
@@ -134,29 +133,29 @@ const Dashboard = () => {
       await axios.put(`${API_BASE}/jobs/${jobId}`, { status: 'completed', rating: Number(rating) }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success("Funds Released! Thank you.");
-      fetchMyJobs();
+      toast.success("Funds Released!");
+      fetchData(); // Refresh everything
     } catch (err) { toast.error("Release failed."); }
   };
 
   const filteredArtisans = artisans.filter(a => {
     const term = search.toLowerCase();
-    const matchesSearch = a.username.toLowerCase().includes(term) || a.category.toLowerCase().includes(term);
+    const matchesSearch = a.username.toLowerCase().includes(term) || (a.category && a.category.toLowerCase().includes(term));
     const matchesCategory = filter === "All" || a.category === filter;
     return matchesSearch && matchesCategory;
   });
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-[#FAFBFF] pb-24">
+      <div className="min-h-screen bg-[#FAFBFF] pb-24 font-sans">
         <Navbar />
         <div className="fixed top-0 left-0 w-full h-[500px] pointer-events-none z-0" style={{ background: `radial-gradient(circle at 50% -5%, ${activeTheme.glow} 0%, transparent 80%)` }} />
         <div className="max-w-7xl mx-auto px-4 md:px-6 pt-8 md:pt-16 relative z-10">
           
           <div className="flex justify-center mb-10">
             <div className="bg-white p-1 rounded-2xl shadow-lg flex gap-1">
-              {["Marketplace", "My Jobs"].map(v => (
-                <button key={v} onClick={() => setView(v)} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === v ? 'bg-black text-white shadow-lg' : 'text-gray-400 hover:text-black'}`}>
+              {["Marketplace", "My Bookings"].map(v => (
+                <button key={v} onClick={() => setView(v === "Marketplace" ? "Marketplace" : "My Jobs")} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === (v === "Marketplace" ? "Marketplace" : "My Jobs") ? 'bg-black text-white shadow-lg' : 'text-gray-400 hover:text-black'}`}>
                   {v}
                 </button>
               ))}
@@ -169,11 +168,12 @@ const Dashboard = () => {
                 <div className="max-w-2xl mx-auto mb-12">
                   <div className="bg-white rounded-[2rem] shadow-xl p-2 flex items-center border border-gray-100">
                     <div className="pl-5 text-gray-400"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></div>
-                    <input type="text" placeholder="Search for help..." className="w-full px-4 py-4 outline-none font-bold text-gray-700 bg-transparent" onChange={(e) => setSearch(e.target.value)} />
+                    <input type="text" placeholder="Search for professionals..." className="w-full px-4 py-4 outline-none font-bold text-gray-700 bg-transparent" onChange={(e) => setSearch(e.target.value)} />
                   </div>
                 </div>
+                {/* CATEGORIES */}
                 <div className="flex justify-start md:justify-center mb-16 overflow-x-auto no-scrollbar">
-                  <div className="bg-white/80 p-2 rounded-full border border-white flex gap-1 shadow-2xl shadow-gray-200">
+                  <div className="bg-white/80 p-2 rounded-full border border-white flex gap-1 shadow-2xl">
                     {categories.map((cat) => (
                       <button key={cat.name} onClick={() => { setFilter(cat.name); setActiveTheme({ name: cat.name, color: cat.color, glow: `${cat.color}22` }); }}
                         className={`relative z-10 px-8 py-4 rounded-full text-[10px] font-black uppercase tracking-widest flex-shrink-0 transition-all ${filter === cat.name ? 'text-white' : 'text-gray-400'}`}>
@@ -183,6 +183,7 @@ const Dashboard = () => {
                     ))}
                   </div>
                 </div>
+                {/* BENTO GRID */}
                 <motion.div layout className="grid grid-cols-1 md:grid-cols-4 gap-8">
                   {filteredArtisans.map((artisan, i) => (
                     <ArtisanCard key={artisan._id} artisan={artisan} index={i} themeColor={activeTheme.color} onClick={() => setSelectedArtisan(artisan)} />
@@ -191,7 +192,7 @@ const Dashboard = () => {
               </motion.div>
             ) : (
               <motion.div key="jobs" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-4xl mx-auto space-y-6">
-                <h2 className="text-3xl font-black tracking-tighter uppercase mb-10 italic text-gray-900">Live Engagements</h2>
+                <h2 className="text-3xl font-black tracking-tighter uppercase mb-10 italic text-gray-900">Active Bookings</h2>
                 {myJobs.length > 0 ? myJobs.map(job => (
                   <div key={job._id} className="bg-white p-8 rounded-[2.5rem] border border-gray-50 shadow-sm flex flex-col md:flex-row justify-between items-center group hover:shadow-xl transition-all">
                     <div className="flex items-center gap-6">
@@ -199,7 +200,7 @@ const Dashboard = () => {
                         <img src={job.artisan?.profilePic || `https://ui-avatars.com/api/?name=${job.artisan?.username}`} className="w-full h-full object-cover" />
                       </div>
                       <div>
-                        <h4 className="font-black text-gray-900 uppercase tracking-tight">{job.artisan?.username}</h4>
+                        <h4 className="font-black text-gray-900 uppercase tracking-tight">{job.artisan?.username || 'Guest Pro'}</h4>
                         <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">📞 {job.artisan?.phone || 'No Phone'}</p>
                       </div>
                     </div>
@@ -219,7 +220,7 @@ const Dashboard = () => {
                   </div>
                 )) : (
                   <div className="text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-gray-100">
-                    <p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.3em]">No active engagements found</p>
+                    <p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.3em]">No bookings found</p>
                   </div>
                 )}
               </motion.div>
