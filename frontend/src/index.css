@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Hide scrollbars */
+/* 1. UTILITY CLASSES (Keep your scrollbar fixes here) */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -11,34 +11,72 @@
   scrollbar-width: none;
 }
 
-/* Global Transition */
+/* Global Transition: Makes the theme flip feel like liquid */
 * {
   @apply transition-colors duration-500;
 }
 
+/* 2. THE LIVING BACKGROUND LOGIC */
 @layer base {
   body {
-    @apply bg-[#FAFBFF] text-gray-900 transition-colors duration-500;
+    /* Base styles that change with the theme */
+    @apply bg-[#FAFBFF] dark:bg-[#0B0F1A] text-gray-900 dark:text-gray-100 transition-colors duration-700 ease-in-out;
+    margin: 0;
+    padding: 0;
   }
 
-  /* When the 'dark' class is present on <html> */
-  .dark body {
-    @apply bg-[#0F172A] text-gray-100;
-  }
-  
-  /* Classy Card Logic: No @apply recursion */
-  .bg-white {
-    transition: background-color 0.5s transition, border-color 0.5s;
+  .living-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
   }
 
+  /* The Animated Orbs */
+  .orb {
+    position: absolute;
+    filter: blur(100px);
+    border-radius: 50%;
+    opacity: 0.3; /* Subtle sophistication */
+    animation: move 25s infinite alternate ease-in-out;
+  }
+
+  .orb-1 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, #3B82F6, transparent);
+    top: -10%; left: -5%;
+  }
+
+  .orb-2 {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, #F59E0B, transparent);
+    bottom: -15%; right: -5%;
+    animation-delay: -7s;
+  }
+
+  @keyframes move {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(150px, 50px) scale(1.1); }
+  }
+
+  /* 3. CLASSY COMPONENT OVERRIDES (The recursion fix) */
   .dark .bg-white {
-    background-color: #1E293B !important; /* Classy Slate */
+    background-color: rgba(22, 28, 44, 0.7) !important; /* Translucent glass card */
+    backdrop-filter: blur(20px);
     color: #ffffff !important;
   }
 
-  /* Classy Border Logic */
   .dark .border-gray-100, 
   .dark .border-gray-50 {
-    border-color: #334155 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  /* Ensures headings stay sharp in dark mode */
+  .dark .text-gray-900 {
+    @apply text-white;
   }
 }

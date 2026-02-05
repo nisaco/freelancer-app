@@ -10,7 +10,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ProfileSetup from './pages/ProfileSetup';
 import ArtisanDashboard from './pages/ArtisanDashboard';
-import Home from './pages/Home';
+import Welcome from './pages/Welcome'; // Import the new name
 import AdminDashboard from './pages/AdminDashboard';
 import MyBookings from './pages/MyBookings';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -23,7 +23,7 @@ const AnimatedRoutes = () => {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Home />} /> 
+        <Route path="/" element={<Welcome />} /> 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         
