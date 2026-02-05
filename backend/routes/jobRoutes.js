@@ -86,22 +86,31 @@ router.put('/:id/finish', protect, async (req, res) => {
 // This route is called by ArtisanDashboard.jsx when status changes to 'awaiting_confirmation'
 
 router.put('/:id', protect, async (req, res) => {
-    try {
-        const { status } = req.body;
-        
-        // This handles the status flow (paid -> awaiting_confirmation -> completed)
-        const job = await Job.findByIdAndUpdate(
-            req.params.id, 
-            { status }, 
-            { new: true }
-        );
-        
-        if (!job) return res.status(404).json({ message: "Job not found" });
-        
-        res.json(job);
-    } catch (err) {
-        res.status(500).json({ message: "Update failed" });
+  try {
+    const { status, rating } = req.body;
+    const job = await Job.findById(req.params.id).populate('artisan');
+
+    // If client is confirming completion, move the money!
+    if (status === 'completed' && job.status === 'awaiting_confirmation') {
+      const artisan = await User.findById(job.artisan._id);
+      const amountToMove = job.amount * 0.90;
+
+      artisan.walletBalance = (artisan.walletBalance || 0) + amountToMove;
+      // Optional: Add rating logic here
+      
+      await artisan.save();
+      job.status = 'completed';
+      await job.save();
+      return res.json({ message: "Funds released!", job });
     }
+
+    // Generic status update (for other transitions)
+    job.status = status || job.status;
+    await job.save();
+    res.json(job);
+  } catch (err) {
+    res.status(500).json({ message: "Update failed" });
+  }
 });
 
 module.exports = router;
