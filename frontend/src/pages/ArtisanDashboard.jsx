@@ -24,8 +24,6 @@ const ArtisanDashboard = () => {
   const fetchArtisanData = async () => {
     try {
       const token = localStorage.getItem('token');
-      
-      // STABLE CALL: Only calling the route we KNOW exists
       const res = await axios.get(`${API_BASE}/jobs/my-jobs`, { 
         headers: { Authorization: `Bearer ${token}` } 
       });
@@ -33,7 +31,6 @@ const ArtisanDashboard = () => {
       const artisanJobs = res.data;
       setJobs(artisanJobs);
 
-      // SYNC WALLET: If the jobs return populated artisan data, use it to update balance
       if (artisanJobs.length > 0 && artisanJobs[0].artisan) {
         const freshUser = { ...user, ...artisanJobs[0].artisan };
         setUser(freshUser);
@@ -70,93 +67,106 @@ const ArtisanDashboard = () => {
   };
 
   if (loading) return (
-    <div className="h-screen flex items-center justify-center bg-white font-black uppercase text-blue-600 tracking-widest animate-pulse">
+    <div className="h-screen flex items-center justify-center bg-white dark:bg-[#0B0F1A] font-black uppercase text-blue-600 tracking-widest animate-pulse">
       Securing Cockpit Access...
     </div>
   );
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans">
+      <div className="relative min-h-screen flex flex-col transition-colors duration-700">
         <Navbar />
         
-        <div className="max-w-6xl mx-auto px-6 pt-12 relative z-10">
+        {/* LIVING BACKGROUND */}
+        <div className="living-bg">
+          <div className="orb orb-1" />
+          <div className="orb orb-2" />
+        </div>
+
+        <div className="max-w-7xl mx-auto px-6 pt-12 md:pt-20 relative z-10 w-full">
           
-          <div className="flex justify-between items-end mb-12">
+          <div className="flex justify-between items-end mb-16">
             <div>
-              <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter uppercase">Artisan Cockpit</h1>
-              <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.4em] mt-3 italic">Business Intelligence</p>
+              <h1 className="text-4xl md:text-6xl font-black text-gray-900 dark:text-white tracking-tighter uppercase italic">Artisan <span className="text-blue-600">Cockpit</span></h1>
+              <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.4em] mt-3 italic">Business Intelligence v2.0</p>
             </div>
             
             <motion.button 
               whileHover={{ rotate: 90, scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => setIsSettingsOpen(true)}
-              className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-xl border border-gray-50 text-gray-400 hover:text-blue-600 transition-all"
+              className="w-16 h-16 bg-white/40 dark:bg-white/5 backdrop-blur-xl rounded-[1.5rem] flex items-center justify-center shadow-2xl border border-white/40 dark:border-white/10 text-gray-400 hover:text-blue-600 transition-all"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               </svg>
             </motion.button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <div className="bg-gray-900 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden">
-              <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-2">Available Balance</p>
-              <h3 className="text-4xl font-black tracking-tighter">GHS {user.walletBalance || 0}</h3>
-              <button className="mt-4 text-[9px] font-black uppercase bg-blue-600 px-4 py-2 rounded-xl hover:bg-white hover:text-black transition-all">Withdraw</button>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+              className="bg-gray-900 dark:bg-blue-600 p-10 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group">
+              <p className="text-[10px] font-black text-blue-400 dark:text-blue-200 uppercase tracking-widest mb-2">Available Balance</p>
+              <h3 className="text-5xl font-black tracking-tighter italic">GHS {user.walletBalance || 0}</h3>
+              <button className="mt-6 text-[10px] font-black uppercase bg-white text-black px-6 py-3 rounded-2xl hover:bg-black hover:text-white transition-all shadow-lg">Withdraw Funds</button>
+              <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
+            </motion.div>
 
-            <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-xl">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">In Escrow</p>
-              <h3 className="text-4xl font-black text-gray-900 tracking-tighter">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+              className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl p-10 rounded-[3rem] border border-white/40 dark:border-white/10 shadow-2xl">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Locked in Escrow</p>
+              <h3 className="text-5xl font-black text-gray-900 dark:text-white tracking-tighter italic">
                 GHS {jobs.filter(j => j.status === 'paid' || j.status === 'awaiting_confirmation').reduce((a, b) => a + (b.amount || 0), 0)}
               </h3>
-            </div>
+            </motion.div>
 
-            <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-xl flex flex-col justify-center">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Reputation</p>
-              <div className="flex items-center gap-2">
-                 <span className="text-3xl font-black text-gray-900">{user.rating || "5.0"}</span>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+              className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl p-10 rounded-[3rem] border border-white/40 dark:border-white/10 shadow-2xl flex flex-col justify-center">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Platform Reputation</p>
+              <div className="flex items-center gap-3">
+                 <span className="text-5xl font-black text-gray-900 dark:text-white italic">{user.rating || "5.0"}</span>
+                 <span className="text-2xl text-yellow-400">★</span>
               </div>
-            </div>
+            </motion.div>
           </div>
 
-          <h3 className="text-xl font-black text-gray-900 uppercase italic mb-8">Live Engagements</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase italic mb-10 tracking-tighter">Live <span className="text-blue-600">Engagements</span></h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-20">
             <AnimatePresence>
               {jobs.length > 0 ? jobs.map(job => (
                 <motion.div 
                   layout key={job._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all group"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl p-10 rounded-[3rem] border border-white/40 dark:border-white/10 shadow-xl hover:shadow-2xl transition-all duration-500 group"
                 >
-                  <div className="flex justify-between items-start mb-6">
+                  <div className="flex justify-between items-start mb-8">
                     <div>
-                      <h4 className="font-black text-gray-900 uppercase tracking-tight line-clamp-1">{job.description || "Service Request"}</h4>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Client: {job.client?.username || 'Guest'}</p>
+                      <h4 className="text-xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter line-clamp-1">{job.description || "Service Request"}</h4>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2 italic">Partner: {job.client?.username || 'Verified Client'}</p>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${job.status === 'completed' ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'}`}>
+                    <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest ${job.status === 'completed' ? 'bg-blue-600 text-white' : 'bg-green-500 text-white animate-pulse'}`}>
                       {job.status.replace('_', ' ')}
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <p className="text-2xl font-black text-gray-900 tracking-tighter">GHS {job.amount || job.price}</p>
+                  <div className="flex items-center justify-between mt-auto">
+                    <p className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter italic">GHS {job.amount || job.price}</p>
                     {job.status === 'paid' && (
-                      <button 
+                      <motion.button 
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={() => handleFinishJob(job._id)}
-                        className="px-6 py-3 bg-gray-900 text-white text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 transition-all shadow-lg"
+                        className="px-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-black text-[10px] font-black uppercase tracking-widest rounded-[1.5rem] shadow-2xl transition-all"
                       >
                         Mark Finished
-                      </button>
+                      </motion.button>
                     )}
                   </div>
                 </motion.div>
               )) : (
-                <div className="col-span-full py-20 text-center bg-white rounded-[3rem] border-2 border-dashed border-gray-100">
-                  <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">No Active Engagements</p>
+                <div className="col-span-full py-24 text-center bg-white/20 dark:bg-black/10 backdrop-blur-md rounded-[4rem] border-4 border-dashed border-white/20">
+                  <p className="text-gray-400 font-black uppercase text-[10px] tracking-[0.5em]">No Active Deployments</p>
                 </div>
               )}
             </AnimatePresence>
@@ -185,7 +195,7 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE }) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.put(`${API_BASE}/jobs/${user._id}`, editData, {
+      await axios.put(`${API_BASE}/jobs/${user._id}`, editData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -197,39 +207,39 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE }) => {
       onClose();
     } catch (err) { 
       console.error(err);
-      toast.error("Update failed: Check your connection"); 
+      toast.error("Update failed: Check connection"); 
     }
   };
 
   return (
     <>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[150]" />
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150]" />
       <motion.div 
         initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-        className="fixed top-0 right-0 h-full w-full max-w-md bg-white z-[200] p-12 shadow-2xl overflow-y-auto"
+        className="fixed top-0 right-0 h-full w-full max-w-md bg-white/95 dark:bg-[#1E293B]/95 backdrop-blur-2xl z-[200] p-12 shadow-2xl overflow-y-auto border-l border-white/20"
       >
-        <div className="flex justify-between items-center mb-12">
-          <h2 className="text-3xl font-black uppercase tracking-tighter">Business Info</h2>
-          <button onClick={onClose} className="text-gray-300 hover:text-black text-2xl">×</button>
+        <div className="flex justify-between items-center mb-16">
+          <h2 className="text-4xl font-black uppercase italic tracking-tighter text-gray-900 dark:text-white">Profile <span className="text-blue-600">Setup</span></h2>
+          <button onClick={onClose} className="text-gray-300 hover:text-black dark:hover:text-white text-4xl font-light">×</button>
         </div>
-        <form onSubmit={handleUpdate} className="space-y-6">
-          <div>
-            <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest">Phone Number</label>
-            <input type="text" value={editData.phone} className="w-full p-4 bg-gray-50 rounded-2xl font-bold" onChange={(e) => setEditData({...editData, phone: e.target.value})} />
+        <form onSubmit={handleUpdate} className="space-y-8">
+          <div className="space-y-2">
+            <label className="text-[9px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">Phone Identity</label>
+            <input type="text" value={editData.phone} className="w-full p-5 bg-gray-100 dark:bg-black/20 rounded-2xl font-bold border-none focus:ring-2 focus:ring-blue-600 outline-none text-gray-900 dark:text-white" onChange={(e) => setEditData({...editData, phone: e.target.value})} />
           </div>
-          <div>
-            <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest">Hourly Rate (GHS)</label>
-            <input type="number" value={editData.price} className="w-full p-4 bg-gray-50 rounded-2xl font-bold" onChange={(e) => setEditData({...editData, price: e.target.value})} />
+          <div className="space-y-2">
+            <label className="text-[9px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">Rate per Session (GHS)</label>
+            <input type="number" value={editData.price} className="w-full p-5 bg-gray-100 dark:bg-black/20 rounded-2xl font-bold border-none focus:ring-2 focus:ring-blue-600 outline-none text-gray-900 dark:text-white" onChange={(e) => setEditData({...editData, price: e.target.value})} />
           </div>
-          <div>
-            <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest">Location</label>
-            <input type="text" value={editData.location} className="w-full p-4 bg-gray-50 rounded-2xl font-bold" onChange={(e) => setEditData({...editData, location: e.target.value})} />
+          <div className="space-y-2">
+            <label className="text-[9px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">Active Location</label>
+            <input type="text" value={editData.location} className="w-full p-5 bg-gray-100 dark:bg-black/20 rounded-2xl font-bold border-none focus:ring-2 focus:ring-blue-600 outline-none text-gray-900 dark:text-white" onChange={(e) => setEditData({...editData, location: e.target.value})} />
           </div>
-          <div>
-            <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest">Bio</label>
-            <textarea value={editData.bio} className="w-full p-4 bg-gray-50 rounded-2xl font-medium h-32" onChange={(e) => setEditData({...editData, bio: e.target.value})} />
+          <div className="space-y-2">
+            <label className="text-[9px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">Professional Bio</label>
+            <textarea value={editData.bio} className="w-full p-5 bg-gray-100 dark:bg-black/20 rounded-2xl font-medium h-32 border-none focus:ring-2 focus:ring-blue-600 outline-none text-gray-900 dark:text-white" onChange={(e) => setEditData({...editData, bio: e.target.value})} />
           </div>
-          <button type="submit" className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl">Update Identity</button>
+          <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" className="w-full bg-blue-600 text-white py-6 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl shadow-blue-500/40 mt-8">Update Identity</motion.button>
         </form>
       </motion.div>
     </>
