@@ -10,7 +10,7 @@ const Register = () => {
     username: '',
     email: '',
     password: '',
-    role: 'client' // Default role
+    role: 'client' 
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -24,19 +24,19 @@ const Register = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      // KEEPING YOUR LOGIC: Dynamic API URL switching
       const API_URL = window.location.hostname === 'localhost' 
         ? 'http://localhost:5000/api/auth/register' 
         : 'https://hireme-bk0l.onrender.com/api/auth/register';
 
       const res = await axios.post(API_URL, formData);
       
-      // Save user data and token
       localStorage.setItem('user', JSON.stringify(res.data));
       localStorage.setItem('token', res.data.token);
 
-      toast.success("Account created successfully!");
+      toast.success("Identity Synchronized. Welcome!");
 
-      // Navigate based on role
+      // KEEPING YOUR LOGIC: Role-based navigation
       if (res.data.role === 'artisan') {
         navigate('/profile-setup');
       } else {
@@ -51,106 +51,114 @@ const Register = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] px-4 relative overflow-hidden">
+      <div className="relative min-h-screen flex items-center justify-center p-6 overflow-hidden">
         
-        {/* Animated Background Decorations */}
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-100 rounded-full mix-blend-multiply filter blur-[120px] opacity-50"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-100 rounded-full mix-blend-multiply filter blur-[120px] opacity-50"></div>
+        {/* 1. THE LIVING BACKGROUND (Integrated with your Landing Page) */}
+        <div className="living-bg">
+          <div className="orb orb-1" />
+          <div className="orb orb-2" />
+        </div>
 
         <motion.div 
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="w-full max-w-lg bg-white/90 backdrop-blur-2xl p-8 md:p-12 rounded-[3rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.1)] border border-white z-10"
+          className="relative z-10 w-full max-w-xl"
         >
-          <div className="text-center mb-10">
-            <motion.h2 
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              className="text-4xl font-black text-gray-900 tracking-tighter"
-            >
-              JOIN <span className="text-blue-600">HIREME</span>
-            </motion.h2>
-            <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.3em] mt-2">Start your professional journey</p>
-          </div>
-
-          <form onSubmit={onSubmit} className="space-y-5">
+          {/* 2. THE GLASS CARD */}
+          <div className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl border border-white/40 dark:border-white/10 rounded-[3rem] p-10 lg:p-12 shadow-2xl">
             
-            {/* ROLE SELECTOR - ALIVE VERSION */}
-            <div className="flex gap-2 p-2 bg-gray-100/50 rounded-2xl mb-4">
-              {['client', 'artisan'].map((r) => (
-                <motion.button
-                  key={r}
-                  type="button"
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setFormData({ ...formData, role: r })}
-                  className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${
-                    role === r 
-                    ? 'bg-white text-blue-600 shadow-sm' 
-                    : 'text-gray-400 hover:text-gray-600'
-                  }`}
-                >
-                  {r}
-                </motion.button>
-              ))}
+            <div className="text-center mb-10">
+              <h2 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter uppercase italic">
+                JOIN <span className="text-blue-600">HIREME</span>
+              </h2>
+              <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.3em] mt-2">
+                Start your professional journey
+              </p>
             </div>
 
-            <motion.div whileFocus={{ scale: 1.01 }}>
-              <input
-                type="text"
-                name="username"
-                placeholder="Full Name / Business Name"
-                className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-semibold"
-                value={username}
-                onChange={onChange}
-                required
-              />
-            </motion.div>
+            <form onSubmit={onSubmit} className="space-y-6">
+              
+              {/* ROLE SELECTOR - REFINED VERSION */}
+              <div className="flex gap-2 p-2 bg-white/30 dark:bg-black/20 rounded-2xl mb-6 border border-white/20">
+                {['client', 'artisan'].map((r) => (
+                  <motion.button
+                    key={r}
+                    type="button"
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setFormData({ ...formData, role: r })}
+                    className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${
+                      role === r 
+                      ? 'bg-blue-600 text-white shadow-lg' 
+                      : 'text-gray-400 hover:text-gray-600 dark:hover:text-white'
+                    }`}
+                  >
+                    {r}
+                  </motion.button>
+                ))}
+              </div>
 
-            <motion.div whileFocus={{ scale: 1.01 }}>
-              <input
-                type="email"
-                name="email"
-                placeholder="Email Address"
-                className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-semibold"
-                value={email}
-                onChange={onChange}
-                required
-              />
-            </motion.div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest ml-4">Identity Name</label>
+                  <input
+                    type="text"
+                    name="username"
+                    placeholder="Full / Business Name"
+                    className="w-full mt-2 px-6 py-4 bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/5 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-bold text-gray-900 dark:text-white placeholder:text-gray-300"
+                    value={username}
+                    onChange={onChange}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest ml-4">Email Address</label>
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="name@email.com"
+                    className="w-full mt-2 px-6 py-4 bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/5 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-bold text-gray-900 dark:text-white placeholder:text-gray-300"
+                    value={email}
+                    onChange={onChange}
+                    required
+                  />
+                </div>
+              </div>
 
-            <motion.div whileFocus={{ scale: 1.01 }} className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                placeholder="Create Password"
-                className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-semibold"
-                value={password}
-                onChange={onChange}
-                required
-              />
-              <button 
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-5 top-4 text-[10px] font-black text-blue-600 uppercase tracking-tighter"
+              <div className="relative">
+                <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest ml-4">Secret Password</label>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  placeholder="••••••••"
+                  className="w-full mt-2 px-6 py-4 bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/5 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-bold text-gray-900 dark:text-white placeholder:text-gray-300"
+                  value={password}
+                  onChange={onChange}
+                  required
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-5 bottom-4 text-[10px] font-black text-blue-600 uppercase tracking-tighter"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                disabled={loading}
+                className="w-full bg-gray-900 dark:bg-white text-white dark:text-black font-black py-5 rounded-2xl shadow-2xl transition-all uppercase tracking-widest text-xs mt-4 disabled:opacity-50"
               >
-                {showPassword ? "Hide" : "Show"}
-              </button>
-            </motion.div>
+                {loading ? "Establishing Identity..." : "Join Platform"}
+              </motion.button>
+            </form>
 
-            <motion.button
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gray-900 text-white font-black py-5 rounded-2xl shadow-2xl shadow-gray-200 transition-all uppercase tracking-widest text-xs"
-            >
-              {loading ? "Creating Account..." : "Join Platform"}
-            </motion.button>
-          </form>
-
-          <p className="text-center mt-8 text-xs font-bold text-gray-400 uppercase tracking-widest">
-            Already have an account? <Link to="/login" className="text-blue-600 font-black hover:underline">Sign In</Link>
-          </p>
+            <p className="text-center mt-8 text-xs font-bold text-gray-400 uppercase tracking-widest">
+              Already verified? <Link to="/login" className="text-blue-600 font-black hover:underline">Sign In</Link>
+            </p>
+          </div>
         </motion.div>
       </div>
     </PageTransition>
