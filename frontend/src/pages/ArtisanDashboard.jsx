@@ -49,18 +49,18 @@ const ArtisanDashboard = () => {
   };
 
   const handleFinishJob = async (jobId) => {
-    try {
-      const token = localStorage.getItem('token');
-      // Status changes to awaiting_confirmation so client can release funds
-      await axios.put(`${API_BASE}/jobs/${jobId}`, { status: 'awaiting_confirmation' }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      toast.info("Completion request sent to client");
-      setJobs(jobs.map(j => j._id === jobId ? { ...j, status: 'awaiting_confirmation' } : j));
-    } catch (err) {
-      toast.error("Update failed");
-    }
-  };
+  try {
+    const token = localStorage.getItem('token');
+    // We send 'awaiting_confirmation' to the backend
+    await axios.put(`${API_BASE}/jobs/${jobId}`, { status: 'awaiting_confirmation' }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    toast.success("Job marked finished! Awaiting client approval.");
+    fetchArtisanData(); // Refresh to see the pulse effect
+  } catch (err) {
+    toast.error("Failed to update status");
+  }
+};
 
   if (loading) return (
     <div className="h-screen flex items-center justify-center bg-white font-black uppercase text-blue-600 tracking-widest animate-pulse">

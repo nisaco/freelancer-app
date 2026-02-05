@@ -8,11 +8,12 @@ const {
   createJob 
 } = require('../controllers/jobController');
 
-// --- 1. MARKETPLACE & CREATION ---
+// --- 1. MARKETPLACE & BOOKING ---
 router.get('/available', getAvailableArtisans);
 router.post('/', protect, createJob);
 
-// --- 2. THE UNIVERSAL DASHBOARD FETCH (Fixes "Sync Failed") ---
+// --- 2. UNIVERSAL DASHBOARD FETCH ---
+// Fixes "Dashboard Sync Failed" for both Client and Artisan
 router.get('/my-jobs', protect, async (req, res) => {
   try {
     const jobs = await Job.find({ 
@@ -23,94 +24,69 @@ router.get('/my-jobs', protect, async (req, res) => {
     .sort({ createdAt: -1 });
     res.json(jobs);
   } catch (err) {
-    res.status(500).json({ message: "Error fetching data" });
+    res.status(500).json({ message: "Error fetching dashboard" });
   }
 });
 
-// --- 3. LEGACY ROLE FETCHES ---
-router.get('/artisan', protect, async (req, res) => {
+// --- 3. THE "ALL-IN-ONE" UPDATE ROUTE ---
+// This handles: Profile Updates, "Mark Finished", and "Client Confirm"
+router.put('/:id', protect, async (req, res) => {
   try {
-    const jobs = await Job.find({ artisan: req.user._id }).populate('client', 'username email').sort({ createdAt: -1 });
-    res.json(jobs);
-  } catch (err) {
-    res.status(500).json({ message: "Error" });
-  }
-});
+    const { status, phone, bio, price, location, rating } = req.body;
 
-router.get('/client', protect, async (req, res) => {
-  try {
-    const jobs = await Job.find({ client: req.user._id }).populate('artisan', 'username category phone').sort({ createdAt: -1 });
-    res.json(jobs);
-  } catch (err) {
-    res.status(500).json({ message: "Error" });
-  }
-});
+    // CASE A: User is updating their own Profile (from Settings)
+    if (req.params.id === req.user._id.toString()) {
+      const user = await User.findById(req.user._id);
+      if (phone) user.phone = phone;
+      if (bio) user.bio = bio;
+      if (price) user.price = price;
+      if (location) user.location = location;
+      await user.save();
+      return res.json({ message: "Profile Updated Successfully", user });
+    }
 
-// --- 4. THE ESCROW & WALLET AUTOMATION (The "Finish" Route) ---
-router.put('/:id/finish', protect, async (req, res) => {
-  try {
+    // CASE B: Status Update (Job Management)
     const job = await Job.findById(req.params.id).populate('artisan');
     if (!job) return res.status(404).json({ message: "Job not found" });
 
-    // Authorization: Only the assigned artisan can finish
-    if (job.artisan._id.toString() !== req.user._id.toString()) {
-      return res.status(401).json({ message: "Not authorized" });
-    }
+    // SUB-CASE: Client confirms and releases money
+    if (status === 'completed' && job.status === 'awaiting_confirmation') {
+       const artisan = await User.findById(job.artisan._id);
+       const artisanShare = job.amount * 0.90; // 90% to artisan
 
-    // Safety check: Job must be 'paid' (money in escrow) before moving to wallet
-    if (job.status !== 'paid') {
-      return res.status(400).json({ message: "Job must be paid first" });
-    }
+       artisan.walletBalance = (artisan.walletBalance || 0) + artisanShare;
+       // If artisan has pendingBalance from the initial payment, reduce it
+       if (artisan.pendingBalance) {
+         artisan.pendingBalance = Math.max(0, artisan.pendingBalance - artisanShare);
+       }
 
-    const artisan = await User.findById(job.artisan._id);
-    const amountToMove = job.amount * 0.90; // 10% platform fee
+       // Update Rating
+       if (rating) {
+         const count = artisan.reviewCount || 0;
+         artisan.rating = ((artisan.rating * count) + rating) / (count + 1);
+         artisan.reviewCount = count + 1;
+       }
 
-    if (artisan.isVerified) {
-      // Release funds to withdrawable wallet
-      artisan.walletBalance = (artisan.walletBalance || 0) + amountToMove;
-      job.status = 'completed';
-      await artisan.save();
+       await artisan.save();
+       job.status = 'completed';
     } else {
-      // Hold funds but mark job as done
-      job.status = 'completed';
+       // Standard status change (e.g., 'paid' -> 'awaiting_confirmation')
+       job.status = status || job.status;
     }
-    
+
     await job.save();
-    res.json({ message: "Job completed and funds processed!", job });
+    res.json({ message: "Status updated", job });
   } catch (err) {
-    res.status(500).json({ message: "Automation Error", error: err.message });
+    console.error(err);
+    res.status(500).json({ message: "Update failed", error: err.message });
   }
 });
 
-// --- 5. THE GENERIC UPDATE (Fixes the 404 on "Mark Finished") ---
-// This route is called by ArtisanDashboard.jsx when status changes to 'awaiting_confirmation'
-
-router.put('/:id', protect, async (req, res) => {
-  try {
-    const { status, rating } = req.body;
-    const job = await Job.findById(req.params.id).populate('artisan');
-
-    // If client is confirming completion, move the money!
-    if (status === 'completed' && job.status === 'awaiting_confirmation') {
-      const artisan = await User.findById(job.artisan._id);
-      const amountToMove = job.amount * 0.90;
-
-      artisan.walletBalance = (artisan.walletBalance || 0) + amountToMove;
-      // Optional: Add rating logic here
-      
-      await artisan.save();
-      job.status = 'completed';
-      await job.save();
-      return res.json({ message: "Funds released!", job });
-    }
-
-    // Generic status update (for other transitions)
-    job.status = status || job.status;
-    await job.save();
-    res.json(job);
-  } catch (err) {
-    res.status(500).json({ message: "Update failed" });
-  }
+// Alias for the 'finish' button if your frontend still uses it
+router.put('/:id/finish', protect, async (req, res) => {
+    // Redirects to the main update logic above
+    req.body.status = 'awaiting_confirmation';
+    router.handle(req, res); 
 });
 
 module.exports = router;
