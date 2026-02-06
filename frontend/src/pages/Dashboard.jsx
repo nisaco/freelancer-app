@@ -84,6 +84,7 @@ const BookingModal = ({ artisan, onClose, themeColor }) => {
 
 // --- MAIN DASHBOARD ---
 const Dashboard = () => {
+const navigate = useNavigate();  
   const [artisans, setArtisans] = useState([]);
   const [myJobs, setMyJobs] = useState([]);
   const [loading, setLoading] = useState(true);
