@@ -3,6 +3,7 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import PageTransition from '../components/PageTransition';
+import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 // --- SUB-COMPONENT: BOOKING MODAL (Upgraded to Glassmorphism) ---
