@@ -14,7 +14,7 @@ import Welcome from './pages/Welcome'; // Import the new name
 import AdminDashboard from './pages/AdminDashboard';
 import MyBookings from './pages/MyBookings';
 import ProtectedRoute from './components/ProtectedRoute';
-
+import ArtisanProfile from './pages/ArtisanProfile';
 
 // <--- FIX 2: Location must be used INSIDE a sub-component or a wrapper
 const AnimatedRoutes = () => {
@@ -34,6 +34,7 @@ const AnimatedRoutes = () => {
         <Route path="/admin-dashboard" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
         
         <Route path="/payment/callback" element={<PaymentCallback />} />
+        <Route path="/artisan/:id" element={<ArtisanProfile />} />
         <Route path="/my-bookings" element={<MyBookings />} />
       </Routes>
     </AnimatePresence>

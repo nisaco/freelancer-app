@@ -251,9 +251,10 @@ const Dashboard = () => {
 };
 
 const ArtisanCard = ({ artisan, index, themeColor, onClick }) => {
+  const navigate = useNavigate();
   const isLarge = index % 5 === 0;
   return (
-    <motion.div layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} whileHover={{ y: -10 }} whileTap={{ scale: 0.98 }} onClick={onClick}
+    <motion.div layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} whileHover={{ y: -10 }} whileTap={{ scale: 0.98 }} onClick={() => navigate(`/artisan/${artisan._id}`)}
       className={`group bg-white/40 dark:bg-white/5 backdrop-blur-3xl rounded-[3rem] p-10 border border-white/40 dark:border-white/10 shadow-xl flex flex-col justify-between cursor-pointer ${isLarge ? 'md:col-span-2 md:row-span-1' : 'col-span-1'} hover:shadow-2xl transition-all duration-500`}>
       <div className="flex flex-col h-full">
         <div className="flex justify-between items-start mb-10">
