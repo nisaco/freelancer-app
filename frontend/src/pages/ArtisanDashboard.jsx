@@ -6,6 +6,27 @@ import { toast } from 'react-toastify';
 import Navbar from '../components/Navbar';
 import PageTransition from '../components/PageTransition';
 
+// --- ANIMATION VARIANTS (The "Power-Up" Sequence) ---
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.12, // Rhythmic entrance for cards
+      delayChildren: 0.3     // Wait for the main page fade to finish
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  show: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } 
+  }
+};
+
 const ArtisanDashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -83,9 +104,15 @@ const ArtisanDashboard = () => {
           <div className="orb orb-2" />
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 pt-12 md:pt-20 relative z-10 w-full">
+        {/* --- WRAP CONTENT IN MOTION.DIV FOR STAGGERED ENTRANCE --- */}
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="max-w-7xl mx-auto px-6 pt-12 md:pt-20 relative z-10 w-full"
+        >
           
-          <div className="flex justify-between items-end mb-16">
+          <motion.div variants={itemVariants} className="flex justify-between items-end mb-16">
             <div>
               <h1 className="text-4xl md:text-6xl font-black text-gray-900 dark:text-white tracking-tighter uppercase italic">Artisan <span className="text-blue-600">Cockpit</span></h1>
               <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.4em] mt-3 italic">Business Intelligence v2.0</p>
@@ -101,10 +128,10 @@ const ArtisanDashboard = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               </svg>
             </motion.button>
-          </div>
+          </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            <motion.div variants={itemVariants}
               className="bg-gray-900 dark:bg-blue-600 p-10 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group">
               <p className="text-[10px] font-black text-blue-400 dark:text-blue-200 uppercase tracking-widest mb-2">Available Balance</p>
               <h3 className="text-5xl font-black tracking-tighter italic">GHS {user.walletBalance || 0}</h3>
@@ -112,7 +139,7 @@ const ArtisanDashboard = () => {
               <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+            <motion.div variants={itemVariants}
               className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl p-10 rounded-[3rem] border border-white/40 dark:border-white/10 shadow-2xl">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Locked in Escrow</p>
               <h3 className="text-5xl font-black text-gray-900 dark:text-white tracking-tighter italic">
@@ -120,7 +147,7 @@ const ArtisanDashboard = () => {
               </h3>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+            <motion.div variants={itemVariants}
               className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl p-10 rounded-[3rem] border border-white/40 dark:border-white/10 shadow-2xl flex flex-col justify-center">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Platform Reputation</p>
               <div className="flex items-center gap-3">
@@ -130,14 +157,16 @@ const ArtisanDashboard = () => {
             </motion.div>
           </div>
 
-          <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase italic mb-10 tracking-tighter">Live <span className="text-blue-600">Engagements</span></h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-20">
+          <motion.h3 variants={itemVariants} className="text-2xl font-black text-gray-900 dark:text-white uppercase italic mb-10 tracking-tighter">Live <span className="text-blue-600">Engagements</span></motion.h3>
+          
+          <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-20">
             <AnimatePresence>
               {jobs.length > 0 ? jobs.map(job => (
                 <motion.div 
                   layout key={job._id}
-                  initial={{ opacity: 0, scale: 0.9 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
                   className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl p-10 rounded-[3rem] border border-white/40 dark:border-white/10 shadow-xl hover:shadow-2xl transition-all duration-500 group"
                 >
                   <div className="flex justify-between items-start mb-8">
@@ -170,8 +199,8 @@ const ArtisanDashboard = () => {
                 </div>
               )}
             </AnimatePresence>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         <AnimatePresence>
           {isSettingsOpen && (
@@ -183,6 +212,7 @@ const ArtisanDashboard = () => {
   );
 };
 
+// ... SettingsDrawer remains exactly the same ...
 const SettingsDrawer = ({ user, setUser, onClose, API_BASE }) => {
   const [editData, setEditData] = useState({
     phone: user.phone || '',
@@ -195,7 +225,7 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE }) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API_BASE}/jobs/${user._id}`, editData, {
+      const res = await axios.put(`${API_BASE}/jobs/${user._id}`, editData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
