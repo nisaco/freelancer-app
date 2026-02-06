@@ -95,4 +95,22 @@ exports.updateJobStatus = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Status update failed' });
   }
+
+  // When Artisan marks job as 'awaiting_confirmation'
+if (status === 'awaiting_confirmation') {
+  await Notification.create({
+    recipient: job.client, // Notify the Client
+    message: `Job Complete! ${user.username} has finished the task. Please verify and release funds.`,
+    type: 'completion'
+  });
+}
+
+// When Client marks job as 'completed' (Releasing funds)
+if (status === 'completed') {
+  await Notification.create({
+    recipient: job.artisan, // Notify the Artisan
+    message: `Funds Released! Your payment for the ${job.category} job is now in your wallet.`,
+    type: 'payment'
+  });
+}
 };

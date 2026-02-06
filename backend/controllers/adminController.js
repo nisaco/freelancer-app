@@ -75,4 +75,10 @@ exports.verifyArtisan = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
   }
-};
+  // Notify the Artisan
+  await Notification.create({
+    recipient: user._id,
+    message: `Congratulations! Your professional identity has been verified. You are now live on the marketplace.`,
+    type: 'system'
+  });
+}

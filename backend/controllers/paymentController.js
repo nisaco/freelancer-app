@@ -86,3 +86,13 @@ exports.verifyPayment = async (req, res) => {
         res.status(500).json({ error: 'Payment verification failed' });
     }
 };
+
+// NOTIFICATION LOGIC
+const Notification = require('../models/Notification'); // Add this import
+
+// Inside the payment success logic:
+await Notification.create({
+  recipient: artisanId, // The Pro getting hired
+  message: `New Booking! A client has paid GHS ${amount} for your services. Check your dashboard.`,
+  type: 'booking'
+});
