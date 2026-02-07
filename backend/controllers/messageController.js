@@ -39,15 +39,15 @@ exports.sendMessage = async (req, res) => {
   }
 };
 
+// @desc    Get all conversations for the inbox
+// @route   GET /api/messages/inbox
 exports.getInbox = async (req, res) => {
   try {
     const userId = req.user.id;
-    // This looks for all messages where you are either sender or recipient
     const messages = await Message.find({
       $or: [{ sender: userId }, { recipient: userId }]
     }).sort({ createdAt: -1 }).populate('sender recipient', 'username');
 
-    // Filter to show unique conversations
     const conversations = [];
     const seen = new Set();
 
@@ -64,6 +64,6 @@ exports.getInbox = async (req, res) => {
     }
     res.json(conversations);
   } catch (err) {
-    res.status(500).json({ message: 'Inbox failed' });
+    res.status(500).json({ message: 'Inbox sync failed' });
   }
 };
