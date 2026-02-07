@@ -6,6 +6,54 @@ import Navbar from '../components/Navbar';
 import PageTransition from '../components/PageTransition';
 import { toast } from 'react-toastify';
 
+// --- SUB-COMPONENT: REVIEW MODAL (New Elite Addition) ---
+const ReviewModal = ({ isOpen, onClose, onConfirm, artisanName }) => {
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-lg p-6">
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+        className="bg-white dark:bg-gray-900 w-full max-w-md rounded-[3rem] p-10 border border-white/20 shadow-2xl"
+      >
+        <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter mb-2">Rate {artisanName}</h2>
+        <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-8">Help the community by sharing your experience</p>
+        
+        <div className="flex justify-center gap-2 mb-8">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button 
+              key={star} 
+              onClick={() => setRating(star)}
+              className={`text-4xl transition-all ${star <= rating ? 'text-yellow-400 scale-110' : 'text-gray-300 dark:text-gray-700'}`}
+            >
+              ★
+            </button>
+          ))}
+        </div>
+
+        <textarea 
+          placeholder="Describe the service (optional)..."
+          className="w-full p-5 bg-gray-50 dark:bg-black/20 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-600 text-sm font-medium dark:text-white mb-6 h-32"
+          onChange={(e) => setComment(e.target.value)}
+        />
+
+        <div className="flex gap-4">
+          <button onClick={onClose} className="flex-1 py-4 text-[10px] font-black uppercase text-gray-400">Cancel</button>
+          <button 
+            onClick={() => onConfirm(rating, comment)}
+            className="flex-[2] py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl"
+          >
+            Submit Review
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 // --- SUB-COMPONENT: BOOKING MODAL (Your Logic Preserved) ---
 const BookingModal = ({ artisan, onClose, themeColor }) => {
   const [bookingData, setBookingData] = useState({ date: '', description: '' });
@@ -92,6 +140,7 @@ const Dashboard = () => {
   const [view, setView] = useState("Marketplace"); 
   const [filter, setFilter] = useState("All");
   const [selectedArtisan, setSelectedArtisan] = useState(null);
+  const [reviewingJob, setReviewingJob] = useState(null); // State for the job being reviewed
   const [activeTheme, setActiveTheme] = useState({ name: 'All', color: '#2563EB', glow: 'rgba(37, 99, 235, 0.15)' });
 
   const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://hireme-bk0l.onrender.com/api';
@@ -126,15 +175,18 @@ const Dashboard = () => {
     }
   };
 
-  const handleConfirmCompletion = async (jobId) => {
-    const rating = window.prompt("Rate the service (1-5):", "5");
-    if (!rating) return;
+  const handleConfirmCompletion = async (rating, comment) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API_BASE}/jobs/${jobId}`, { status: 'completed', rating: Number(rating) }, {
+      await axios.put(`${API_BASE}/jobs/${reviewingJob._id}`, { 
+        status: 'completed', 
+        rating: Number(rating),
+        comment: comment
+      }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success("Funds Released!");
+      setReviewingJob(null); // Close modal
       fetchData(); 
     } catch (err) { toast.error("Release failed."); }
   };
@@ -156,7 +208,7 @@ const Dashboard = () => {
           <div className="orb orb-2" />
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 md:px-6 pt-12 md:pt-20 relative z-10 w-full">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 pt-32 md:pt-40 relative z-10 w-full">
           
           <div className="flex justify-center mb-16">
             <div className="bg-white/40 dark:bg-white/5 backdrop-blur-xl p-1.5 rounded-[2rem] border border-white/40 dark:border-white/10 shadow-2xl flex gap-1">
@@ -223,7 +275,12 @@ const Dashboard = () => {
                           {job.status.replace('_', ' ')}
                         </p>
                         {job.status === 'awaiting_confirmation' && (
-                          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleConfirmCompletion(job._id)} className="bg-green-600 text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-green-500/30 hover:bg-black transition-all">
+                          <motion.button 
+                            whileHover={{ scale: 1.05 }} 
+                            whileTap={{ scale: 0.95 }} 
+                            onClick={() => setReviewingJob(job)} 
+                            className="bg-green-600 text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-green-500/30 hover:bg-black transition-all"
+                          >
                             Release Funds
                           </motion.button>
                         )}
@@ -238,6 +295,19 @@ const Dashboard = () => {
             )}
           </AnimatePresence>
         </div>
+
+        {/* MODAL SECTION */}
+        <AnimatePresence>
+          {selectedArtisan && <BookingModal artisan={selectedArtisan} themeColor={activeTheme.color} onClose={() => setSelectedArtisan(null)} />}
+          {reviewingJob && (
+            <ReviewModal 
+              isOpen={!!reviewingJob} 
+              artisanName={reviewingJob.artisan?.username} 
+              onClose={() => setReviewingJob(null)} 
+              onConfirm={handleConfirmCompletion} 
+            />
+          )}
+        </AnimatePresence>
       </div>
     </PageTransition>
   );

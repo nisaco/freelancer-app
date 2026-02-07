@@ -1,26 +1,23 @@
 const Job = require('../models/Job');
 const User = require('../models/User');
 const ArtisanProfile = require('../models/ArtisanProfile');
+const Notification = require('../models/Notification');
 
 // @desc    Get all artisans for the Marketplace (Merge Users and Profiles)
 // @route   GET /api/jobs/available
 exports.getAvailableArtisans = async (req, res) => {
   try {
-    // 1. Get all users registered as artisans
     const artisans = await User.find({ role: 'artisan' })
       .select('username profilePic isVerified location category price bio rating reviewCount');
 
-    // 2. Fetch professional profiles
     const profiles = await ArtisanProfile.find();
 
-    // 3. Merge data: Priority to ArtisanProfile, fallback to User model
     const formattedArtisans = artisans.map(user => {
       const profile = profiles.find(p => p.user && p.user.toString() === user._id.toString());
       
       return {
         _id: user._id,
         username: user.username,
-        // If profile exists, use its category, else use user model, else default
         category: profile?.serviceCategory || user.category || 'General Artisan',
         bio: profile?.bio || user.bio || 'Professional artisan ready to help.',
         price: profile?.startingPrice || user.price || 0,
@@ -39,7 +36,7 @@ exports.getAvailableArtisans = async (req, res) => {
   }
 };
 
-// @desc    Create a new job request (Called after Paystack initialization)
+// @desc    Create a new job request
 exports.createJob = async (req, res) => {
   const { artisanId, serviceType, description, date, amount } = req.body;
   try {
@@ -50,7 +47,7 @@ exports.createJob = async (req, res) => {
       description,
       amount: amount || 0,
       date: new Date(date),
-      status: 'pending' // Usually set to 'paid' after Paystack webhook
+      status: 'pending' 
     });
     res.status(201).json(job);
   } catch (error) {
@@ -62,7 +59,6 @@ exports.createJob = async (req, res) => {
 // @desc    Universal Job History
 exports.getMyJobs = async (req, res) => {
   try {
-    // Finds jobs where user is either the client or the artisan
     const jobs = await Job.find({ 
       $or: [{ client: req.user.id }, { artisan: req.user.id }] 
     })
@@ -76,10 +72,10 @@ exports.getMyJobs = async (req, res) => {
   }
 };
 
-// @desc    Legacy Status Update (Standard logic)
+// @desc    Update Job Status & Handle Ratings/Notifications
 exports.updateJobStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, rating, comment } = req.body;
     let job = await Job.findById(req.params.id);
     
     if (!job) return res.status(404).json({ message: 'Job not found' });
@@ -90,27 +86,53 @@ exports.updateJobStatus = async (req, res) => {
     }
 
     job.status = status;
+
+    // --- LOGIC: ARTISAN FINISHED WORK ---
+    if (status === 'awaiting_confirmation') {
+      await Notification.create({
+        recipient: job.client,
+        message: `Job Complete! The artisan has finished the task. Please verify and release funds.`,
+        type: 'completion'
+      });
+    }
+
+    // --- LOGIC: CLIENT RELEASES FUNDS & RATES ---
+    if (status === 'completed') {
+      if (rating) {
+        job.rating = rating;
+        job.reviewComment = comment || "";
+        
+        // Update Artisan's Global Rating
+        const artisan = await User.findById(job.artisan);
+        if (artisan) {
+          // Find all completed jobs for this artisan that have a rating
+          const ratedJobs = await Job.find({ 
+            artisan: job.artisan, 
+            status: 'completed', 
+            rating: { $exists: true } 
+          });
+
+          const totalRatings = ratedJobs.length + 1; // +1 for the current job
+          const sumRatings = ratedJobs.reduce((acc, curr) => acc + curr.rating, 0) + Number(rating);
+          
+          artisan.rating = (sumRatings / totalRatings).toFixed(1);
+          artisan.reviewCount = totalRatings;
+          await artisan.save();
+        }
+      }
+
+      await Notification.create({
+        recipient: job.artisan,
+        message: `Funds Released! Your payment for the ${job.serviceType} job is now in your wallet.`,
+        type: 'payment'
+      });
+    }
+
     await job.save();
     res.status(200).json(job);
+
   } catch (error) {
+    console.error("Status Update Error:", error);
     res.status(500).json({ message: 'Status update failed' });
   }
-
-  // When Artisan marks job as 'awaiting_confirmation'
-if (status === 'awaiting_confirmation') {
-  await Notification.create({
-    recipient: job.client, // Notify the Client
-    message: `Job Complete! ${user.username} has finished the task. Please verify and release funds.`,
-    type: 'completion'
-  });
-}
-
-// When Client marks job as 'completed' (Releasing funds)
-if (status === 'completed') {
-  await Notification.create({
-    recipient: job.artisan, // Notify the Artisan
-    message: `Funds Released! Your payment for the ${job.category} job is now in your wallet.`,
-    type: 'payment'
-  });
-}
 };
