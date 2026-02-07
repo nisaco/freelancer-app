@@ -15,7 +15,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import MyBookings from './pages/MyBookings';
 import ProtectedRoute from './components/ProtectedRoute';
 import ArtisanProfile from './pages/ArtisanProfile';
-
+import Messages from './pages/Messages';
 // <--- FIX 2: Location must be used INSIDE a sub-component or a wrapper
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -36,6 +36,7 @@ const AnimatedRoutes = () => {
         <Route path="/payment/callback" element={<PaymentCallback />} />
         <Route path="/artisan/:id" element={<ArtisanProfile />} />
         <Route path="/my-bookings" element={<MyBookings />} />
+        <Route path="/messages/:recipientId" element={<Messages />} />
       </Routes>
     </AnimatePresence>
   );

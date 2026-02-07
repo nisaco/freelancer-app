@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import PageTransition from '../components/PageTransition';
-import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-// --- SUB-COMPONENT: BOOKING MODAL (Upgraded to Glassmorphism) ---
+// --- SUB-COMPONENT: BOOKING MODAL (Your Logic Preserved) ---
 const BookingModal = ({ artisan, onClose, themeColor }) => {
   const [bookingData, setBookingData] = useState({ date: '', description: '' });
   const [loading, setLoading] = useState(false);
@@ -84,7 +84,7 @@ const BookingModal = ({ artisan, onClose, themeColor }) => {
 
 // --- MAIN DASHBOARD ---
 const Dashboard = () => {
-const navigate = useNavigate();  
+  const navigate = useNavigate();  
   const [artisans, setArtisans] = useState([]);
   const [myJobs, setMyJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -151,7 +151,6 @@ const navigate = useNavigate();
       <div className="relative min-h-screen flex flex-col transition-colors duration-700">
         <Navbar />
         
-        {/* 1. THE LIVING BACKGROUND */}
         <div className="living-bg">
           <div className="orb orb-1" />
           <div className="orb orb-2" />
@@ -159,7 +158,6 @@ const navigate = useNavigate();
 
         <div className="max-w-7xl mx-auto px-4 md:px-6 pt-12 md:pt-20 relative z-10 w-full">
           
-          {/* VIEW TOGGLE */}
           <div className="flex justify-center mb-16">
             <div className="bg-white/40 dark:bg-white/5 backdrop-blur-xl p-1.5 rounded-[2rem] border border-white/40 dark:border-white/10 shadow-2xl flex gap-1">
               {["Marketplace", "My Bookings"].map(v => {
@@ -178,7 +176,6 @@ const navigate = useNavigate();
             {view === "Marketplace" ? (
               <motion.div key="market" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                 
-                {/* SEARCH BAR UPGRADE */}
                 <div className="max-w-2xl mx-auto mb-16">
                   <div className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl rounded-[2.5rem] shadow-2xl p-2 flex items-center border border-white/40 dark:border-white/10 transition-all focus-within:border-blue-500/50">
                     <div className="pl-6 text-gray-400"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></div>
@@ -186,7 +183,6 @@ const navigate = useNavigate();
                   </div>
                 </div>
 
-                {/* CATEGORIES UPGRADE */}
                 <div className="flex justify-start md:justify-center mb-20 overflow-x-auto no-scrollbar px-4">
                   <div className="bg-white/30 dark:bg-black/20 p-2 rounded-full border border-white/20 flex gap-2 shadow-2xl backdrop-blur-md">
                     {categories.map((cat) => (
@@ -199,10 +195,9 @@ const navigate = useNavigate();
                   </div>
                 </div>
 
-                {/* BENTO GRID UPGRADE */}
                 <motion.div layout className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-20">
                   {filteredArtisans.map((artisan, i) => (
-                    <ArtisanCard key={artisan._id} artisan={artisan} index={i} themeColor={activeTheme.color} onClick={() => setSelectedArtisan(artisan)} />
+                    <ArtisanCard key={artisan._id} artisan={artisan} index={i} themeColor={activeTheme.color} />
                   ))}
                 </motion.div>
               </motion.div>
@@ -217,21 +212,21 @@ const navigate = useNavigate();
                       </div>
                       <div>
                         <h4 className="text-xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter">{job.artisan?.username || 'Guest Pro'}</h4>
-                        <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.3em] mt-1">📞 {job.artisan?.phone || 'No Phone'}</p>
+                        <div className="flex gap-3 mt-2">
+                           <button onClick={() => navigate(`/messages/${job.artisan?._id}`)} className="text-[8px] font-black uppercase tracking-widest bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-lg">Message</button>
+                           <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.3em] self-center">GHS {job.amount || job.price}</p>
+                        </div>
                       </div>
                     </div>
                     <div className="flex flex-col items-center md:items-end mt-6 md:mt-0 gap-4">
                         <p className={`text-[9px] font-black uppercase tracking-[0.3em] px-4 py-2 rounded-full ${job.status === 'awaiting_confirmation' ? 'bg-blue-600 text-white animate-pulse shadow-lg shadow-blue-500/30' : 'bg-gray-100 dark:bg-white/10 text-gray-400'}`}>
                           {job.status.replace('_', ' ')}
                         </p>
-                        <div className="flex items-center gap-6">
-                          <span className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter">GHS {job.amount || job.price}</span>
-                          {job.status === 'awaiting_confirmation' && (
-                            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleConfirmCompletion(job._id)} className="bg-green-600 text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-green-500/30 hover:bg-black transition-all">
-                              Release Funds
-                            </motion.button>
-                          )}
-                        </div>
+                        {job.status === 'awaiting_confirmation' && (
+                          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleConfirmCompletion(job._id)} className="bg-green-600 text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-green-500/30 hover:bg-black transition-all">
+                            Release Funds
+                          </motion.button>
+                        )}
                     </div>
                   </div>
                 )) : (
@@ -243,20 +238,16 @@ const navigate = useNavigate();
             )}
           </AnimatePresence>
         </div>
-
-        <AnimatePresence>
-          {selectedArtisan && <BookingModal artisan={selectedArtisan} themeColor={activeTheme.color} onClose={() => setSelectedArtisan(null)} />}
-        </AnimatePresence>
       </div>
     </PageTransition>
   );
 };
 
-const ArtisanCard = ({ artisan, index, themeColor, onClick }) => {
+const ArtisanCard = ({ artisan, index, themeColor }) => {
   const navigate = useNavigate();
   const isLarge = index % 5 === 0;
   return (
-    <motion.div layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} whileHover={{ y: -10 }} whileTap={{ scale: 0.98 }} onClick={() => navigate(`/artisan/${artisan._id}`)}
+    <motion.div layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} whileHover={{ y: -10 }} whileTap={{ scale: 0.98 }}
       className={`group bg-white/40 dark:bg-white/5 backdrop-blur-3xl rounded-[3rem] p-10 border border-white/40 dark:border-white/10 shadow-xl flex flex-col justify-between cursor-pointer ${isLarge ? 'md:col-span-2 md:row-span-1' : 'col-span-1'} hover:shadow-2xl transition-all duration-500`}>
       <div className="flex flex-col h-full">
         <div className="flex justify-between items-start mb-10">
@@ -268,17 +259,23 @@ const ArtisanCard = ({ artisan, index, themeColor, onClick }) => {
             <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter italic">GHS {artisan.price}</p>
           </div>
         </div>
-        <div className="flex-1">
+        <div className="flex-1" onClick={() => navigate(`/artisan/${artisan._id}`)}>
           <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter leading-[0.8] mb-2 uppercase italic">{artisan.username}</h3>
           <p className="text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: themeColor }}>{artisan.category}</p>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-6 line-clamp-3 font-medium italic leading-relaxed">{artisan.bio || "Verified professional elite artisan."}</p>
         </div>
         <div className="mt-10 pt-8 border-t border-gray-100 dark:border-white/5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`w-2 h-2 rounded-full ${artisan.isVerified ? 'bg-blue-500 animate-pulse' : 'bg-gray-200'}`} />
-            <span className="text-[9px] font-black uppercase text-gray-300 dark:text-gray-500 tracking-[0.2em]">{artisan.isVerified ? 'Elite Pro' : 'Active'}</span>
-          </div>
-          <div className="w-12 h-12 rounded-[1.2rem] flex items-center justify-center text-white text-lg shadow-2xl transition-all duration-700 group-hover:bg-black group-hover:rotate-45" style={{ backgroundColor: themeColor }}>→</div>
+          <button 
+            onClick={(e) => { e.stopPropagation(); navigate(`/messages/${artisan._id}`); }}
+            className="text-[9px] font-black uppercase text-blue-600 tracking-[0.2em] hover:underline"
+          >
+            Ask Question
+          </button>
+          <div 
+            onClick={() => navigate(`/artisan/${artisan._id}`)}
+            className="w-12 h-12 rounded-[1.2rem] flex items-center justify-center text-white text-lg shadow-2xl transition-all duration-700 group-hover:bg-black group-hover:rotate-45" 
+            style={{ backgroundColor: themeColor }}
+          >→</div>
         </div>
       </div>
     </motion.div>

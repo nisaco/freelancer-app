@@ -5,6 +5,7 @@ const cors = require('cors');
 const path = require('path');
 const paymentRoutes = require('./routes/paymentRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 // Load env vars
 dotenv.config();
 
@@ -37,6 +38,7 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/messages', messageRoutes);
 // =================================================================
 //  THE GLUE CODE (Production Mode)
 // =================================================================

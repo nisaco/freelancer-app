@@ -20,7 +20,7 @@ const Navbar = () => {
   useEffect(() => {
     if (token) {
       fetchNotifications();
-      // Optional: Poll for new notifications every 30 seconds
+      // Poll for new notifications every 30 seconds
       const interval = setInterval(fetchNotifications, 30000);
       return () => clearInterval(interval);
     }
@@ -64,14 +64,25 @@ const Navbar = () => {
         HIRE<span className="text-blue-600">ME</span>
       </Link>
 
-      <div className="flex items-center gap-4 md:gap-8">
+      <div className="flex items-center gap-2 md:gap-6">
         
         {/* NAVIGATION LINKS (HIDDEN ON MOBILE) */}
-        <div className="hidden md:flex gap-6 items-center">
+        <div className="hidden md:flex gap-6 items-center mr-4">
           <Link to={user?.role === 'artisan' ? '/artisan-dashboard' : '/dashboard'} className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-blue-600 transition-colors">
             Dashboard
           </Link>
         </div>
+
+        {/* MESSAGE HUB ICON - NEW */}
+        <Link 
+          to="/inbox" 
+          className="p-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors relative"
+          title="Messages"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+          </svg>
+        </Link>
 
         {/* NOTIFICATION BELL */}
         <div className="relative">
@@ -133,7 +144,7 @@ const Navbar = () => {
               setIsProfileOpen(!isProfileOpen);
               setIsNotifOpen(false);
             }}
-            className="w-10 h-10 rounded-2xl bg-gray-900 dark:bg-white flex items-center justify-center overflow-hidden shadow-xl"
+            className="w-10 h-10 rounded-2xl bg-gray-900 dark:bg-white flex items-center justify-center overflow-hidden shadow-xl border border-white/20"
           >
             <img 
               src={user?.profilePic || `https://ui-avatars.com/api/?name=${user?.username || 'User'}&background=000&color=fff`} 
@@ -146,7 +157,7 @@ const Navbar = () => {
             {isProfileOpen && (
               <motion.div 
                 initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 15 }}
-                className="absolute right-0 mt-6 w-56 bg-white dark:bg-gray-900 rounded-[2rem] shadow-2xl border border-white/10 p-4"
+                className="absolute right-0 mt-6 w-56 bg-white dark:bg-gray-900 rounded-[2rem] shadow-2xl border border-white/10 p-4 z-[110]"
               >
                 <div className="px-4 py-3 mb-2">
                   <p className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tighter truncate">{user?.username}</p>

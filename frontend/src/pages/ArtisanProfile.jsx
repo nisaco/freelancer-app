@@ -123,6 +123,12 @@ const ArtisanProfile = () => {
               <button onClick={() => setIsModalOpen(true)} className="w-full py-5 bg-white text-blue-600 font-black uppercase text-xs tracking-widest rounded-2xl shadow-xl hover:scale-105 transition-all">
                 Book Now
               </button>
+              <button 
+  onClick={() => navigate(`/messages/${artisan._id}`)}
+  className="w-full py-5 border border-white/20 text-white font-black uppercase text-xs tracking-widest rounded-2xl hover:bg-white/10 transition-all mt-4"
+>
+  Ask a Question
+</button>
             </div>
           </div>
         </div>
