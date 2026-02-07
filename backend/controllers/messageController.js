@@ -38,3 +38,32 @@ exports.sendMessage = async (req, res) => {
     res.status(500).json({ message: 'Failed to send message' });
   }
 };
+
+exports.getInbox = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    // This looks for all messages where you are either sender or recipient
+    const messages = await Message.find({
+      $or: [{ sender: userId }, { recipient: userId }]
+    }).sort({ createdAt: -1 }).populate('sender recipient', 'username');
+
+    // Filter to show unique conversations
+    const conversations = [];
+    const seen = new Set();
+
+    for (const msg of messages) {
+      const otherUser = msg.sender._id.toString() === userId ? msg.recipient : msg.sender;
+      if (!seen.has(otherUser._id.toString())) {
+        seen.add(otherUser._id.toString());
+        conversations.push({
+          otherUser,
+          lastMessage: msg.text,
+          createdAt: msg.createdAt
+        });
+      }
+    }
+    res.json(conversations);
+  } catch (err) {
+    res.status(500).json({ message: 'Inbox failed' });
+  }
+};

@@ -16,6 +16,7 @@ import MyBookings from './pages/MyBookings';
 import ProtectedRoute from './components/ProtectedRoute';
 import ArtisanProfile from './pages/ArtisanProfile';
 import Messages from './pages/Messages';
+import Inbox from './pages/Inbox';
 // <--- FIX 2: Location must be used INSIDE a sub-component or a wrapper
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -37,6 +38,7 @@ const AnimatedRoutes = () => {
         <Route path="/artisan/:id" element={<ArtisanProfile />} />
         <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/messages/:recipientId" element={<Messages />} />
+        <Route path="/inbox" element={<Inbox />} />
       </Routes>
     </AnimatePresence>
   );
