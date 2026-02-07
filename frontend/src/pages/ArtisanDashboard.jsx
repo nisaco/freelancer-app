@@ -30,7 +30,7 @@ const itemVariants = {
 const ArtisanDashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')) || {});
+  const [user, setUser] = useState({}); // Start with empty, fetch fresh
   const [chartData, setChartData] = useState([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -45,19 +45,21 @@ const ArtisanDashboard = () => {
   const fetchArtisanData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_BASE}/jobs/my-jobs`, { 
-        headers: { Authorization: `Bearer ${token}` } 
-      });
       
-      const artisanJobs = res.data;
+      // NEW: Fetch both Jobs AND User Profile in parallel
+      const [jobRes, profileRes] = await Promise.all([
+        axios.get(`${API_BASE}/jobs/my-jobs`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_BASE}/auth/profile`, { headers: { Authorization: `Bearer ${token}` } }) // Use your profile route
+      ]);
+      
+      const artisanJobs = jobRes.data;
+      const freshUser = profileRes.data;
+
       setJobs(artisanJobs);
+      setUser(freshUser); // THIS updates your GHS walletBalance display
+      localStorage.setItem('user', JSON.stringify(freshUser)); // Sync storage
 
-      if (artisanJobs.length > 0 && artisanJobs[0].artisan) {
-        const freshUser = { ...user, ...artisanJobs[0].artisan };
-        setUser(freshUser);
-        localStorage.setItem('user', JSON.stringify(freshUser));
-      }
-
+      // Chart logic (remains the same)
       const grouped = artisanJobs.reduce((acc, job) => {
         if (job.status === 'completed') {
           const date = new Date(job.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -66,6 +68,7 @@ const ArtisanDashboard = () => {
         return acc;
       }, {});
       setChartData(Object.keys(grouped).map(date => ({ date, amount: grouped[date] })));
+      
     } catch (err) { 
       console.error(err);
       toast.error("Dashboard sync failed"); 
@@ -73,7 +76,6 @@ const ArtisanDashboard = () => {
       setLoading(false); 
     }
   };
-
   const handleFinishJob = async (jobId) => {
     try {
       const token = localStorage.getItem('token');
