@@ -81,14 +81,23 @@ exports.getProfile = async (req, res) => {
 };
 
 exports.handleOnboarding = async (req, res) => {
-  const user = await User.findById(req.user.id);
-  
-  // profilePic is public
-  if (req.files.profilePic) user.profilePic = req.files.profilePic[0].path;
-  
-  // ghanaCard is private (Admin view only)
-  if (req.files.ghanaCard) user.ghanaCardImage = req.files.ghanaCard[0].path;
-  
-  await user.save();
-  res.status(200).json({ message: "Verification documents submitted!" });
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Multer puts files in req.files when using .fields()
+    if (req.files['profilePic']) {
+      user.profilePic = req.files['profilePic'][0].path;
+    }
+    
+    if (req.files['ghanaCard']) {
+      user.ghanaCardImage = req.files['ghanaCard'][0].path;
+    }
+
+    await user.save();
+    res.status(200).json({ message: "Documents uploaded. Verification pending." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error during onboarding" });
+  }
 };
