@@ -43,7 +43,7 @@ const BookingModal = ({ artisan, onClose, themeColor }) => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
-      <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-[3rem] p-10 shadow-2xl relative border border-white/20">
+      <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-white dark:bg-gray-900 w-full max-lg rounded-[3rem] p-10 shadow-2xl relative border border-white/20">
         <button onClick={onClose} className="absolute top-6 right-8 text-2xl font-light text-gray-400">×</button>
         <h3 className="text-2xl font-black mb-6 uppercase italic text-gray-900 dark:text-white">Hire {artisan.username}</h3>
         <div className="space-y-6">
@@ -67,9 +67,11 @@ const BookingModal = ({ artisan, onClose, themeColor }) => {
 // --- MAIN PROFILE PAGE ---
 const ArtisanProfile = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [artisan, setArtisan] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false); // NEW STATE
+  const [isModalOpen, setIsModalOpen] = useState(false); 
+  const [reviews, setReviews] = useState([]); // NEW STATE
 
   const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://hireme-bk0l.onrender.com/api';
 
@@ -83,7 +85,16 @@ const ArtisanProfile = () => {
       } catch (err) { toast.error("Error loading profile"); }
       finally { setLoading(false); }
     };
+
+    const fetchReviews = async () => {
+      try {
+        const res = await axios.get(`${API_BASE}/jobs/reviews/${id}`);
+        setReviews(res.data);
+      } catch (err) { console.error("Failed to fetch reviews"); }
+    };
+
     fetchArtisan();
+    fetchReviews();
   }, [id, API_BASE]);
 
   if (loading) return <div className="h-screen flex items-center justify-center bg-white dark:bg-[#0B0F1A] font-black uppercase text-blue-600 animate-pulse">Scanning Profile...</div>;
@@ -119,16 +130,55 @@ const ArtisanProfile = () => {
             <div className="bg-blue-600 p-10 rounded-[3rem] shadow-2xl flex flex-col justify-center items-center text-center text-white">
               <p className="text-[10px] font-black uppercase tracking-[0.4em] mb-4 opacity-80">GHS {artisan.price}</p>
               <h4 className="text-3xl font-black italic mb-8 uppercase tracking-tighter">Ready to <br />book?</h4>
-              {/* FIXED BUTTON: Now opens the modal */}
               <button onClick={() => setIsModalOpen(true)} className="w-full py-5 bg-white text-blue-600 font-black uppercase text-xs tracking-widest rounded-2xl shadow-xl hover:scale-105 transition-all">
                 Book Now
               </button>
               <button 
-  onClick={() => navigate(`/messages/${artisan._id}`)}
-  className="w-full py-5 border border-white/20 text-white font-black uppercase text-xs tracking-widest rounded-2xl hover:bg-white/10 transition-all mt-4"
->
-  Ask a Question
-</button>
+                onClick={() => navigate(`/messages/${artisan._id}`)}
+                className="w-full py-5 border border-white/20 text-white font-black uppercase text-xs tracking-widest rounded-2xl hover:bg-white/10 transition-all mt-4"
+              >
+                Ask a Question
+              </button>
+            </div>
+          </div>
+
+          {/* NEW: REVIEWS GALLERY (Client View) */}
+          <div className="mt-24">
+            <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter mb-10">
+              Client <span className="text-blue-600">Testimonials</span>
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {reviews.length > 0 ? reviews.map((rev) => (
+                <motion.div 
+                  key={rev._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl p-10 rounded-[3.5rem] border border-white/40 dark:border-white/10 shadow-xl"
+                >
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-black">
+                        {rev.client?.username?.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-gray-900 dark:text-white uppercase italic tracking-tighter">{rev.client?.username}</p>
+                        <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">{new Date(rev.createdAt).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <div className="flex text-yellow-400 text-xs">
+                      {Array.from({ length: rev.rating }).map((_, i) => <span key={i}>★</span>)}
+                    </div>
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm italic font-medium leading-relaxed">
+                    "{rev.reviewComment || "The client didn't leave a comment, but the service was excellent!"}"
+                  </p>
+                </motion.div>
+              )) : (
+                <div className="col-span-full py-20 text-center bg-white/10 rounded-[3rem] border border-dashed border-white/20">
+                  <p className="text-gray-400 font-black uppercase text-[10px] tracking-widest italic">No reviews recorded for this elite pro yet.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

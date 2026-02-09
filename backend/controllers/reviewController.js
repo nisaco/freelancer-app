@@ -51,4 +51,22 @@ const getArtisanReviews = async (req, res) => {
   }
 };
 
+// @desc    Get all reviews for a specific artisan
+// @route   GET /api/jobs/reviews/:artisanId
+exports.getArtisanReviews = async (req, res) => {
+  try {
+    const reviews = await Job.find({ 
+      artisan: req.params.artisanId, 
+      status: 'completed',
+      rating: { $exists: true } 
+    })
+    .populate('client', 'username profilePic')
+    .sort({ createdAt: -1 });
+
+    res.status(200).json(reviews);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch reviews" });
+  }
+};
+
 module.exports = { addReview, getArtisanReviews };
