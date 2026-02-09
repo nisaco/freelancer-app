@@ -102,6 +102,7 @@ exports.updateJobStatus = async (req, res) => {
       if (rating) {
         job.rating = rating;
         job.reviewComment = comment || "";
+        await job.save();
         
         // Update Artisan's Global Rating
         const artisan = await User.findById(job.artisan);
