@@ -43,17 +43,19 @@ exports.loginUser = async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
 
+    // Important: compare against user.password
     if (user && (await bcrypt.compare(password, user.password))) {
       res.json({
         _id: user.id,
         username: user.username,
         email: user.email,
         role: user.role,
-        category: user.category, // CRITICAL: Frontend needs this to hide skeleton
+        category: user.category, 
         bio: user.bio,
         price: user.price,
         location: user.location,
         isVerified: user.isVerified,
+        profilePic: user.profilePic, // Send this back too!
         token: generateToken(user._id),
       });
     } else {
@@ -65,37 +67,37 @@ exports.loginUser = async (req, res) => {
 };
 
 // @desc    Get current logged in user profile
-// @route   GET /api/auth/profile
 exports.getProfile = async (req, res) => {
   try {
-    // req.user.id comes from your protect middleware
     const user = await User.findById(req.user.id).select('-password');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server Error' });
   }
 };
 
+// @desc    Handle File Uploads for Verification
 exports.handleOnboarding = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Multer puts files in req.files when using .fields()
-    if (req.files['profilePic']) {
-      user.profilePic = req.files['profilePic'][0].path;
+    // Multer saves files to 'uploads/' and puts the path in req.files
+    if (req.files && req.files['profilePic']) {
+      // Store the path so the frontend can display the image
+      user.profilePic = `uploads/${req.files['profilePic'][0].filename}`;
     }
     
-    if (req.files['ghanaCard']) {
-      user.ghanaCardImage = req.files['ghanaCard'][0].path;
+    if (req.files && req.files['ghanaCard']) {
+      user.ghanaCardImage = `uploads/${req.files['ghanaCard'][0].filename}`;
     }
 
     await user.save();
-    res.status(200).json({ message: "Documents uploaded. Verification pending." });
+    res.status(200).json({ 
+      message: "Documents uploaded. Verification pending.",
+      profilePic: user.profilePic 
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error during onboarding" });

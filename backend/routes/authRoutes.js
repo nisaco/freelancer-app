@@ -3,12 +3,17 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const { protect } = require('../middleware/authMiddleware');
-const { handleOnboarding, getProfile } = require('../controllers/authController');
+const { 
+  registerUser, 
+  loginUser, 
+  getProfile, 
+  handleOnboarding 
+} = require('../controllers/authController');
 
 // --- MULTER CONFIGURATION ---
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Make sure this folder exists in your backend root
+    cb(null, 'uploads/'); 
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
@@ -28,13 +33,16 @@ const upload = multer({
 
 // --- ROUTES ---
 
-// Your new onboarding route
+// Public Routes (No 'protect' needed)
+router.post('/register', registerUser);
+router.post('/login', loginUser); // THIS WAS MISSING - FIXES 404
+
+// Private Routes (Need 'protect')
+router.get('/profile', protect, getProfile);
+
 router.post('/onboarding', protect, upload.fields([
   { name: 'profilePic', maxCount: 1 },
   { name: 'ghanaCard', maxCount: 1 }
 ]), handleOnboarding);
-
-// Existing profile route
-router.get('/profile', protect, getProfile);
 
 module.exports = router;
