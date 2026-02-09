@@ -61,7 +61,10 @@ const Welcome = () => {
           </h2>
           
           <p className="text-lg text-gray-500 dark:text-gray-400 mb-12 leading-relaxed max-w-lg font-medium">
-            Stop searching for reliable help. From Plumbers to Electricians, book verified experts and pay securely with <span className="text-gray-900 dark:text-white font-bold">Paystack.</span>
+            Don't stress over Domestic, Industrial and commercial challenges anymore the professional are here!!
+Anything Construction, Carpentry, Electrical, Air-conditioning / Refrigerating, Plumbing Electronics, IT, Painting, Deco, 
+Cleaning Services etc. Just Sign up as Artisan to be in business or Client to enjoy the first Class professional Service we provide.
+ <span className="text-gray-900 dark:text-white font-bold">Connect</span> today and your stressful moments are over with just a click. <span className="text-gray-900 dark:text-white font-bold"> Terms and Conditions</span> applied.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center gap-8">
