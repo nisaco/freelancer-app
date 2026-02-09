@@ -34,6 +34,10 @@ const ArtisanDashboard = () => {
   const [chartData, setChartData] = useState([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
+  // --- WALLET/WITHDRAWAL ADDITIONS ---
+  const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
+  const [transactions, setTransactions] = useState([]); 
+
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
     : 'https://hireme-bk0l.onrender.com/api';
@@ -46,18 +50,20 @@ const ArtisanDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       
-      // NEW: Fetch both Jobs AND User Profile in parallel
-      const [jobRes, profileRes] = await Promise.all([
+      // Fetching Jobs, Profile, and Transactions in parallel
+      const [jobRes, profileRes, transRes] = await Promise.all([
         axios.get(`${API_BASE}/jobs/my-jobs`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${API_BASE}/auth/profile`, { headers: { Authorization: `Bearer ${token}` } }) // Use your profile route
+        axios.get(`${API_BASE}/auth/profile`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_BASE}/transactions/my-transactions`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
       
       const artisanJobs = jobRes.data;
       const freshUser = profileRes.data;
 
       setJobs(artisanJobs);
-      setUser(freshUser); // THIS updates your GHS walletBalance display
-      localStorage.setItem('user', JSON.stringify(freshUser)); // Sync storage
+      setTransactions(transRes.data);
+      setUser(freshUser); 
+      localStorage.setItem('user', JSON.stringify(freshUser)); 
 
       // Chart logic (remains the same)
       const grouped = artisanJobs.reduce((acc, job) => {
@@ -76,6 +82,24 @@ const ArtisanDashboard = () => {
       setLoading(false); 
     }
   };
+
+  const handleWithdrawal = async (withdrawData) => {
+    if (!withdrawData.amount || Number(withdrawData.amount) > user.walletBalance) {
+      return toast.error("Check amount or balance");
+    }
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_BASE}/transactions/request`, withdrawData, { 
+        headers: { Authorization: `Bearer ${token}` } 
+      });
+      toast.success("Payout requested!");
+      setIsWithdrawOpen(false);
+      fetchArtisanData(); // Refresh everything
+    } catch (err) {
+      toast.error("Request failed");
+    }
+  };
+
   const handleFinishJob = async (jobId) => {
     try {
       const token = localStorage.getItem('token');
@@ -100,13 +124,11 @@ const ArtisanDashboard = () => {
       <div className="relative min-h-screen flex flex-col transition-colors duration-700">
         <Navbar />
         
-        {/* LIVING BACKGROUND */}
         <div className="living-bg">
           <div className="orb orb-1" />
           <div className="orb orb-2" />
         </div>
 
-        {/* --- WRAP CONTENT IN MOTION.DIV FOR STAGGERED ENTRANCE --- */}
         <motion.div 
           variants={containerVariants}
           initial="hidden"
@@ -137,7 +159,11 @@ const ArtisanDashboard = () => {
               className="bg-gray-900 dark:bg-blue-600 p-10 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group">
               <p className="text-[10px] font-black text-blue-400 dark:text-blue-200 uppercase tracking-widest mb-2">Available Balance</p>
               <h3 className="text-5xl font-black tracking-tighter italic">GHS {user.walletBalance || 0}</h3>
-              <button className="mt-6 text-[10px] font-black uppercase bg-white text-black px-6 py-3 rounded-2xl hover:bg-black hover:text-white transition-all shadow-lg">Withdraw Funds</button>
+              <button 
+                onClick={() => setIsWithdrawOpen(true)}
+                className="mt-6 text-[10px] font-black uppercase bg-white text-black px-6 py-3 rounded-2xl hover:bg-black hover:text-white transition-all shadow-lg">
+                Withdraw Funds
+              </button>
               <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
             </motion.div>
 
@@ -161,7 +187,7 @@ const ArtisanDashboard = () => {
 
           <motion.h3 variants={itemVariants} className="text-2xl font-black text-gray-900 dark:text-white uppercase italic mb-10 tracking-tighter">Live <span className="text-blue-600">Engagements</span></motion.h3>
           
-          <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-20">
+          <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
             <AnimatePresence>
               {jobs.length > 0 ? jobs.map(job => (
                 <motion.div 
@@ -202,11 +228,38 @@ const ArtisanDashboard = () => {
               )}
             </AnimatePresence>
           </motion.div>
+
+          {/* FINANCIAL LOGS (TRANSACTION HISTORY) */}
+          <motion.h3 variants={itemVariants} className="text-2xl font-black text-gray-900 dark:text-white uppercase italic mb-10 tracking-tighter">Financial <span className="text-blue-600">Logs</span></motion.h3>
+          <motion.div variants={itemVariants} className="space-y-4 mb-20">
+            {transactions.length > 0 ? transactions.map(t => (
+              <div key={t._id} className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl p-6 rounded-[2rem] border border-white/10 flex justify-between items-center transition-all hover:bg-white/60">
+                <div className="flex items-center gap-6">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black shadow-lg ${t.status === 'completed' ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}>
+                    {t.status === 'completed' ? '✓' : '!'}
+                  </div>
+                  <div>
+                    <h4 className="text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tighter">Payout to {t.momoNumber}</h4>
+                    <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1">{t.network} • {new Date(t.createdAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-black text-gray-900 dark:text-white italic">- GHS {t.amount}</p>
+                  <p className={`text-[8px] font-black uppercase tracking-widest mt-1 ${t.status === 'completed' ? 'text-green-500' : 'text-yellow-500'}`}>{t.status}</p>
+                </div>
+              </div>
+            )) : (
+              <div className="py-20 text-center bg-white/10 rounded-[3rem] border border-dashed border-white/20 italic text-gray-400 uppercase font-black text-[10px] tracking-widest">No Payout Requests Found</div>
+            )}
+          </motion.div>
         </motion.div>
 
         <AnimatePresence>
           {isSettingsOpen && (
             <SettingsDrawer user={user} setUser={setUser} onClose={() => setIsSettingsOpen(false)} API_BASE={API_BASE} />
+          )}
+          {isWithdrawOpen && (
+            <WithdrawModal isOpen={isWithdrawOpen} onClose={() => setIsWithdrawOpen(false)} onConfirm={handleWithdrawal} />
           )}
         </AnimatePresence>
       </div>
@@ -214,7 +267,36 @@ const ArtisanDashboard = () => {
   );
 };
 
-// ... SettingsDrawer remains exactly the same ...
+// --- SUB-COMPONENT: WITHDRAW MODAL ---
+const WithdrawModal = ({ isOpen, onClose, onConfirm }) => {
+  const [data, setData] = useState({ amount: '', momoNumber: '', network: 'MTN' });
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-lg p-6">
+      <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white dark:bg-gray-900 w-full max-w-md rounded-[3rem] p-10 shadow-2xl">
+        <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase italic mb-6">Request <span className="text-blue-600">Payout</span></h2>
+        <div className="space-y-4">
+          <input type="number" placeholder="Amount (GHS)" className="w-full p-5 bg-gray-50 dark:bg-black/20 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 dark:text-white font-bold" 
+            onChange={(e) => setData({...data, amount: e.target.value})} />
+          <input type="text" placeholder="MoMo Number" className="w-full p-5 bg-gray-50 dark:bg-black/20 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 dark:text-white font-bold" 
+            onChange={(e) => setData({...data, momoNumber: e.target.value})} />
+          <select className="w-full p-5 bg-gray-50 dark:bg-black/20 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 dark:text-white font-bold"
+            onChange={(e) => setData({...data, network: e.target.value})}>
+            <option value="MTN">MTN MoMo</option>
+            <option value="Telecel">Telecel Cash</option>
+            <option value="AT">AT Money</option>
+          </select>
+          <button onClick={() => onConfirm(data)} className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl mt-4">
+            Request GHS {data.amount || '0'}
+          </button>
+          <button onClick={onClose} className="w-full text-gray-400 text-[10px] font-black uppercase mt-2">Cancel</button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// --- SETTINGS DRAWER ---
 const SettingsDrawer = ({ user, setUser, onClose, API_BASE }) => {
   const [editData, setEditData] = useState({
     phone: user.phone || '',
@@ -227,18 +309,15 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE }) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.put(`${API_BASE}/jobs/${user._id}`, editData, {
+      await axios.put(`${API_BASE}/jobs/${user._id}`, editData, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
       const updatedUser = { ...user, ...editData };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
-      
       toast.success("Identity Synchronized");
       onClose();
     } catch (err) { 
-      console.error(err);
       toast.error("Update failed: Check connection"); 
     }
   };
