@@ -24,20 +24,22 @@ const AdminDashboard = () => {
     pendingArtisans: [],
     recentTransactions: [] 
   });
+  const [payouts, setPayouts] = useState([]); // Added for payouts
   const [loading, setLoading] = useState(true);
 
   const API_BASE = window.location.hostname === 'localhost' 
-    ? 'http://localhost:5000/api/admin' 
-    : 'https://hireme-bk0l.onrender.com/api/admin';
+    ? 'http://localhost:5000/api' 
+    : 'https://hireme-bk0l.onrender.com/api';
 
   useEffect(() => {
     fetchData();
+    fetchPayouts(); // Added payout fetch
   }, []);
 
   const fetchData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_BASE}/stats`, {
+      const res = await axios.get(`${API_BASE}/admin/stats`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setData(res.data);
@@ -48,16 +50,42 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchPayouts = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_BASE}/transactions/admin/all`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPayouts(res.data);
+    } catch (err) {
+      console.error("Payout load failed");
+    }
+  };
+
   const handleVerify = async (id, status) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API_BASE}/verify/${id}`, { status }, {
+      await axios.put(`${API_BASE}/admin/verify/${id}`, { status }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success(`Identity ${status === 'approve' ? 'Verified' : 'Rejected'}`);
       fetchData(); 
     } catch (err) {
       toast.error("Action failed");
+    }
+  };
+
+  const markAsPaid = async (id) => {
+    if (!window.confirm("Confirm MoMo payment sent?")) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_BASE}/transactions/complete/${id}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Payout marked as Paid");
+      fetchPayouts();
+    } catch (err) {
+      toast.error("Payment confirmation failed");
     }
   };
 
@@ -78,7 +106,7 @@ const AdminDashboard = () => {
           variants={containerVariants}
           initial="hidden"
           animate="show"
-          className="max-w-7xl mx-auto px-6 pt-16 md:pt-24 relative z-10 w-full"
+          className="max-w-7xl mx-auto px-6 pt-16 md:pt-32 relative z-10 w-full"
         >
           <motion.div variants={itemVariants} className="mb-16">
             <h1 className="text-5xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tighter uppercase italic leading-none">
@@ -101,7 +129,7 @@ const AdminDashboard = () => {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 pb-24">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 pb-12">
             <motion.div variants={itemVariants} className="lg:col-span-2">
               <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter mb-8">Verification <span className="text-blue-600">Queue</span></h3>
               <div className="space-y-4">
@@ -143,6 +171,46 @@ const AdminDashboard = () => {
               </div>
             </motion.div>
           </div>
+
+          {/* PAYOUT MANAGEMENT SECTION - ADDED */}
+          <motion.div variants={itemVariants} className="pb-24">
+            <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter mb-8">Payout <span className="text-blue-600">Requests</span></h3>
+            <div className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl rounded-[3rem] border border-white/40 shadow-2xl overflow-hidden">
+              <div className="overflow-x-auto no-scrollbar">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-white/10">
+                      <th className="p-8 text-[10px] font-black uppercase text-gray-400">Artisan</th>
+                      <th className="p-8 text-[10px] font-black uppercase text-gray-400">MoMo Details</th>
+                      <th className="p-8 text-[10px] font-black uppercase text-gray-400">Amount</th>
+                      <th className="p-8 text-[10px] font-black uppercase text-gray-400">Status</th>
+                      <th className="p-8 text-[10px] font-black uppercase text-gray-400 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {payouts.map((p) => (
+                      <tr key={p._id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                        <td className="p-8 font-black text-gray-900 dark:text-white uppercase italic">{p.user?.username}</td>
+                        <td className="p-8">
+                          <p className="text-sm font-black text-blue-600 tracking-tighter">{p.momoNumber}</p>
+                          <p className="text-[8px] font-black text-gray-400 uppercase mt-1">{p.network}</p>
+                        </td>
+                        <td className="p-8 text-xl font-black text-gray-900 dark:text-white italic tracking-tighter">GHS {p.amount}</td>
+                        <td className="p-8">
+                          <span className={`text-[8px] font-black uppercase px-3 py-1 rounded-full ${p.status === 'completed' ? 'bg-green-500 text-white' : 'bg-yellow-500 text-black animate-pulse'}`}>{p.status}</span>
+                        </td>
+                        <td className="p-8 text-right">
+                          {p.status === 'pending' && (
+                            <button onClick={() => markAsPaid(p._id)} className="bg-gray-900 dark:bg-white text-white dark:text-black px-6 py-2 rounded-xl font-black uppercase text-[9px] tracking-widest shadow-lg">Confirm Paid</button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </motion.div>
         </motion.div>
       </div>
     </PageTransition>

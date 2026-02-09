@@ -9,5 +9,8 @@ router.get('/my-transactions', protect, getMyTransactions);
 
 // Admin Route (You'll use this later)
 router.put('/complete/:id', protect, completePayout);
+// Add this line to your existing transaction routes
+router.get('/admin/all', protect, getAllPayouts);
+
 
 module.exports = router;
