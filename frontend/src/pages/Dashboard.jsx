@@ -140,7 +140,7 @@ const Dashboard = () => {
   const [view, setView] = useState("Marketplace"); 
   const [filter, setFilter] = useState("All");
   const [selectedArtisan, setSelectedArtisan] = useState(null);
-  const [reviewingJob, setReviewingJob] = useState(null); // State for the job being reviewed
+  const [reviewingJob, setReviewingJob] = useState(null); 
   const [activeTheme, setActiveTheme] = useState({ name: 'All', color: '#2563EB', glow: 'rgba(37, 99, 235, 0.15)' });
 
   const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://hireme-bk0l.onrender.com/api';
@@ -181,12 +181,12 @@ const Dashboard = () => {
       await axios.put(`${API_BASE}/jobs/${reviewingJob._id}`, { 
         status: 'completed', 
         rating: Number(rating),
-        comment: comment
+        reviewComment: comment // Matching your schema's key
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success("Funds Released!");
-      setReviewingJob(null); // Close modal
+      setReviewingJob(null); 
       fetchData(); 
     } catch (err) { toast.error("Release failed."); }
   };
@@ -249,7 +249,7 @@ const Dashboard = () => {
 
                 <motion.div layout className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-20">
                   {filteredArtisans.map((artisan, i) => (
-                    <ArtisanCard key={artisan._id} artisan={artisan} index={i} themeColor={activeTheme.color} />
+                    <ArtisanCard key={artisan._id} artisan={artisan} index={i} themeColor={activeTheme.color} onBook={() => setSelectedArtisan(artisan)} />
                   ))}
                 </motion.div>
               </motion.div>
@@ -313,7 +313,7 @@ const Dashboard = () => {
   );
 };
 
-const ArtisanCard = ({ artisan, index, themeColor }) => {
+const ArtisanCard = ({ artisan, index, themeColor, onBook }) => {
   const navigate = useNavigate();
   const isLarge = index % 5 === 0;
   return (
@@ -342,7 +342,7 @@ const ArtisanCard = ({ artisan, index, themeColor }) => {
             Ask Question
           </button>
           <div 
-            onClick={() => navigate(`/artisan/${artisan._id}`)}
+            onClick={(e) => { e.stopPropagation(); onBook(); }}
             className="w-12 h-12 rounded-[1.2rem] flex items-center justify-center text-white text-lg shadow-2xl transition-all duration-700 group-hover:bg-black group-hover:rotate-45" 
             style={{ backgroundColor: themeColor }}
           >→</div>

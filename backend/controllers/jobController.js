@@ -154,3 +154,26 @@ exports.getArtisanReviews = async (req, res) => {
     res.status(500).json({ message: "Server error fetching reviews" });
   }
 };
+
+// @desc    Complete job and add review
+// @route   PUT /api/jobs/complete/:id
+exports.completeJob = async (req, res) => {
+  try {
+    const { rating, reviewComment } = req.body;
+    const job = await Job.findById(req.params.id);
+
+    if (!job) return res.status(404).json({ message: "Job not found" });
+
+    job.status = 'completed';
+    job.rating = rating;
+    job.reviewComment = reviewComment;
+
+    await job.save();
+
+    // OPTIONAL: Update Artisan's wallet balance here if you're ready for that
+    
+    res.status(200).json({ message: "Job finalized with review" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error finalizing job" });
+  }
+};
