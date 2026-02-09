@@ -30,7 +30,10 @@ const connectDB = async () => {
   }
 };
 connectDB();
-
+// Add this right above your other app.use routes
+app.get('/api/ping', (req, res) => {
+  res.json({ message: "API is alive and listening", time: new Date() });
+});
 // --- API ROUTES ---
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/artisan', require('./routes/artisanRoutes'));
