@@ -9,5 +9,8 @@ const { protect } = require('../middleware/authMiddleware');
 router.post('/register', registerUser);
 router.post('/login', loginUser); 
 router.get('/profile', protect, getProfile); // Now 'protect' and 'getProfile' are recognized
-
+router.post('/onboarding', protect, upload.fields([
+  { name: 'profilePic', maxCount: 1 },
+  { name: 'ghanaCard', maxCount: 1 }
+]), handleOnboarding);
 module.exports = router;

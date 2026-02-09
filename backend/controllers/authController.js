@@ -79,3 +79,16 @@ exports.getProfile = async (req, res) => {
     res.status(500).json({ message: 'Server Error' });
   }
 };
+
+exports.handleOnboarding = async (req, res) => {
+  const user = await User.findById(req.user.id);
+  
+  // profilePic is public
+  if (req.files.profilePic) user.profilePic = req.files.profilePic[0].path;
+  
+  // ghanaCard is private (Admin view only)
+  if (req.files.ghanaCard) user.ghanaCardImage = req.files.ghanaCard[0].path;
+  
+  await user.save();
+  res.status(200).json({ message: "Verification documents submitted!" });
+};

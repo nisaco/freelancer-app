@@ -112,11 +112,15 @@ const ArtisanProfile = () => {
             <div className="w-48 h-48 md:w-64 md:h-64 rounded-[3.5rem] overflow-hidden border-8 border-white dark:border-white/10 shadow-2xl">
               <img src={artisan.profilePic || `https://ui-avatars.com/api/?name=${artisan.username}&background=random`} className="w-full h-full object-cover" alt="" />
             </div>
-            <div className="flex-1 text-center md:text-left">
-              <span className="px-4 py-1.5 bg-blue-600 text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-full mb-6 inline-block">Verified Elite</span>
-              <h1 className="text-5xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tighter uppercase italic leading-none mb-4">{artisan.username}</h1>
-              <p className="text-xl font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">{artisan.category}</p>
-            </div>
+       <div className="flex-1 text-center md:text-left">
+  <div className="flex items-center gap-3 mb-6 justify-center md:justify-start">
+    <h1 className="text-5xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tighter uppercase italic leading-none">
+      {artisan.username}
+    </h1>
+    {artisan.isVerified && <VerifiedBadge size="w-8 h-8" />} {/* THE BADGE */}
+  </div>
+  <p className="text-xl font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">{artisan.category}</p>
+</div>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
