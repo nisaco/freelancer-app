@@ -6,6 +6,13 @@ import { toast } from 'react-toastify';
 import Navbar from '../components/Navbar';
 import PageTransition from '../components/PageTransition';
 
+// --- VERIFIED BADGE COMPONENT (TikTok/LinkedIn Style) ---
+const VerifiedBadge = ({ size = "w-6 h-6" }) => (
+  <svg className={`${size} text-blue-500 fill-current shadow-xl inline-block ml-2`} viewBox="0 0 24 24">
+    <path d="M23.389 10.134a1.001 1.001 0 0 0-.544-.687l-2.074-.912a1 1 0 0 1-.57-.933l.033-2.264a1 1 0 0 0-.74-.974l-2.203-.51a1 1 0 0 1-.74-.74l-.51-2.203a1 1 0 0 0-.974-.74l-2.264.033a1 1 0 0 1-.933-.57l-.912-2.074a1 1 0 0 0-1.687 0l-.912 2.074a1 1 0 0 1-.933.57l-2.264-.033a1 1 0 0 0-.974.74l-.51 2.203a1 1 0 0 1-.74.74l-2.203.51a1 1 0 0 0-.74.974l.033 2.264a1 1 0 0 1-.57.933l-2.074.912a1 1 0 0 0 0 1.687l2.074.912a1 1 0 0 1 .57.933l-.033 2.264a1 1 0 0 0 .74.974l2.203.51a1 1 0 0 1 .74.74l.51 2.203a1 1 0 0 0 .974.74l2.264-.033a1 1 0 0 1 .933.57l.912 2.074a1 1 0 0 0 1.687 0l.912-2.074a1 1 0 0 1 .933-.57l2.264.033a1 1 0 0 0 .974-.74l.51-2.203a1 1 0 0 1 .74-.74l2.203-.51a1 1 0 0 0 .74-.974l-.033-2.264a1 1 0 0 1 .57-.933l2.074-.912a1.001 1.001 0 0 0 .544-.687zM10.293 17.293l-4-4 1.414-1.414L10.293 14.465l7.293-7.293 1.414 1.414-8.707 8.707z" />
+  </svg>
+);
+
 // --- SHARED BOOKING MODAL (Your logic preserved) ---
 const BookingModal = ({ artisan, onClose, themeColor }) => {
   const [bookingData, setBookingData] = useState({ date: '', description: '' });
@@ -43,7 +50,7 @@ const BookingModal = ({ artisan, onClose, themeColor }) => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
-      <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-white dark:bg-gray-900 w-full max-lg rounded-[3rem] p-10 shadow-2xl relative border border-white/20">
+      <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-[3rem] p-10 shadow-2xl relative border border-white/20">
         <button onClick={onClose} className="absolute top-6 right-8 text-2xl font-light text-gray-400">×</button>
         <h3 className="text-2xl font-black mb-6 uppercase italic text-gray-900 dark:text-white">Hire {artisan.username}</h3>
         <div className="space-y-6">
@@ -71,7 +78,7 @@ const ArtisanProfile = () => {
   const [artisan, setArtisan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false); 
-  const [reviews, setReviews] = useState([]); // NEW STATE
+  const [reviews, setReviews] = useState([]);
 
   const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://hireme-bk0l.onrender.com/api';
 
@@ -112,15 +119,15 @@ const ArtisanProfile = () => {
             <div className="w-48 h-48 md:w-64 md:h-64 rounded-[3.5rem] overflow-hidden border-8 border-white dark:border-white/10 shadow-2xl">
               <img src={artisan.profilePic || `https://ui-avatars.com/api/?name=${artisan.username}&background=random`} className="w-full h-full object-cover" alt="" />
             </div>
-       <div className="flex-1 text-center md:text-left">
-  <div className="flex items-center gap-3 mb-6 justify-center md:justify-start">
-    <h1 className="text-5xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tighter uppercase italic leading-none">
-      {artisan.username}
-    </h1>
-    {artisan.isVerified && <VerifiedBadge size="w-8 h-8" />} {/* THE BADGE */}
-  </div>
-  <p className="text-xl font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">{artisan.category}</p>
-</div>
+            <div className="flex-1 text-center md:text-left">
+              <div className="flex items-center gap-3 mb-6 justify-center md:justify-start">
+                <h1 className="text-5xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tighter uppercase italic leading-none">
+                  {artisan.username}
+                </h1>
+                {artisan.isVerified && <VerifiedBadge size="w-10 h-10" />}
+              </div>
+              <p className="text-xl font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">{artisan.category}</p>
+            </div>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
@@ -146,7 +153,7 @@ const ArtisanProfile = () => {
             </div>
           </div>
 
-          {/* NEW: REVIEWS GALLERY (Client View) */}
+          {/* REVIEWS GALLERY */}
           <div className="mt-24">
             <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter mb-10">
               Client <span className="text-blue-600">Testimonials</span>

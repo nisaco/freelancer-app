@@ -4,6 +4,7 @@ const Job = require('../models/Job');
 const User = require('../models/User');
 const { protect } = require('../middleware/authMiddleware');
 const { getAvailableArtisans, createJob } = require('../controllers/jobController');
+const { getArtisanReviews } = require('../controllers/jobController');
 
 // --- 1. MARKETPLACE ---
 router.get('/available', getAvailableArtisans);
@@ -79,6 +80,7 @@ router.put('/:id/finish', protect, async (req, res) => {
   }
 });
 
+
 // --- 7. CLIENT: CONFIRM & RELEASE FUNDS (The 80/20 Escrow Logic) ---
 router.put('/:id/confirm', protect, async (req, res) => {
   try {
@@ -123,5 +125,8 @@ router.put('/:id', protect, async (req, res) => {
         res.status(500).json({ message: "Update failed" });
     }
 });
+
+// Add this route
+router.get('/reviews/:id', getArtisanReviews);
 
 module.exports = router;

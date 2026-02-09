@@ -3,6 +3,7 @@ const User = require('../models/User');
 const ArtisanProfile = require('../models/ArtisanProfile');
 const Notification = require('../models/Notification');
 
+
 // @desc    Get all artisans for the Marketplace (Merge Users and Profiles)
 // @route   GET /api/jobs/available
 exports.getAvailableArtisans = async (req, res) => {
@@ -134,5 +135,21 @@ exports.updateJobStatus = async (req, res) => {
   } catch (error) {
     console.error("Status Update Error:", error);
     res.status(500).json({ message: 'Status update failed' });
+  }
+};
+
+// @desc    Get reviews for a specific artisan
+exports.getArtisanReviews = async (req, res) => {
+  try {
+    const Job = require('../models/Job'); // Ensure Job model is imported
+    const reviews = await Job.find({ 
+      artisan: req.params.id, 
+      status: 'completed',
+      rating: { $exists: true } 
+    }).populate('client', 'username profilePic');
+
+    res.json(reviews);
+  } catch (err) {
+    res.status(500).json({ message: "Server error fetching reviews" });
   }
 };
