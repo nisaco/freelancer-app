@@ -39,6 +39,7 @@ const AnimatedRoutes = () => {
         <Route path="/payment/callback" element={<PaymentCallback />} />
         <Route path="/artisan/:id" element={<ArtisanProfile />} />
         <Route path="/my-bookings" element={<MyBookings />} />
+        <Route path="/messages" element={<Messages />} />
         <Route path="/messages/:recipientId" element={<Messages />} />
         <Route path="/inbox" element={<Inbox />} />
       </Routes>
