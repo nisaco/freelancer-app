@@ -1,5 +1,5 @@
 const Notification = require('../models/Notification');
-
+const Message = require('../models/Message'); // Make sure this file exists!
 // @desc    Get user notifications
 // @route   GET /api/notifications
 exports.getNotifications = async (req, res) => {

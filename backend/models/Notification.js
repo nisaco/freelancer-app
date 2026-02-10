@@ -9,7 +9,7 @@ const notificationSchema = new mongoose.Schema({
     enum: ['NEW_BOOKING', 'PAYMENT_RECEIVED', 'JOB_COMPLETED', 'NEW_MESSAGE'], 
     required: true 
   },
-  content: { type: String, required: true },
+  message: { type: String, required: true },
   relatedId: { type: mongoose.Schema.Types.ObjectId }, // ID of the Job or Message
   isRead: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
