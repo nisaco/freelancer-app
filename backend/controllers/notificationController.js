@@ -12,6 +12,23 @@ exports.getNotifications = async (req, res) => {
     res.status(500).json({ message: 'Error fetching notifications' });
   }
 };
+exports.getUnreadCount = async (req, res) => {
+  try {
+    const notifCount = await Notification.countDocuments({ 
+      recipient: req.user.id, 
+      read: false 
+    });
+    
+    const msgCount = await Message.countDocuments({ 
+      recipient: req.user.id, 
+      isRead: false 
+    });
+
+    res.json({ notifications: notifCount, messages: msgCount });
+  } catch (err) {
+    res.status(500).json({ message: "Error counting unread items" });
+  }
+};
 
 // @desc    Mark notifications as read
 // @route   PUT /api/notifications/read
