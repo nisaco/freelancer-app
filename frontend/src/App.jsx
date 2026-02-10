@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
-import { AnimatePresence } from 'framer-motion'; // <--- FIX 1: Missing Import
+import { AnimatePresence } from 'framer-motion';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Import Pages
@@ -10,7 +10,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ProfileSetup from './pages/ProfileSetup';
 import ArtisanDashboard from './pages/ArtisanDashboard';
-import Welcome from './pages/Welcome'; // Import the new name
+import Welcome from './pages/Welcome';
 import Onboarding from './pages/Onboarding';
 import AdminDashboard from './pages/AdminDashboard';
 import MyBookings from './pages/MyBookings';
@@ -18,7 +18,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ArtisanProfile from './pages/ArtisanProfile';
 import Messages from './pages/Messages';
 import Inbox from './pages/Inbox';
-// <--- FIX 2: Location must be used INSIDE a sub-component or a wrapper
+
 const AnimatedRoutes = () => {
   const location = useLocation();
 
@@ -39,7 +39,6 @@ const AnimatedRoutes = () => {
         <Route path="/payment/callback" element={<PaymentCallback />} />
         <Route path="/artisan/:id" element={<ArtisanProfile />} />
         <Route path="/my-bookings" element={<MyBookings />} />
-        <Route path="/messages" element={<Messages />} />
         <Route path="/messages/:recipientId" element={<Messages />} />
         <Route path="/inbox" element={<Inbox />} />
       </Routes>
