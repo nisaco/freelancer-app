@@ -103,3 +103,24 @@ exports.handleOnboarding = async (req, res) => {
     res.status(500).json({ message: "Server error during onboarding" });
   }
 };
+
+exports.verifyArtisan = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.isVerified = true; // Make sure 'isVerified' exists in your User model
+    await user.save();
+
+    // Trigger a notification for the artisan
+    await Notification.create({
+      recipient: user._id,
+      message: "Congratulations! Your identity has been verified. You now have the verified badge.",
+      type: "SYSTEM"
+    });
+
+    res.json({ message: "Artisan verified successfully", user });
+  } catch (err) {
+    res.status(500).json({ message: "Verification failed" });
+  }
+};

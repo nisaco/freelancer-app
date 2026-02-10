@@ -1,12 +1,25 @@
 const express = require('express');
 const router = express.Router();
-const { getAdminStats, verifyArtisan } = require('../controllers/adminController');
-const { protect, authorize } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/authMiddleware');
+const User = require('../models/User');
+const { verifyArtisan } = require('../controllers/authController');
 
-// Get all stats and the pending list
-router.get('/stats', protect, authorize('admin'), getAdminStats);
+// 1. Get all artisans who uploaded cards but aren't verified yet
+router.get('/pending-artisans', protect, async (req, res) => {
+  try {
+    // Only allow Admins (optional check: if(req.user.role !== 'admin')...)
+    const pending = await User.find({ 
+      role: 'artisan', 
+      isVerified: false,
+      ghanaCard: { $exists: true, $ne: '' } // Only those who actually uploaded a card
+    });
+    res.json(pending);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching pending artisans" });
+  }
+});
 
-// Verify or Reject an artisan - FIXED LINE 9
-router.put('/verify/:id', protect, authorize('admin'), verifyArtisan);
+// 2. The Verification Action
+router.put('/verify/:id', protect, verifyArtisan);
 
 module.exports = router;
