@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { getNotifications, markAsRead } = require('../controllers/notificationController');
-const { protect } = require('../middleware/authMiddleware'); // Ensure they are logged in
+const { protect } = require('../middleware/authMiddleware');
 const { 
   getNotifications, 
   getUnreadCount, 
   markAsRead 
-} = require('../controllers/notificationController');
+} = require('../controllers/notificationController'); // Double check this line!
+
 router.get('/', protect, getNotifications);
 router.get('/unread-count', protect, getUnreadCount);
 router.put('/read', protect, markAsRead);
