@@ -13,32 +13,34 @@ const adminOnly = (req, res, next) => {
   }
 };
 
-// 1. Admin Stats (Deeply Structured to prevent frontend crashes)
-router.get('/stats', protect, async (req, res) => {
+// 1. Admin Stats (Structured to match the Frontend 'data' state)
+router.get('/stats', protect, adminOnly, async (req, res) => {
   try {
-    // 1. Get actual counts from DB
     const totalArtisans = await User.countDocuments({ role: 'artisan' });
     const totalClients = await User.countDocuments({ role: 'client' });
-    const pendingVerifications = await User.countDocuments({ 
+    const totalUsers = await User.countDocuments();
+    
+    // Fetch the actual pending artisans list for the queue
+    const pendingArtisansList = await User.find({ 
       role: 'artisan', 
       isVerified: false,
       ghanaCard: { $exists: true, $ne: '' } 
-    });
+    }).select('-password');
 
-    // 2. Send the FULL structure the frontend expects
+    // Send the exact object structure the frontend "data" state uses
     res.json({
-      totalArtisans,
-      totalClients,
-      pendingVerifications,
-      // We nest these so stats.revenue.totalVolume isn't undefined
-      revenue: {
-        totalVolume: 0,
-        monthlyGrowth: 0
+      stats: {
+        totalArtisans,
+        totalClients,
+        totalUsers,
+        totalVolume: 0, // Placeholder for Network Volume
+        revenue: {
+          totalVolume: 0, // Shield for deeply nested frontend calls
+          monthlyGrowth: 0
+        }
       },
-      transactions: {
-        totalVolume: 0,
-        recent: []
-      }
+      pendingArtisans: pendingArtisansList,
+      recentTransactions: [] // Placeholder to prevent map() errors
     });
   } catch (err) {
     console.error("Admin Stats Error:", err);
@@ -46,7 +48,7 @@ router.get('/stats', protect, async (req, res) => {
   }
 });
 
-// 2. Get all artisans pending verification
+// 2. Get all artisans pending verification (Direct endpoint if needed)
 router.get('/pending-artisans', protect, adminOnly, async (req, res) => {
   try {
     const pending = await User.find({ 
