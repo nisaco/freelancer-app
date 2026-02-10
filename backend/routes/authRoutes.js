@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const User = require('../models/User'); // <--- ADD THIS LINE!
 const { protect } = require('../middleware/authMiddleware');
 
@@ -12,10 +13,16 @@ const {
   handleOnboarding 
 } = require('../controllers/authController');
 
+// --- AUTOMATIC FOLDER CREATION ---
+const uploadDir = 'uploads/';
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 // --- MULTER CONFIGURATION ---
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); 
+    cb(null, uploadDir); // Uses the verified directory
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
