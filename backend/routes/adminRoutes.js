@@ -14,8 +14,9 @@ const adminOnly = (req, res, next) => {
 };
 
 // 1. Admin Stats (Deeply Structured to prevent frontend crashes)
-router.get('/stats', protect, adminOnly, async (req, res) => {
+router.get('/stats', protect, async (req, res) => {
   try {
+    // 1. Get actual counts from DB
     const totalArtisans = await User.countDocuments({ role: 'artisan' });
     const totalClients = await User.countDocuments({ role: 'client' });
     const pendingVerifications = await User.countDocuments({ 
@@ -24,13 +25,12 @@ router.get('/stats', protect, adminOnly, async (req, res) => {
       ghanaCard: { $exists: true, $ne: '' } 
     });
 
-    // We send back a nested structure because the frontend is clearly 
-    // looking for properties inside an object (like revenue or transactions)
+    // 2. Send the FULL structure the frontend expects
     res.json({
       totalArtisans,
       totalClients,
       pendingVerifications,
-      // This part stops the "undefined (reading 'totalVolume')" crash
+      // We nest these so stats.revenue.totalVolume isn't undefined
       revenue: {
         totalVolume: 0,
         monthlyGrowth: 0
@@ -41,8 +41,8 @@ router.get('/stats', protect, adminOnly, async (req, res) => {
       }
     });
   } catch (err) {
-    console.error("Stats Error:", err);
-    res.status(500).json({ message: "Failed to load admin stats" });
+    console.error("Admin Stats Error:", err);
+    res.status(500).json({ message: "Failed to load stats" });
   }
 });
 

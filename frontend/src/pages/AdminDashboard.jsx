@@ -19,12 +19,19 @@ const itemVariants = {
 };
 
 const AdminDashboard = () => {
+  // --- FRONTEND SHIELD: Initial State Structure ---
   const [data, setData] = useState({ 
-    stats: { totalArtisans: 0, totalClients: 0, totalUsers: 0, totalVolume: 0 }, 
+    stats: { 
+      totalArtisans: 0, 
+      totalClients: 0, 
+      totalUsers: 0, 
+      totalVolume: 0,
+      revenue: { totalVolume: 0 } // Nested shield
+    }, 
     pendingArtisans: [],
     recentTransactions: [] 
   });
-  const [payouts, setPayouts] = useState([]); // Added for payouts
+  const [payouts, setPayouts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const API_BASE = window.location.hostname === 'localhost' 
@@ -33,7 +40,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchData();
-    fetchPayouts(); // Added payout fetch
+    fetchPayouts();
   }, []);
 
   const fetchData = async () => {
@@ -42,8 +49,10 @@ const AdminDashboard = () => {
       const res = await axios.get(`${API_BASE}/admin/stats`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setData(res.data);
+      // Safety: Ensure we don't save null/undefined to state
+      if (res.data) setData(res.data);
     } catch (err) {
+      console.error("Stats load error:", err);
       toast.error("Failed to load admin metrics");
     } finally {
       setLoading(false);
@@ -56,7 +65,7 @@ const AdminDashboard = () => {
       const res = await axios.get(`${API_BASE}/transactions/admin/all`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setPayouts(res.data);
+      setPayouts(res.data || []);
     } catch (err) {
       console.error("Payout load failed");
     }
@@ -117,10 +126,11 @@ const AdminDashboard = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
             {[
-              { label: 'Network Volume', value: `GHS ${data.stats.totalVolume || 0}`, color: 'text-blue-600' },
-              { label: 'Artisans', value: data.stats.totalArtisans, color: 'text-gray-900 dark:text-white' },
-              { label: 'Clients', value: data.stats.totalClients, color: 'text-gray-900 dark:text-white' },
-              { label: 'Total Users', value: data.stats.totalUsers, color: 'text-green-500' }
+              // --- FRONTEND SHIELD: Optional Chaining on Values ---
+              { label: 'Network Volume', value: `GHS ${data?.stats?.revenue?.totalVolume || data?.stats?.totalVolume || 0}`, color: 'text-blue-600' },
+              { label: 'Artisans', value: data?.stats?.totalArtisans || 0, color: 'text-gray-900 dark:text-white' },
+              { label: 'Clients', value: data?.stats?.totalClients || 0, color: 'text-gray-900 dark:text-white' },
+              { label: 'Total Users', value: data?.stats?.totalUsers || 0, color: 'text-green-500' }
             ].map((stat) => (
               <motion.div key={stat.label} variants={itemVariants} className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl p-8 rounded-[2.5rem] border border-white/40 dark:border-white/10 shadow-2xl">
                 <p className="text-gray-400 dark:text-gray-500 text-[9px] font-black uppercase tracking-[0.3em] mb-2">{stat.label}</p>
@@ -134,7 +144,8 @@ const AdminDashboard = () => {
               <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter mb-8">Verification <span className="text-blue-600">Queue</span></h3>
               <div className="space-y-4">
                 <AnimatePresence mode="popLayout">
-                  {data.pendingArtisans.map((artisan) => (
+                  {/* SHIELD: Safe mapping with fallback array */}
+                  {(data?.pendingArtisans || []).map((artisan) => (
                     <motion.div key={artisan._id} layout variants={itemVariants} exit={{ opacity: 0, x: 20 }} className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl p-6 rounded-[2rem] border border-white/40 shadow-xl flex justify-between items-center group">
                       <div className="flex items-center gap-6">
                         <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 overflow-hidden border-2 border-white"><img src={`https://ui-avatars.com/api/?name=${artisan.username}&background=random`} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt="" /></div>
@@ -158,7 +169,7 @@ const AdminDashboard = () => {
               <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter mb-8">Live <span className="text-blue-600">Feed</span></h3>
               <div className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl rounded-[3rem] border border-white/40 p-8 shadow-2xl h-[500px] overflow-y-auto no-scrollbar">
                 <div className="space-y-8">
-                  {data.recentTransactions.map((tx, i) => (
+                  {(data?.recentTransactions || []).map((tx, i) => (
                     <div key={i} className="flex gap-4 items-start">
                       <div className="w-2 h-2 rounded-full bg-blue-600 mt-2 shrink-0 animate-pulse" />
                       <div>
@@ -172,7 +183,7 @@ const AdminDashboard = () => {
             </motion.div>
           </div>
 
-          {/* PAYOUT MANAGEMENT SECTION - ADDED */}
+          {/* PAYOUT MANAGEMENT SECTION */}
           <motion.div variants={itemVariants} className="pb-24">
             <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter mb-8">Payout <span className="text-blue-600">Requests</span></h3>
             <div className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl rounded-[3rem] border border-white/40 shadow-2xl overflow-hidden">
@@ -188,7 +199,7 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {payouts.map((p) => (
+                    {(payouts || []).map((p) => (
                       <tr key={p._id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                         <td className="p-8 font-black text-gray-900 dark:text-white uppercase italic">{p.user?.username}</td>
                         <td className="p-8">
