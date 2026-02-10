@@ -2,7 +2,9 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const User = require('../models/User'); // <--- ADD THIS LINE!
 const { protect } = require('../middleware/authMiddleware');
+
 const { 
   registerUser, 
   loginUser, 
@@ -30,7 +32,21 @@ const upload = multer({
     cb(new Error('Only images (jpeg, jpg, png) are allowed!'));
   }
 });
-
+//upload profile picture
+router.post('/update-photo', protect, upload.single('profilePic'), async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (req.file) {
+      // Store the path so it's accessible via the static /uploads route
+      user.profilePic = `uploads/${req.file.filename}`;
+      await user.save();
+      res.status(200).json({ profilePic: user.profilePic });
+    }
+  } catch (err) {
+    console.error(err);// This helps see the REAL error in Render logs
+    res.status(500).json({ message: "Photo update failed" });
+  }
+});
 // --- ROUTES ---
 
 // Public Routes (No 'protect' needed)
@@ -45,19 +61,6 @@ router.post('/onboarding', protect, upload.fields([
   { name: 'ghanaCard', maxCount: 1 }
 ]), handleOnboarding);
 
-// backend/routes/authRoutes.js
-router.post('/update-photo', protect, upload.single('profilePic'), async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (req.file) {
-      // Store the path so it's accessible via the static /uploads route
-      user.profilePic = `uploads/${req.file.filename}`;
-      await user.save();
-      res.status(200).json({ profilePic: user.profilePic });
-    }
-  } catch (err) {
-    res.status(500).json({ message: "Photo update failed" });
-  }
-});
+
 
 module.exports = router;
