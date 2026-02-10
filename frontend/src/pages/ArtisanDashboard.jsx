@@ -33,6 +33,8 @@ const ArtisanDashboard = () => {
   const [user, setUser] = useState({}); // Start with empty, fetch fresh
   const [chartData, setChartData] = useState([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [newPhoto, setNewPhoto] = setNewPhoto(null);
+const [uploading, setUploading] = useState(false);
 
   // --- WALLET/WITHDRAWAL ADDITIONS ---
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
@@ -355,6 +357,51 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE }) => {
       </motion.div>
     </>
   );
+  const handlePhotoUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  setUploading(true);
+  const formData = new FormData();
+  formData.append('profilePic', file);
+
+  try {
+    const token = localStorage.getItem('token');
+    const res = await axios.post(`${API_BASE}/auth/update-photo`, formData, {
+      headers: { 
+        'Content-Type': 'multipart/form-data', 
+        Authorization: `Bearer ${token}` 
+      }
+    });
+    toast.success("Profile Photo Updated!");
+    // Update local state to show the new photo immediately
+    setArtisan({ ...artisan, profilePic: res.data.profilePic });
+  } catch (err) {
+    toast.error("Upload failed");
+  } finally {
+    setUploading(false);
+  }
+};
+
+// --- JSX UI for the Dashboard ---
+<div className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl p-8 rounded-[3rem] border border-white/40 shadow-xl mb-10">
+  <div className="flex items-center gap-6">
+    <div className="relative group w-24 h-24">
+      <img 
+        src={artisan.profilePic || `https://ui-avatars.com/api/?name=${artisan.username}`} 
+        className="w-full h-full rounded-3xl object-cover border-4 border-white shadow-lg" 
+      />
+      <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 cursor-pointer transition-all">
+        <span className="text-white text-[8px] font-black uppercase">Change</span>
+        <input type="file" className="hidden" onChange={handlePhotoUpload} />
+      </label>
+    </div>
+    <div>
+      <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter">Update Identity</h3>
+      <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">This photo is visible to all potential clients</p>
+    </div>
+  </div>
+</div>
 };
 
 export default ArtisanDashboard;

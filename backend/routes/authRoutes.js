@@ -45,4 +45,19 @@ router.post('/onboarding', protect, upload.fields([
   { name: 'ghanaCard', maxCount: 1 }
 ]), handleOnboarding);
 
+// backend/routes/authRoutes.js
+router.post('/update-photo', protect, upload.single('profilePic'), async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (req.file) {
+      // Store the path so it's accessible via the static /uploads route
+      user.profilePic = `uploads/${req.file.filename}`;
+      await user.save();
+      res.status(200).json({ profilePic: user.profilePic });
+    }
+  } catch (err) {
+    res.status(500).json({ message: "Photo update failed" });
+  }
+});
+
 module.exports = router;
