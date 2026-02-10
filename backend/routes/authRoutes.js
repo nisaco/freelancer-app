@@ -1,11 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const User = require('../models/User'); // <--- ADD THIS LINE!
+const User = require('../models/User');
 const { protect } = require('../middleware/authMiddleware');
-
+const { upload } = require('../config/cloudinary'); // Importing your existing code
 const { 
   registerUser, 
   loginUser, 
@@ -13,61 +10,44 @@ const {
   handleOnboarding 
 } = require('../controllers/authController');
 
-// --- AUTOMATIC FOLDER CREATION ---
-const uploadDir = 'uploads/';
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// --- MULTER CONFIGURATION ---
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir); // Uses the verified directory
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  }
-});
-
-const upload = multer({ 
-  storage: storage,
-  fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
-    if (extname && mimetype) return cb(null, true);
-    cb(new Error('Only images (jpeg, jpg, png) are allowed!'));
-  }
-});
-//upload profile picture
-router.post('/update-photo', protect, upload.single('profilePic'), async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (req.file) {
-      // Store the path so it's accessible via the static /uploads route
-      user.profilePic = `uploads/${req.file.filename}`;
-      await user.save();
-      res.status(200).json({ profilePic: user.profilePic });
-    }
-  } catch (err) {
-    console.error(err);// This helps see the REAL error in Render logs
-    res.status(500).json({ message: "Photo update failed" });
-  }
-});
 // --- ROUTES ---
 
-// Public Routes (No 'protect' needed)
-router.post('/register', registerUser);
-router.post('/login', loginUser); // THIS WAS MISSING - FIXES 404
+// 1. Update Profile Photo (Instant Upload)
+// Uses your existing 'upload' middleware which handles Cloudinary
+router.post('/update-photo', protect, upload.single('profilePic'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No image file provided" });
+    }
 
-// Private Routes (Need 'protect')
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // With your cloudinary.js setup, req.file.path is the Cloudinary URL
+    user.profilePic = req.file.path; 
+    await user.save();
+
+    res.status(200).json({ 
+      message: "Profile photo updated", 
+      profilePic: user.profilePic 
+    });
+  } catch (err) {
+    console.error("Cloudinary Error:", err);
+    res.status(500).json({ message: "Cloud upload failed" });
+  }
+});
+
+// 2. Public Routes
+router.post('/register', registerUser);
+router.post('/login', loginUser);
+
+// 3. Private Routes
 router.get('/profile', protect, getProfile);
 
+// 4. Onboarding (Handling multiple files)
 router.post('/onboarding', protect, upload.fields([
   { name: 'profilePic', maxCount: 1 },
   { name: 'ghanaCard', maxCount: 1 }
 ]), handleOnboarding);
-
-
 
 module.exports = router;
