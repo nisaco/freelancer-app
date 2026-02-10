@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
 const User = require('../models/User');
+const Transaction = require('../models/Transaction');
 const { verifyArtisan } = require('../controllers/authController');
 
 // --- SECURITY MIDDLEWARE: ADMIN ONLY ---
@@ -19,7 +20,19 @@ router.get('/stats', protect, adminOnly, async (req, res) => {
     const totalArtisans = await User.countDocuments({ role: 'artisan' });
     const totalClients = await User.countDocuments({ role: 'client' });
     const totalUsers = await User.countDocuments();
-    
+ 
+    // 2. Calculate Network Volume (Sum of all successful transactions)
+    const volumeData = await Transaction.aggregate([
+      { $match: { status: 'completed' } }, 
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+    const totalVolume = volumeData.length > 0 ? volumeData[0].total : 0;
+
+    // 3. Fetch Recent Transactions for the Live Feed
+    const recentTransactions = await Transaction.find()
+      .sort({ createdAt: -1 })
+      .limit(10);
+
     // Fetch the actual pending artisans list for the queue
     const pendingArtisansList = await User.find({ 
       role: 'artisan', 
@@ -27,20 +40,20 @@ router.get('/stats', protect, adminOnly, async (req, res) => {
       ghanaCard: { $exists: true, $ne: '' } 
     }).select('-password');
 
-    // Send the exact object structure the frontend "data" state uses
+    // --- FIX: SEND THE ACTUAL VARIABLES INSTEAD OF 0 AND [] ---
     res.json({
       stats: {
         totalArtisans,
         totalClients,
         totalUsers,
-        totalVolume: 0, // Placeholder for Network Volume
+        totalVolume: totalVolume, // Was 0
         revenue: {
-          totalVolume: 0, // Shield for deeply nested frontend calls
+          totalVolume: totalVolume, // Was 0
           monthlyGrowth: 0
         }
       },
       pendingArtisans: pendingArtisansList,
-      recentTransactions: [] // Placeholder to prevent map() errors
+      recentTransactions: recentTransactions // Was []
     });
   } catch (err) {
     console.error("Admin Stats Error:", err);
@@ -48,7 +61,7 @@ router.get('/stats', protect, adminOnly, async (req, res) => {
   }
 });
 
-// 2. Get all artisans pending verification (Direct endpoint if needed)
+// 4. Get all artisans pending verification
 router.get('/pending-artisans', protect, adminOnly, async (req, res) => {
   try {
     const pending = await User.find({ 
@@ -56,7 +69,6 @@ router.get('/pending-artisans', protect, adminOnly, async (req, res) => {
       isVerified: false,
       ghanaCard: { $exists: true, $ne: '' } 
     }).select('-password');
-
     res.json(pending);
   } catch (err) {
     console.error("Admin Fetch Error:", err);
@@ -64,7 +76,7 @@ router.get('/pending-artisans', protect, adminOnly, async (req, res) => {
   }
 });
 
-// 3. The Verification Action
+// 5. The Verification Action
 router.put('/verify/:id', protect, adminOnly, verifyArtisan);
 
 module.exports = router;
