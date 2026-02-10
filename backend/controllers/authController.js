@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Notification = require('../models/Notification'); // <--- CRITICAL: ADD THIS
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -43,7 +44,6 @@ exports.loginUser = async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
 
-    // Important: compare against user.password
     if (user && (await bcrypt.compare(password, user.password))) {
       res.json({
         _id: user.id,
@@ -55,7 +55,7 @@ exports.loginUser = async (req, res) => {
         price: user.price,
         location: user.location,
         isVerified: user.isVerified,
-        profilePic: user.profilePic, // Send this back too!
+        profilePic: user.profilePic,
         token: generateToken(user._id),
       });
     } else {
@@ -77,26 +77,29 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// @desc    Handle File Uploads for Verification
+// @desc    Handle File Uploads for Verification (Cloudinary Version)
 exports.handleOnboarding = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Multer saves files to 'uploads/' and puts the path in req.files
-    if (req.files && req.files['profilePic']) {
-      // Store the path so the frontend can display the image
-      user.profilePic = `uploads/${req.files['profilePic'][0].filename}`;
-    }
-    
-    if (req.files && req.files['ghanaCard']) {
-      user.ghanaCardImage = `uploads/${req.files['ghanaCard'][0].filename}`;
+    // Since we are using CloudinaryStorage in authRoutes, 
+    // req.files['field'][0].path is the actual URL.
+    if (req.files) {
+      if (req.files['profilePic']) {
+        user.profilePic = req.files['profilePic'][0].path; 
+      }
+      
+      if (req.files['ghanaCard']) {
+        user.ghanaCard = req.files['ghanaCard'][0].path; 
+      }
     }
 
     await user.save();
     res.status(200).json({ 
       message: "Documents uploaded. Verification pending.",
-      profilePic: user.profilePic 
+      profilePic: user.profilePic,
+      ghanaCard: user.ghanaCard 
     });
   } catch (error) {
     console.error(error);
@@ -104,23 +107,26 @@ exports.handleOnboarding = async (req, res) => {
   }
 };
 
+// @desc    Verify an Artisan
 exports.verifyArtisan = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    user.isVerified = true; // Make sure 'isVerified' exists in your User model
+    user.isVerified = true; 
     await user.save();
 
     // Trigger a notification for the artisan
+    // This will now work because we imported the Notification model
     await Notification.create({
       recipient: user._id,
       message: "Congratulations! Your identity has been verified. You now have the verified badge.",
-      type: "SYSTEM"
+      type: "JOB_COMPLETED" // Or add a 'SYSTEM' type to your model enum
     });
 
     res.json({ message: "Artisan verified successfully", user });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Verification failed" });
   }
 };
