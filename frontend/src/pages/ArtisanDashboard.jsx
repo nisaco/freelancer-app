@@ -33,8 +33,8 @@ const ArtisanDashboard = () => {
   const [user, setUser] = useState({}); // Start with empty, fetch fresh
   const [chartData, setChartData] = useState([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [newPhoto, setNewPhoto] = setNewPhoto(null);
-const [uploading, setUploading] = useState(false);
+  const [newPhoto, setNewPhoto] = useState(null); // FIXED BUG HERE
+  const [uploading, setUploading] = useState(false);
 
   // --- WALLET/WITHDRAWAL ADDITIONS ---
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
@@ -52,7 +52,6 @@ const [uploading, setUploading] = useState(false);
     try {
       const token = localStorage.getItem('token');
       
-      // Fetching Jobs, Profile, and Transactions in parallel
       const [jobRes, profileRes, transRes] = await Promise.all([
         axios.get(`${API_BASE}/jobs/my-jobs`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API_BASE}/auth/profile`, { headers: { Authorization: `Bearer ${token}` } }),
@@ -67,7 +66,6 @@ const [uploading, setUploading] = useState(false);
       setUser(freshUser); 
       localStorage.setItem('user', JSON.stringify(freshUser)); 
 
-      // Chart logic (remains the same)
       const grouped = artisanJobs.reduce((acc, job) => {
         if (job.status === 'completed') {
           const date = new Date(job.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -96,7 +94,7 @@ const [uploading, setUploading] = useState(false);
       });
       toast.success("Payout requested!");
       setIsWithdrawOpen(false);
-      fetchArtisanData(); // Refresh everything
+      fetchArtisanData(); 
     } catch (err) {
       toast.error("Request failed");
     }
@@ -112,6 +110,31 @@ const [uploading, setUploading] = useState(false);
       fetchArtisanData(); 
     } catch (err) {
       toast.error("Failed to update status");
+    }
+  };
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('profilePic', file);
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.post(`${API_BASE}/auth/update-photo`, formData, {
+        headers: { 
+          'Content-Type': 'multipart/form-data', 
+          Authorization: `Bearer ${token}` 
+        }
+      });
+      toast.success("Profile Photo Updated!");
+      setUser({ ...user, profilePic: res.data.profilePic });
+    } catch (err) {
+      toast.error("Upload failed");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -231,7 +254,6 @@ const [uploading, setUploading] = useState(false);
             </AnimatePresence>
           </motion.div>
 
-          {/* FINANCIAL LOGS (TRANSACTION HISTORY) */}
           <motion.h3 variants={itemVariants} className="text-2xl font-black text-gray-900 dark:text-white uppercase italic mb-10 tracking-tighter">Financial <span className="text-blue-600">Logs</span></motion.h3>
           <motion.div variants={itemVariants} className="space-y-4 mb-20">
             {transactions.length > 0 ? transactions.map(t => (
@@ -258,7 +280,14 @@ const [uploading, setUploading] = useState(false);
 
         <AnimatePresence>
           {isSettingsOpen && (
-            <SettingsDrawer user={user} setUser={setUser} onClose={() => setIsSettingsOpen(false)} API_BASE={API_BASE} />
+            <SettingsDrawer 
+              user={user} 
+              setUser={setUser} 
+              onClose={() => setIsSettingsOpen(false)} 
+              API_BASE={API_BASE} 
+              handlePhotoUpload={handlePhotoUpload}
+              uploading={uploading}
+            />
           )}
           {isWithdrawOpen && (
             <WithdrawModal isOpen={isWithdrawOpen} onClose={() => setIsWithdrawOpen(false)} onConfirm={handleWithdrawal} />
@@ -269,7 +298,6 @@ const [uploading, setUploading] = useState(false);
   );
 };
 
-// --- SUB-COMPONENT: WITHDRAW MODAL ---
 const WithdrawModal = ({ isOpen, onClose, onConfirm }) => {
   const [data, setData] = useState({ amount: '', momoNumber: '', network: 'MTN' });
   if (!isOpen) return null;
@@ -298,8 +326,7 @@ const WithdrawModal = ({ isOpen, onClose, onConfirm }) => {
   );
 };
 
-// --- SETTINGS DRAWER ---
-const SettingsDrawer = ({ user, setUser, onClose, API_BASE }) => {
+const SettingsDrawer = ({ user, setUser, onClose, API_BASE, handlePhotoUpload, uploading }) => {
   const [editData, setEditData] = useState({
     phone: user.phone || '',
     bio: user.bio || '',
@@ -311,7 +338,7 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE }) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API_BASE}/jobs/${user._id}`, editData, {
+      await axios.put(`${API_BASE}/auth/profile`, editData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const updatedUser = { ...user, ...editData };
@@ -335,6 +362,26 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE }) => {
           <h2 className="text-4xl font-black uppercase italic tracking-tighter text-gray-900 dark:text-white">Profile <span className="text-blue-600">Setup</span></h2>
           <button onClick={onClose} className="text-gray-300 hover:text-black dark:hover:text-white text-4xl font-light">×</button>
         </div>
+
+        <div className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl p-8 rounded-[3rem] border border-white/40 shadow-xl mb-10">
+          <div className="flex items-center gap-6">
+            <div className="relative group w-24 h-24">
+              <img 
+                src={user.profilePic ? (user.profilePic.startsWith('http') ? user.profilePic : `https://hireme-bk0l.onrender.com/${user.profilePic}`) : `https://ui-avatars.com/api/?name=${user.username}`} 
+                className="w-full h-full rounded-3xl object-cover border-4 border-white shadow-lg" 
+              />
+              <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 cursor-pointer transition-all">
+                <span className="text-white text-[8px] font-black uppercase">{uploading ? "..." : "Change"}</span>
+                <input type="file" className="hidden" onChange={handlePhotoUpload} />
+              </label>
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter">Update Identity</h3>
+              <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">Visible to all clients</p>
+            </div>
+          </div>
+        </div>
+
         <form onSubmit={handleUpdate} className="space-y-8">
           <div className="space-y-2">
             <label className="text-[9px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">Phone Identity</label>
@@ -357,51 +404,6 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE }) => {
       </motion.div>
     </>
   );
-  const handlePhotoUpload = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  setUploading(true);
-  const formData = new FormData();
-  formData.append('profilePic', file);
-
-  try {
-    const token = localStorage.getItem('token');
-    const res = await axios.post(`${API_BASE}/auth/update-photo`, formData, {
-      headers: { 
-        'Content-Type': 'multipart/form-data', 
-        Authorization: `Bearer ${token}` 
-      }
-    });
-    toast.success("Profile Photo Updated!");
-    // Update local state to show the new photo immediately
-    setArtisan({ ...artisan, profilePic: res.data.profilePic });
-  } catch (err) {
-    toast.error("Upload failed");
-  } finally {
-    setUploading(false);
-  }
-};
-
-// --- JSX UI for the Dashboard ---
-<div className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl p-8 rounded-[3rem] border border-white/40 shadow-xl mb-10">
-  <div className="flex items-center gap-6">
-    <div className="relative group w-24 h-24">
-      <img 
-        src={artisan.profilePic || `https://ui-avatars.com/api/?name=${artisan.username}`} 
-        className="w-full h-full rounded-3xl object-cover border-4 border-white shadow-lg" 
-      />
-      <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 cursor-pointer transition-all">
-        <span className="text-white text-[8px] font-black uppercase">Change</span>
-        <input type="file" className="hidden" onChange={handlePhotoUpload} />
-      </label>
-    </div>
-    <div>
-      <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter">Update Identity</h3>
-      <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">This photo is visible to all potential clients</p>
-    </div>
-  </div>
-</div>
 };
 
 export default ArtisanDashboard;
