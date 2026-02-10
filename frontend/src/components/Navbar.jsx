@@ -7,6 +7,8 @@ const Navbar = () => {
   const [notifications, setNotifications] = useState([]);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [unreadNotifs, setUnreadNotifs] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -20,11 +22,16 @@ const Navbar = () => {
   useEffect(() => {
     if (token) {
       fetchNotifications();
-      // Poll for new notifications every 30 seconds
-      const interval = setInterval(fetchNotifications, 30000);
+      fetchUnreadCounts(); // NEW: Initial fetch for badge counts
+      
+      // Poll for new data every 30 seconds
+      const interval = setInterval(() => {
+        fetchNotifications();
+        fetchUnreadCounts();
+      }, 30000);
       return () => clearInterval(interval);
     }
-  }, [token]);
+  }, [token, location.pathname]); // Re-fetch on route change
 
   const fetchNotifications = async () => {
     try {
@@ -37,12 +44,26 @@ const Navbar = () => {
     }
   };
 
+  // --- NEW: FETCH UNREAD COUNTS LOGIC ---
+  const fetchUnreadCounts = async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/notifications/unread-count`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUnreadNotifs(res.data.notifications || 0);
+      setUnreadMessages(res.data.messages || 0);
+    } catch (err) {
+      console.error("Count Error:", err);
+    }
+  };
+
   const markAllAsRead = async () => {
     try {
       await axios.put(`${API_BASE}/notifications/read`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(notifications.map(n => ({ ...n, read: true })));
+      setUnreadNotifs(0); // Instantly clear the badge
     } catch (err) {
       console.error("Mark read failed");
     }
@@ -54,6 +75,7 @@ const Navbar = () => {
     navigate('/login');
   };
 
+  // Derived count for notifications
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
@@ -73,15 +95,20 @@ const Navbar = () => {
           </Link>
         </div>
 
-        {/* MESSAGE HUB ICON - NEW */}
+        {/* MESSAGE HUB ICON - UPDATED WITH UNREAD BADGE */}
         <Link 
-          to="/inbox" 
+          to="/messages" 
           className="p-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors relative"
           title="Messages"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
           </svg>
+          {unreadMessages > 0 && (
+            <span className="absolute top-1 right-1 w-4 h-4 bg-blue-600 text-white text-[8px] font-black flex items-center justify-center rounded-full shadow-lg border-2 border-white dark:border-gray-900">
+              {unreadMessages}
+            </span>
+          )}
         </Link>
 
         {/* NOTIFICATION BELL */}
@@ -97,9 +124,9 @@ const Navbar = () => {
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
-            {unreadCount > 0 && (
+            {(unreadCount > 0 || unreadNotifs > 0) && (
               <span className="absolute top-1 right-1 w-4 h-4 bg-red-600 text-white text-[8px] font-black flex items-center justify-center rounded-full shadow-lg border-2 border-white dark:border-gray-900">
-                {unreadCount}
+                {unreadNotifs || unreadCount}
               </span>
             )}
           </button>
@@ -115,13 +142,13 @@ const Navbar = () => {
               >
                 <div className="flex justify-between items-center mb-6">
                   <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Activity Feed</h4>
-                  {unreadCount > 0 && <span className="text-[8px] font-black text-blue-600 uppercase">New Alerts</span>}
+                  {(unreadCount > 0 || unreadNotifs > 0) && <span className="text-[8px] font-black text-blue-600 uppercase">New Alerts</span>}
                 </div>
 
                 <div className="max-h-80 overflow-y-auto no-scrollbar space-y-3">
                   {notifications.length > 0 ? notifications.map((n) => (
                     <div key={n._id} className={`p-4 rounded-2xl border transition-all ${n.read ? 'bg-gray-50/50 dark:bg-white/5 border-transparent' : 'bg-blue-50/50 dark:bg-blue-600/10 border-blue-100 dark:border-blue-900/30'}`}>
-                      <p className="text-[11px] font-bold text-gray-800 dark:text-gray-200 leading-relaxed">{n.message}</p>
+                      <p className="text-[11px] font-bold text-gray-800 dark:text-gray-200 leading-relaxed">{n.message || n.content}</p>
                       <p className="text-[8px] font-black text-blue-500 mt-2 uppercase tracking-tighter">
                         {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
