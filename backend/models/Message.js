@@ -1,12 +1,12 @@
+// models/Message.js
 const mongoose = require('mongoose');
 
-const MessageSchema = new mongoose.Schema({
+const messageSchema = new mongoose.Schema({
   sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   recipient: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  jobId: { type: mongoose.Schema.Types.ObjectId, ref: 'Job' }, // Optional: Link to a specific job
-  text: { type: String, required: true },
-  read: { type: Boolean, default: false },
+  content: { type: String, required: true },
+  isRead: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('Message', MessageSchema);
+module.exports = mongoose.model('Message', messageSchema);
