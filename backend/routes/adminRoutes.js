@@ -13,7 +13,7 @@ const adminOnly = (req, res, next) => {
   }
 };
 
-// 1. Admin Stats (Moved up to prevent path conflicts)
+// 1. Admin Stats (Deeply Structured to prevent frontend crashes)
 router.get('/stats', protect, adminOnly, async (req, res) => {
   try {
     const totalArtisans = await User.countDocuments({ role: 'artisan' });
@@ -24,13 +24,21 @@ router.get('/stats', protect, adminOnly, async (req, res) => {
       ghanaCard: { $exists: true, $ne: '' } 
     });
 
-    // We provide these fields as defaults to prevent frontend "undefined" crashes
+    // We send back a nested structure because the frontend is clearly 
+    // looking for properties inside an object (like revenue or transactions)
     res.json({
       totalArtisans,
       totalClients,
       pendingVerifications,
-      totalVolume: 0, // Placeholder for revenue
-      recentTransactions: [] // Placeholder for charts/lists
+      // This part stops the "undefined (reading 'totalVolume')" crash
+      revenue: {
+        totalVolume: 0,
+        monthlyGrowth: 0
+      },
+      transactions: {
+        totalVolume: 0,
+        recent: []
+      }
     });
   } catch (err) {
     console.error("Stats Error:", err);
