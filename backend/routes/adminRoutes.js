@@ -30,6 +30,29 @@ router.get('/pending-artisans', protect, adminOnly, async (req, res) => {
     res.status(500).json({ message: "Error fetching pending artisans" });
   }
 });
+// Add this route to backend/routes/adminRoutes.js
+
+router.get('/stats', protect, adminOnly, async (req, res) => {
+  try {
+    const totalArtisans = await User.countDocuments({ role: 'artisan' });
+    const pendingVerifications = await User.countDocuments({ 
+      role: 'artisan', 
+      isVerified: false,
+      ghanaCard: { $exists: true, $ne: '' } 
+    });
+    const totalClients = await User.countDocuments({ role: 'client' });
+
+    // You can add more stats here later (like total revenue)
+    res.json({
+      totalArtisans,
+      pendingVerifications,
+      totalClients
+    });
+  } catch (err) {
+    console.error("Stats Error:", err);
+    res.status(500).json({ message: "Failed to load admin stats" });
+  }
+});
 
 // 2. The Verification Action
 router.put('/verify/:id', protect, adminOnly, verifyArtisan);
