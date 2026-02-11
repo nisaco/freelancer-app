@@ -7,6 +7,15 @@ exports.getMessages = async (req, res) => {
     const { recipientId } = req.params;
     const senderId = req.user.id;
 
+    await Message.updateMany(
+      {
+        sender: recipientId,
+        recipient: senderId,
+        isRead: false
+      },
+      { $set: { isRead: true } }
+    );
+
     const messages = await Message.find({
       $or: [
         { sender: senderId, recipient: recipientId },
@@ -24,13 +33,18 @@ exports.getMessages = async (req, res) => {
 // @route   POST /api/messages
 exports.sendMessage = async (req, res) => {
   try {
-    const { recipient, text } = req.body;
+    const { recipient, text, content } = req.body;
     const sender = req.user.id;
+    const messageContent = (content || text || '').trim();
+
+    if (!recipient || !messageContent) {
+      return res.status(400).json({ message: 'Recipient and content are required' });
+    }
 
     const newMessage = await Message.create({
       sender,
       recipient,
-      text
+      content: messageContent
     });
 
     res.status(201).json(newMessage);
@@ -57,7 +71,7 @@ exports.getInbox = async (req, res) => {
         seen.add(otherUser._id.toString());
         conversations.push({
           otherUser,
-          lastMessage: msg.text,
+          lastMessage: msg.content || msg.text || '',
           createdAt: msg.createdAt
         });
       }

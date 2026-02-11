@@ -118,7 +118,8 @@ const Messages = () => {
             {/* MESSAGE STREAM */}
             <div className="flex-1 overflow-y-auto p-8 space-y-6 no-scrollbar bg-white/5">
               {messages.length > 0 ? messages.map((msg, i) => {
-                const isMe = msg.sender === user?._id;
+                const senderId = typeof msg.sender === 'string' ? msg.sender : msg.sender?._id;
+                const isMe = senderId === user?._id;
                 return (
                   <motion.div 
                     initial={{ opacity: 0, y: 10, x: isMe ? 10 : -10 }}
@@ -131,7 +132,7 @@ const Messages = () => {
                       ? 'bg-blue-600 text-white rounded-tr-none' 
                       : 'bg-white dark:bg-gray-800 dark:text-white rounded-tl-none border border-white/20'
                     }`}>
-                      <p className="text-[13px] font-bold leading-relaxed">{msg.text}</p>
+                      <p className="text-[13px] font-bold leading-relaxed">{msg.content || msg.text}</p>
                       <p className={`text-[8px] mt-3 font-black uppercase opacity-40 tracking-widest ${isMe ? 'text-right' : 'text-left'}`}>
                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
