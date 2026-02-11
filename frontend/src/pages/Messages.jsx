@@ -59,7 +59,7 @@ const Messages = () => {
 
     const messageData = {
       recipient: recipientId,
-      text: newMessage
+      content: newMessage
     };
 
     try {

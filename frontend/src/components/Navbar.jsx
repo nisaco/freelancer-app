@@ -97,7 +97,7 @@ const Navbar = () => {
 
         {/* MESSAGE HUB ICON - UPDATED WITH UNREAD BADGE */}
         <Link 
-          to="/messages" 
+          to="/inbox" 
           className="p-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors relative"
           title="Messages"
         >

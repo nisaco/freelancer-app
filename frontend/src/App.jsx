@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import { AnimatePresence } from 'framer-motion';
 import 'react-toastify/dist/ReactToastify.css';
@@ -39,8 +39,12 @@ const AnimatedRoutes = () => {
         <Route path="/payment/callback" element={<PaymentCallback />} />
         <Route path="/artisan/:id" element={<ArtisanProfile />} />
         <Route path="/my-bookings" element={<MyBookings />} />
-        <Route path="/messages/:recipientId" element={<Messages />} />
-        <Route path="/inbox" element={<Inbox />} />
+        <Route
+          path="/messages"
+          element={<ProtectedRoute><Navigate to="/inbox" replace /></ProtectedRoute>}
+        />
+        <Route path="/messages/:recipientId" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+        <Route path="/inbox" element={<ProtectedRoute><Inbox /></ProtectedRoute>} />
       </Routes>
     </AnimatePresence>
   );
