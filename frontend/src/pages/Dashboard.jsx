@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
@@ -29,7 +29,7 @@ const ReviewModal = ({ isOpen, onClose, onConfirm, artisanName }) => {
               onClick={() => setRating(star)}
               className={`text-4xl transition-all ${star <= rating ? 'text-yellow-400 scale-110' : 'text-gray-300 dark:text-gray-700'}`}
             >
-              ★
+              â˜…
             </button>
           ))}
         </div>
@@ -129,7 +129,7 @@ const BookingModal = ({ artisan, onClose, themeColor }) => {
       const token = localStorage.getItem('token');
       const API_BASE = window.location.hostname === 'localhost' 
         ? 'http://localhost:5000/api' 
-        : 'https://hireme-bk0l.onrender.com/api';
+        : 'https://linkup-bk0l.onrender.com/api';
 
       const res = await axios.post(`${API_BASE}/payment/initialize`, {
         artisanId: artisan._id,
@@ -160,7 +160,7 @@ const BookingModal = ({ artisan, onClose, themeColor }) => {
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
         className="bg-white/90 dark:bg-[#1E293B]/90 backdrop-blur-2xl w-full md:max-w-4xl rounded-t-[3rem] md:rounded-[3.5rem] overflow-hidden shadow-2xl flex flex-col md:flex-row relative border-t md:border border-white/40 max-h-[95vh]"
       >
-        <button onClick={onClose} className="absolute top-6 right-8 text-3xl font-light text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white z-50 transition-colors">×</button>
+        <button onClick={onClose} className="absolute top-6 right-8 text-3xl font-light text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white z-50 transition-colors">Ã—</button>
         <div className="flex flex-col md:flex-row w-full overflow-y-auto no-scrollbar">
           <div className="md:w-5/12 p-8 md:p-12 bg-gray-50/50 dark:bg-black/20 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-gray-100 dark:border-white/5">
             <div className="w-24 h-24 md:w-40 md:h-40 rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden mb-6 shadow-2xl border-4 border-white dark:border-white/10">
@@ -207,15 +207,15 @@ const Dashboard = () => {
   const [disputeJob, setDisputeJob] = useState(null);
   const [activeTheme, setActiveTheme] = useState({ name: 'All', color: '#2563EB', glow: 'rgba(37, 99, 235, 0.15)' });
 
-  const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://hireme-bk0l.onrender.com/api';
+  const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://linkup-bk0l.onrender.com/api';
 
   const categories = [
-    { name: 'All', icon: '✦', color: '#2563EB' },
-    { name: 'Electrician', icon: '⚡', color: '#EAB308' },
-    { name: 'Plumber', icon: '💧', color: '#0EA5E9' },
-    { name: 'Carpenter', icon: '🪵', color: '#78716C' },
-    { name: 'Painter', icon: '🎨', color: '#EC4899' },
-    { name: 'Mason', icon: '🧱', color: '#F87171' }
+    { name: 'All', icon: 'âœ¦', color: '#2563EB' },
+    { name: 'Electrician', icon: 'âš¡', color: '#EAB308' },
+    { name: 'Plumber', icon: 'ðŸ’§', color: '#0EA5E9' },
+    { name: 'Carpenter', icon: 'ðŸªµ', color: '#78716C' },
+    { name: 'Painter', icon: 'ðŸŽ¨', color: '#EC4899' },
+    { name: 'Mason', icon: 'ðŸ§±', color: '#F87171' }
   ];
 
   useEffect(() => {
@@ -351,7 +351,7 @@ const Dashboard = () => {
                     <input type="text" placeholder="Search for professionals..." className="w-full px-5 py-5 outline-none font-bold text-gray-700 dark:text-white bg-transparent placeholder:text-gray-300" onChange={(e) => setSearch(e.target.value)} />
                   </div>
                   <div className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl rounded-[2.5rem] shadow-2xl p-2 flex items-center border border-white/40 dark:border-white/10 transition-all focus-within:border-blue-500/50 min-w-0">
-                    <div className="pl-6 text-gray-400">📍</div>
+                    <div className="pl-6 text-gray-400">ðŸ“</div>
                     <input
                       type="text"
                       value={locationFilter}
@@ -524,7 +524,7 @@ const ArtisanCard = ({ artisan, index, themeColor, onBook }) => {
             onClick={(e) => { e.stopPropagation(); onBook(); }}
             className="w-12 h-12 rounded-[1.2rem] flex items-center justify-center text-white text-lg shadow-2xl transition-all duration-700 group-hover:bg-black group-hover:rotate-45" 
             style={{ backgroundColor: themeColor }}
-          >→</div>
+          >â†’</div>
         </div>
       </div>
     </motion.div>
@@ -532,3 +532,4 @@ const ArtisanCard = ({ artisan, index, themeColor, onBook }) => {
 };
 
 export default Dashboard;
+

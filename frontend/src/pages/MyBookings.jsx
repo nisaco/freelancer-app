@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
@@ -15,7 +15,7 @@ const MyBookings = () => {
         const token = localStorage.getItem('token');
         const API_BASE = window.location.hostname === 'localhost' 
           ? 'http://localhost:5000/api' 
-          : 'https://hireme-bk0l.onrender.com/api';
+          : 'https://linkup-bk0l.onrender.com/api';
         
         const res = await axios.get(`${API_BASE}/jobs/client`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -73,7 +73,7 @@ const BookingTicket = ({ booking }) => {
     
     // Clean phone number (remove spaces/special chars)
     const cleanPhone = phone.replace(/\D/g, '');
-    const message = encodeURIComponent(`Hello ${name}, I just booked your service on HireMe for ${booking.date}.`);
+    const message = encodeURIComponent(`Hello ${name}, I just booked your service on LinkUp for ${booking.date}.`);
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
   };
 // Add this right above the return statement in BookingTicket

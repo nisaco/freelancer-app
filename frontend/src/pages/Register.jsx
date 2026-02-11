@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -36,7 +36,7 @@ const Register = () => {
       // KEEPING YOUR LOGIC: Dynamic API URL switching
       const API_URL = window.location.hostname === 'localhost' 
         ? 'http://localhost:5000/api/auth/register' 
-        : 'https://hireme-bk0l.onrender.com/api/auth/register';
+        : 'https://linkup-bk0l.onrender.com/api/auth/register';
 
       const res = await axios.post(API_URL, formData);
       
@@ -78,7 +78,7 @@ const Register = () => {
             
             <div className="text-center mb-10">
               <h2 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter uppercase italic">
-                JOIN <span className="text-blue-600">HIREME</span>
+                JOIN <span className="text-blue-600">LINKUP</span>
               </h2>
               <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.3em] mt-2">
                 Start your professional journey
@@ -138,7 +138,7 @@ const Register = () => {
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   className="w-full mt-2 px-6 py-4 bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/5 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-bold text-gray-900 dark:text-white placeholder:text-gray-300"
                   value={password}
                   onChange={onChange}
@@ -202,3 +202,4 @@ const Register = () => {
 };
 
 export default Register;
+

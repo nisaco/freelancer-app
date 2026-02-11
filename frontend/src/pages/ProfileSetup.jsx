@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -52,7 +52,7 @@ const ProfileSetup = () => {
       const token = localStorage.getItem('token');
       const API_URL = window.location.hostname === 'localhost' 
         ? 'http://localhost:5000/api/upload/profile-setup' 
-        : 'https://hireme-bk0l.onrender.com/api/upload/profile-setup';
+        : 'https://linkup-bk0l.onrender.com/api/upload/profile-setup';
 
       const response = await axios.put(API_URL, payload, {
         headers: { 
@@ -153,3 +153,4 @@ const ProfileSetup = () => {
 };
 
 export default ProfileSetup;
+

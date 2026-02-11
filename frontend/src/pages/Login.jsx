@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -18,7 +18,7 @@ const Login = () => {
       // KEEPING YOUR LOGIC: Localhost vs Render switch
       const API_URL = window.location.hostname === 'localhost' 
         ? 'http://localhost:5000/api/auth/login' 
-        : 'https://hireme-bk0l.onrender.com/api/auth/login';
+        : 'https://linkup-bk0l.onrender.com/api/auth/login';
 
       const res = await axios.post(API_URL, formData);
       localStorage.setItem('user', JSON.stringify(res.data));
@@ -82,7 +82,7 @@ const Login = () => {
                 <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest ml-4">Access Key</label>
                 <input
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   className="w-full mt-2 px-6 py-4 bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/5 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-bold text-gray-900 dark:text-white placeholder:text-gray-300"
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
                   required

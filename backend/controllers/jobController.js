@@ -1,4 +1,4 @@
-const Job = require('../models/Job');
+﻿const Job = require('../models/Job');
 const User = require('../models/User');
 const ArtisanProfile = require('../models/ArtisanProfile');
 const { createNotification } = require('../utils/notifications');
@@ -482,7 +482,7 @@ exports.downloadInvoice = async (req, res) => {
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
     doc.pipe(res);
 
-    doc.fontSize(20).text('HireMe Invoice Receipt', { align: 'left' });
+    doc.fontSize(20).text('LinkUp Invoice Receipt', { align: 'left' });
     doc.moveDown();
     doc.fontSize(11);
     doc.text(`Invoice #: ${job.invoiceNumber}`);
@@ -558,3 +558,4 @@ exports.completeJob = async (req, res) => {
     res.status(500).json({ message: "Server error finalizing job" });
   }
 };
+

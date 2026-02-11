@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const Job = require('../models/Job');
@@ -54,7 +54,7 @@ const activateGoldSubscription = async (userId, reference) => {
   await createNotification({
     recipient: user._id,
     type: 'SYSTEM',
-    message: `HireMe Gold activated. Your subscription is active until ${expires.toDateString()}.`
+    message: `LinkUp Gold activated. Your subscription is active until ${expires.toDateString()}.`
   });
 
   return user;
@@ -118,7 +118,7 @@ router.post('/initialize', protect, async (req, res) => {
 
     if (numericAmount >= HIGH_VALUE_JOB_THRESHOLD && !isGoldActive(artisan)) {
       return res.status(403).json({
-        message: `This is a High-Value job (>= GHS ${HIGH_VALUE_JOB_THRESHOLD}). Only HireMe Gold artisans can accept it.`
+        message: `This is a High-Value job (>= GHS ${HIGH_VALUE_JOB_THRESHOLD}). Only LinkUp Gold artisans can accept it.`
       });
     }
 
@@ -179,7 +179,7 @@ router.post('/initialize', protect, async (req, res) => {
   }
 });
 
-// Initialize HireMe Gold subscription payment
+// Initialize LinkUp Gold subscription payment
 router.post('/subscription/initialize', protect, authorize('artisan'), async (req, res) => {
   try {
     const paystackData = {
@@ -265,3 +265,4 @@ router.get('/verify', async (req, res) => {
 });
 
 module.exports = router;
+

@@ -1,9 +1,9 @@
-const POLICY_VERSION = '2026-02-11';
+﻿const POLICY_VERSION = '2026-02-11';
 
 const policies = {
   version: POLICY_VERSION,
   terms: {
-    title: 'HireMe Terms and Agreement',
+    title: 'LinkUp Terms and Agreement',
     sections: [
       {
         title: 'Escrow Policy',
@@ -15,16 +15,16 @@ const policies = {
       },
       {
         title: 'Conduct Policy',
-        body: 'Off-platform payments are prohibited. Users must complete payments within HireMe to protect trust, records, and commission handling.'
+        body: 'Off-platform payments are prohibited. Users must complete payments within LinkUp to protect trust, records, and commission handling.'
       },
       {
         title: 'Dispute Policy',
-        body: 'Disputes are reviewed by HireMe Admin. Admin may release funds to artisan, refund client, or hold funds after evidence review.'
+        body: 'Disputes are reviewed by LinkUp Admin. Admin may release funds to artisan, refund client, or hold funds after evidence review.'
       }
     ]
   },
   privacy: {
-    title: 'HireMe Privacy Policy',
+    title: 'LinkUp Privacy Policy',
     sections: [
       {
         title: 'Data Collected',
@@ -43,3 +43,4 @@ const policies = {
 };
 
 module.exports = { POLICY_VERSION, policies };
+

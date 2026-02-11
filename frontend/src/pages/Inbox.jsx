@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -10,7 +10,7 @@ const Inbox = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
-  const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://hireme-bk0l.onrender.com/api';
+  const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://linkup-bk0l.onrender.com/api';
 
   useEffect(() => {
     const fetchInbox = async () => {
@@ -79,3 +79,4 @@ const Inbox = () => {
 };
 
 export default Inbox;
+

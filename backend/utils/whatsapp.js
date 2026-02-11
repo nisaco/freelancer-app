@@ -1,4 +1,4 @@
-const axios = require('axios');
+﻿const axios = require('axios');
 
 const normalizePhone = (phone = '') => {
   const cleaned = String(phone).replace(/[^\d+]/g, '');
@@ -8,7 +8,7 @@ const normalizePhone = (phone = '') => {
   return cleaned;
 };
 
-const sendWhatsAppJobAlert = async ({ phone, serviceType, location, platform = 'HIREME' }) => {
+const sendWhatsAppJobAlert = async ({ phone, serviceType, location, platform = 'LINKUP' }) => {
   const token = process.env.WHATSAPP_TOKEN;
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   const to = normalizePhone(phone);
@@ -50,3 +50,4 @@ const sendWhatsAppJobAlert = async ({ phone, serviceType, location, platform = '
 };
 
 module.exports = { sendWhatsAppJobAlert };
+

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -15,7 +15,7 @@ const PaymentCallback = () => {
   useEffect(() => {
     const verifyPayment = async () => {
       try {
-        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://hireme-bk0l.onrender.com/api';
+        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://linkup-bk0l.onrender.com/api';
         const res = await axios.get(`${API_BASE}/payment/callback?reference=${reference}`);
 
         if (res.data.status === 'success' || res.data.data?.status === 'success') {
@@ -48,7 +48,7 @@ const PaymentCallback = () => {
               <h1 className="text-5xl font-black text-gray-900 tracking-tighter mb-4 uppercase">Success</h1>
               <p className="text-gray-400 font-medium mb-10 leading-relaxed">
                 {paymentType === 'subscription'
-                  ? 'HireMe Gold is now active. Premium placement and high-value bidding access unlocked.'
+                  ? 'LinkUp Gold is now active. Premium placement and high-value bidding access unlocked.'
                   : 'Your professional has been notified. Check your dashboard for updates.'}
               </p>
               <button
@@ -74,3 +74,4 @@ const PaymentCallback = () => {
 };
 
 export default PaymentCallback;
+

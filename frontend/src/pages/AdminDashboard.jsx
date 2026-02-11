@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '../components/Navbar';
@@ -40,7 +40,7 @@ const AdminDashboard = () => {
 
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
-    : 'https://hireme-bk0l.onrender.com/api';
+    : 'https://linkup-bk0l.onrender.com/api';
 
   useEffect(() => {
     fetchData();
@@ -443,3 +443,4 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+

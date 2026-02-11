@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts';
@@ -93,7 +93,7 @@ const ArtisanDashboard = () => {
 
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
-    : 'https://hireme-bk0l.onrender.com/api';
+    : 'https://linkup-bk0l.onrender.com/api';
 
   useEffect(() => {
     fetchArtisanData();
@@ -409,7 +409,7 @@ const ArtisanDashboard = () => {
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Platform Reputation</p>
               <div className="flex items-center gap-3">
                  <span className="text-5xl font-black text-gray-900 dark:text-white italic">{user.rating || "5.0"}</span>
-                 <span className="text-2xl text-yellow-400">★</span>
+                 <span className="text-2xl text-yellow-400">â˜…</span>
               </div>
             </motion.div>
           </div>
@@ -436,7 +436,7 @@ const ArtisanDashboard = () => {
 
           <motion.div variants={itemVariants} className="mb-16 bg-white/40 dark:bg-white/5 backdrop-blur-3xl p-8 rounded-[2rem] border border-white/40 dark:border-white/10 shadow-xl flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">HireMe Gold</p>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">LinkUp Gold</p>
               <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter italic mt-2">
                 {analytics.isGoldPro ? "Active Pro Tier" : "Unlock Premium Placement"}
               </h3>
@@ -521,11 +521,11 @@ const ArtisanDashboard = () => {
               <div key={t._id} className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl p-6 rounded-[2rem] border border-white/10 flex justify-between items-center transition-all hover:bg-white/60">
                 <div className="flex items-center gap-6">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black shadow-lg ${t.status === 'completed' ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}>
-                    {t.status === 'completed' ? '✓' : '!'}
+                    {t.status === 'completed' ? 'âœ“' : '!'}
                   </div>
                   <div>
                     <h4 className="text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tighter">Payout to {t.momoNumber}</h4>
-                    <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1">{t.network} • {new Date(t.createdAt).toLocaleDateString()}</p>
+                    <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1">{t.network} â€¢ {new Date(t.createdAt).toLocaleDateString()}</p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -624,14 +624,14 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE, handlePhotoUpload, u
       >
         <div className="flex justify-between items-center mb-16">
           <h2 className="text-4xl font-black uppercase italic tracking-tighter text-gray-900 dark:text-white">Profile <span className="text-blue-600">Setup</span></h2>
-          <button onClick={onClose} className="text-gray-300 hover:text-black dark:hover:text-white text-4xl font-light">×</button>
+          <button onClick={onClose} className="text-gray-300 hover:text-black dark:hover:text-white text-4xl font-light">Ã—</button>
         </div>
 
         <div className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl p-8 rounded-[3rem] border border-white/40 shadow-xl mb-10">
           <div className="flex items-center gap-6">
             <div className="relative group w-24 h-24">
               <img 
-                src={user.profilePic ? (user.profilePic.startsWith('http') ? user.profilePic : `https://hireme-bk0l.onrender.com/${user.profilePic}`) : `https://ui-avatars.com/api/?name=${user.username}`} 
+                src={user.profilePic ? (user.profilePic.startsWith('http') ? user.profilePic : `https://linkup-bk0l.onrender.com/${user.profilePic}`) : `https://ui-avatars.com/api/?name=${user.username}`} 
                 className="w-full h-full rounded-3xl object-cover border-4 border-white shadow-lg" 
               />
               <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 cursor-pointer transition-all">
@@ -703,3 +703,4 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE, handlePhotoUpload, u
 };
 
 export default ArtisanDashboard;
+

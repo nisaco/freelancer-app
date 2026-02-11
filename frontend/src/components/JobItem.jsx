@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import PayButton from './PayButton';
 
 const JobItem = ({ artisan }) => { // Changed 'job' to 'artisan' for clarity
@@ -43,7 +43,7 @@ const JobItem = ({ artisan }) => { // Changed 'job' to 'artisan' for clarity
 
         {/* Location Tag */}
         <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-lg text-[10px] font-bold text-gray-700 shadow-sm border border-white">
-           📍 {artisan.location || "Ghana"}
+           ðŸ“ {artisan.location || "Ghana"}
         </div>
       </div>
 
@@ -79,9 +79,9 @@ const JobItem = ({ artisan }) => { // Changed 'job' to 'artisan' for clarity
               {/* Safety Warning for Unverified */}
               {!artisan.isVerified && (
                 <div className="mb-4 p-3 bg-amber-100 border border-amber-200 rounded-xl flex items-start gap-3">
-                  <span className="text-lg">⚠️</span>
+                  <span className="text-lg">âš ï¸</span>
                   <p className="text-[10px] text-amber-900 font-bold leading-tight uppercase">
-                    Security Alert: This artisan is unverified. Use the HireMe secure payment only.
+                    Security Alert: This artisan is unverified. Use the LinkUp secure payment only.
                   </p>
                 </div>
               )}
@@ -97,7 +97,7 @@ const JobItem = ({ artisan }) => { // Changed 'job' to 'artisan' for clarity
               {/* Assuming PayButton handles the Paystack logic */}
               <PayButton 
                 amount={depositAmount} 
-                email={user?.email || "customer@hireme.com"} 
+                email={user?.email || "customer@linkup.com"} 
                 artisanId={artisan._id} // Pass this to save the job after payment
               />
               

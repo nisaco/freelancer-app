@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
@@ -12,7 +12,7 @@ const Onboarding = () => {
 
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
-    : 'https://hireme-bk0l.onrender.com/api';
+    : 'https://linkup-bk0l.onrender.com/api';
 
   const handleSubmit = async (e) => {
     e.preventDefault();

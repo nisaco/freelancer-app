@@ -1,4 +1,4 @@
-const axios = require('axios');
+﻿const axios = require('axios');
 const Job = require('../models/Job'); // Ensure you have this model!
 
 // --- 1. INITIALIZE PAYMENT ---
@@ -30,7 +30,7 @@ exports.initializePayment = async (req, res) => {
             email: email,
             amount: Math.round(amount * 100), // GHS to Pesewas
             currency: 'GHS',
-            callback_url: "https://hireme-bk0l.onrender.com/payment/callback",
+            callback_url: "https://linkup-bk0l.onrender.com/payment/callback",
             // Use metadata to keep track of the Job ID during payment
             metadata: {
                 jobId: newJob._id,
