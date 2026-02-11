@@ -42,7 +42,7 @@ const BookingModal = ({ artisan, onClose, themeColor }) => {
         window.location.href = res.data.authorization_url;
       }
     } catch (err) {
-      toast.error("Booking failed.");
+      toast.error(err.response?.data?.message || "Booking failed.");
     } finally {
       setLoading(false);
     }
@@ -85,10 +85,8 @@ const ArtisanProfile = () => {
   useEffect(() => {
     const fetchArtisan = async () => {
       try {
-        const res = await axios.get(`${API_BASE}/jobs/available`);
-        const found = res.data.find(a => a._id === id);
-        if (found) setArtisan(found);
-        else toast.error("Artisan not found");
+        const res = await axios.get(`${API_BASE}/jobs/artisan/${id}`);
+        setArtisan(res.data);
       } catch (err) { toast.error("Error loading profile"); }
       finally { setLoading(false); }
     };

@@ -38,7 +38,7 @@ router.get('/stats', protect, adminOnly, async (req, res) => {
       role: 'artisan', 
       isVerified: false,
       ghanaCardImage: { $exists: true, $ne: '' } 
-    }).select('-password');
+    }).select('-password').sort({ subscriptionTier: -1, createdAt: 1 });
 
     // --- FIX: SEND THE ACTUAL VARIABLES INSTEAD OF 0 AND [] ---
     res.json({
@@ -68,7 +68,7 @@ router.get('/pending-artisans', protect, adminOnly, async (req, res) => {
       role: 'artisan', 
       isVerified: false,
       ghanaCardImage: { $exists: true, $ne: '' } 
-    }).select('-password');
+    }).select('-password').sort({ subscriptionTier: -1, createdAt: 1 });
     res.json(pending);
   } catch (err) {
     console.error("Admin Fetch Error:", err);

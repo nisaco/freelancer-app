@@ -20,8 +20,26 @@ const userSchema = new mongoose.Schema({
   },
   role: { 
     type: String, 
-    enum: ['client', 'artisan'], 
+    enum: ['client', 'artisan', 'admin'], 
     default: 'client' 
+  },
+
+  // Legal acceptance
+  termsAccepted: {
+    type: Boolean,
+    default: false
+  },
+  privacyAccepted: {
+    type: Boolean,
+    default: false
+  },
+  acceptedPolicyVersion: {
+    type: String,
+    default: null
+  },
+  acceptedPolicyAt: {
+    type: Date,
+    default: null
   },
 
   // Verification & Status
@@ -50,6 +68,50 @@ const userSchema = new mongoose.Schema({
   walletBalance: { 
     type: Number, 
     default: 0 
+  },
+  momoNumber: {
+    type: String
+  },
+  momoNetwork: {
+    type: String
+  },
+
+  // --- SUBSCRIPTIONS ---
+  subscriptionTier: {
+    type: String,
+    enum: ['free', 'gold'],
+    default: 'free'
+  },
+  subscriptionStatus: {
+    type: String,
+    enum: ['inactive', 'active', 'expired'],
+    default: 'inactive'
+  },
+  subscriptionStartedAt: {
+    type: Date,
+    default: null
+  },
+  subscriptionExpiresAt: {
+    type: Date,
+    default: null
+  },
+  subscriptionReference: {
+    type: String,
+    default: null
+  },
+
+  // --- ANALYTICS ---
+  profileViewsTotal: {
+    type: Number,
+    default: 0
+  },
+  profileViewsToday: {
+    type: Number,
+    default: 0
+  },
+  profileViewsDate: {
+    type: Date,
+    default: null
   },
 
   // --- PROFESSIONAL DATA (Artisan specific) ---

@@ -2,19 +2,32 @@ const express = require('express');
 const router = express.Router();
 const Job = require('../models/Job');
 const User = require('../models/User');
-const { protect } = require('../middleware/authMiddleware');
-const { getAvailableArtisans, createJob } = require('../controllers/jobController');
-const { getArtisanReviews } = require('../controllers/jobController');
+const { protect, authorize } = require('../middleware/authMiddleware');
+const {
+  getAvailableArtisans,
+  getArtisanProfile,
+  getArtisanAnalytics,
+  createJob,
+  getArtisanReviews,
+  updateJobStatus,
+  downloadInvoice
+} = require('../controllers/jobController');
 
-// --- 1. MARKETPLACE ---
+const ARTISAN_EARNINGS_RATIO = 0.8;
+
+// Marketplace + artisan profile
 router.get('/available', getAvailableArtisans);
+router.get('/artisan/analytics/me', protect, authorize('artisan'), getArtisanAnalytics);
+router.get('/artisan/:id', getArtisanProfile);
+
+// Booking creation
 router.post('/', protect, createJob);
 
-// --- 2. CLIENT BOOKINGS (Fixes the 404 Found Error) ---
+// Client booking history
 router.get('/client', protect, async (req, res) => {
   try {
     const jobs = await Job.find({ client: req.user._id })
-      .populate('artisan', 'username category price phone profilePic isVerified')
+      .populate('artisan', 'username category price phone profilePic isVerified subscriptionTier subscriptionStatus subscriptionExpiresAt')
       .sort({ createdAt: -1 });
     res.json(jobs);
   } catch (err) {
@@ -22,7 +35,7 @@ router.get('/client', protect, async (req, res) => {
   }
 });
 
-// --- 3. ARTISAN JOBS (Fixes the Dashboard Sync Failed) ---
+// Artisan job history
 router.get('/artisan', protect, async (req, res) => {
   try {
     const jobs = await Job.find({ artisan: req.user._id })
@@ -34,7 +47,7 @@ router.get('/artisan', protect, async (req, res) => {
   }
 });
 
-// --- 4. THE UNIVERSAL FETCH (For the new dashboards) ---
+// Universal job history
 router.get('/my-jobs', protect, async (req, res) => {
   try {
     const jobs = await Job.find({ $or: [{ client: req.user._id }, { artisan: req.user._id }] })
@@ -47,17 +60,17 @@ router.get('/my-jobs', protect, async (req, res) => {
   }
 });
 
-// --- 5. ARTISAN SETTINGS UPDATE (Fixes "Update Failed" on Phone/Bio) ---
+// Artisan profile setup
 router.put('/profile-setup', protect, async (req, res) => {
   try {
     const { phone, bio, price, location } = req.body;
     const user = await User.findById(req.user._id);
-    
+
     if (phone) user.phone = phone;
     if (bio) user.bio = bio;
     if (price) user.price = price;
     if (location) user.location = location;
-    
+
     await user.save();
     res.json({ message: "Profile Synchronized", user });
   } catch (err) {
@@ -65,7 +78,7 @@ router.put('/profile-setup', protect, async (req, res) => {
   }
 });
 
-// --- 6. ARTISAN: MARK FINISHED ---
+// Artisan marks work done
 router.put('/:id/finish', protect, async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
@@ -80,53 +93,55 @@ router.put('/:id/finish', protect, async (req, res) => {
   }
 });
 
-
-// --- 7. CLIENT: CONFIRM & RELEASE FUNDS (The 80/20 Escrow Logic) ---
+// Client confirms completion and releases escrow
 router.put('/:id/confirm', protect, async (req, res) => {
   try {
-    const { rating } = req.body;
+    const { rating, reviewComment } = req.body;
     const job = await Job.findById(req.params.id);
     if (!job) return res.status(404).json({ message: "Job not found" });
+    if (job.client.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ message: "Only the client can release escrow funds" });
+    }
 
     const artisan = await User.findById(job.artisan);
-    const artisanShare = job.amount * 0.80; // Your 80% share logic
+    const artisanShare = Number(job.amount || 0) * ARTISAN_EARNINGS_RATIO;
 
-    if (artisan.isVerified) {
+    if (artisan && artisan.isVerified) {
       artisan.walletBalance = (artisan.walletBalance || 0) + artisanShare;
       artisan.pendingBalance = Math.max(0, (artisan.pendingBalance || 0) - artisanShare);
-      
+
       if (rating) {
         const count = artisan.reviewCount || 0;
-        artisan.rating = ((artisan.rating * count) + rating) / (count + 1);
+        artisan.rating = ((Number(artisan.rating || 5) * count) + Number(rating)) / (count + 1);
         artisan.reviewCount = count + 1;
       }
-      
-      job.status = 'completed';
+
       await artisan.save();
-      await job.save();
-      res.json({ message: "Funds released to artisan wallet!", job });
-    } else {
-      job.status = 'completed';
-      await job.save();
-      res.json({ message: "Job completed. Funds held until verification.", job });
     }
+
+    job.status = 'completed';
+    job.completedAt = new Date();
+    job.escrowReleasedAt = new Date();
+    if (rating) job.rating = Number(rating);
+    if (reviewComment) job.reviewComment = reviewComment;
+    await job.save();
+
+    res.json({
+      message: "Job completed. Escrow released after client confirmation.",
+      job
+    });
   } catch (err) {
     res.status(500).json({ message: "Release failed" });
   }
 });
 
-// --- 8. CATCH-ALL STATUS UPDATE ---
-router.put('/:id', protect, async (req, res) => {
-    try {
-        const { status } = req.body;
-        const job = await Job.findByIdAndUpdate(req.params.id, { status }, { new: true });
-        res.json(job);
-    } catch (err) {
-        res.status(500).json({ message: "Update failed" });
-    }
-});
+// PDF invoice
+router.get('/:id/invoice', protect, downloadInvoice);
 
-// Add this route
+// Status update
+router.put('/:id', protect, updateJobStatus);
+
+// Reviews
 router.get('/reviews/:id', getArtisanReviews);
 
 module.exports = router;

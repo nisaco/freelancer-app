@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Notification = require('../models/Notification'); // <--- CRITICAL: ADD THIS
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { POLICY_VERSION, policies } = require('../utils/policies');
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -10,8 +11,23 @@ const generateToken = (id) => {
 // @desc    Register new user
 exports.registerUser = async (req, res) => {
   try {
-    const { username, email, password, role } = req.body;
+    const {
+      username,
+      email,
+      password,
+      role,
+      termsAccepted,
+      privacyAccepted,
+      acceptedPolicyVersion
+    } = req.body;
+
     if (!username || !email || !password) return res.status(400).json({ message: 'Please add all fields' });
+    if (!termsAccepted || !privacyAccepted) {
+      return res.status(400).json({ message: 'You must accept Terms and Privacy Policy to create an account' });
+    }
+    if (acceptedPolicyVersion && acceptedPolicyVersion !== POLICY_VERSION) {
+      return res.status(400).json({ message: 'Please re-accept the latest Terms and Privacy Policy' });
+    }
 
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ message: 'User already exists' });
@@ -20,7 +36,14 @@ exports.registerUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const user = await User.create({
-      username, email, password: hashedPassword, role: role || 'client'
+      username,
+      email,
+      password: hashedPassword,
+      role: role || 'client',
+      termsAccepted: true,
+      privacyAccepted: true,
+      acceptedPolicyVersion: POLICY_VERSION,
+      acceptedPolicyAt: new Date()
     });
 
     if (user) {
@@ -30,6 +53,8 @@ exports.registerUser = async (req, res) => {
         email: user.email,
         role: user.role,
         isVerified: user.isVerified,
+        subscriptionTier: user.subscriptionTier,
+        subscriptionStatus: user.subscriptionStatus,
         token: generateToken(user._id),
       });
     }
@@ -58,6 +83,9 @@ exports.loginUser = async (req, res) => {
         isPending: user.isPending,
         profilePic: user.profilePic,
         ghanaCardImage: user.ghanaCardImage,
+        subscriptionTier: user.subscriptionTier,
+        subscriptionStatus: user.subscriptionStatus,
+        subscriptionExpiresAt: user.subscriptionExpiresAt,
         token: generateToken(user._id),
       });
     } else {
@@ -121,6 +149,9 @@ exports.verifyArtisan = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     if (status === 'approve') {
+      if (!user.ghanaCardImage || !user.ghanaCardNumber) {
+        return res.status(400).json({ message: "Valid Ghana Card number and image are required before approval." });
+      }
       user.isVerified = true;
       user.isPending = false;
     } else if (status === 'reject' || status === 'unverify') {
@@ -147,4 +178,9 @@ exports.verifyArtisan = async (req, res) => {
     console.error(err);
     res.status(500).json({ message: "Verification failed" });
   }
+};
+
+// @desc    Get active terms/privacy policy document
+exports.getPolicies = async (req, res) => {
+  res.json(policies);
 };

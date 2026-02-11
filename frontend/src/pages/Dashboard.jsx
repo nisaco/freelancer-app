@@ -144,7 +144,7 @@ const BookingModal = ({ artisan, onClose, themeColor }) => {
         window.location.href = res.data.authorization_url;
       }
     } catch (err) {
-      toast.error("Booking failed.");
+      toast.error(err.response?.data?.message || "Booking failed.");
     } finally {
       setLoading(false);
     }
@@ -252,10 +252,9 @@ const Dashboard = () => {
   const handleConfirmCompletion = async (rating, comment) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API_BASE}/jobs/${reviewingJob._id}`, { 
-        status: 'completed', 
+      await axios.put(`${API_BASE}/jobs/${reviewingJob._id}/confirm`, {
         rating: Number(rating),
-        reviewComment: comment // Matching your schema's key
+        reviewComment: comment
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -263,6 +262,27 @@ const Dashboard = () => {
       setReviewingJob(null); 
       fetchData(); 
     } catch (err) { toast.error("Release failed."); }
+  };
+
+  const handleDownloadInvoice = async (jobId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_BASE}/jobs/${jobId}/invoice`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      });
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `invoice-${jobId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error("Invoice download failed");
+    }
   };
 
   const handleCreateDispute = async ({ reason, description }) => {
@@ -392,6 +412,14 @@ const Dashboard = () => {
                               Release Funds
                             </motion.button>
                           )}
+                          {job.status === 'completed' && (
+                            <button
+                              onClick={() => handleDownloadInvoice(job._id)}
+                              className="bg-blue-600 text-white px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest"
+                            >
+                              Invoice PDF
+                            </button>
+                          )}
                           {job.status !== 'completed' && (
                             <button
                               onClick={() => setDisputeJob(job)}
@@ -473,6 +501,9 @@ const ArtisanCard = ({ artisan, index, themeColor, onBook }) => {
             <img src={artisan.profilePic || `https://ui-avatars.com/api/?name=${artisan.username}&background=random`} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" />
           </div>
           <div className="text-right">
+            {artisan.isGoldPro && (
+              <p className="text-[8px] font-black text-yellow-600 uppercase tracking-[0.3em] mb-1">Gold Pro</p>
+            )}
             <p className="text-[8px] font-black text-gray-400 uppercase tracking-[0.3em] mb-1">Session</p>
             <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter italic">GHS {artisan.price}</p>
           </div>

@@ -10,18 +10,27 @@ const Register = () => {
     username: '',
     email: '',
     password: '',
-    role: 'client' 
+    role: 'client',
+    termsAccepted: false,
+    privacyAccepted: false,
+    acceptedPolicyVersion: '2026-02-11'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const { username, email, password, role } = formData;
+  const { username, email, password, role, termsAccepted, privacyAccepted } = formData;
 
-  const onChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const onChange = (e) => {
+    const { name, type, checked, value } = e.target;
+    setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    if (!termsAccepted || !privacyAccepted) {
+      return toast.error("Accept Terms and Privacy Policy to continue");
+    }
     setLoading(true);
     try {
       // KEEPING YOUR LOGIC: Dynamic API URL switching
@@ -148,11 +157,38 @@ const Register = () => {
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
-                disabled={loading}
+                disabled={loading || !termsAccepted || !privacyAccepted}
                 className="w-full bg-gray-900 dark:bg-white text-white dark:text-black font-black py-5 rounded-2xl shadow-2xl transition-all uppercase tracking-widest text-xs mt-4 disabled:opacity-50"
               >
                 {loading ? "Establishing Identity..." : "Join Platform"}
               </motion.button>
+
+              <div className="space-y-3 pt-2">
+                <label className="flex items-start gap-3 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                  <input
+                    type="checkbox"
+                    name="termsAccepted"
+                    checked={termsAccepted}
+                    onChange={onChange}
+                    className="mt-1"
+                  />
+                  <span>
+                    I agree to the <Link to="/terms" className="text-blue-600 font-black">Terms & Agreement</Link>.
+                  </span>
+                </label>
+                <label className="flex items-start gap-3 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                  <input
+                    type="checkbox"
+                    name="privacyAccepted"
+                    checked={privacyAccepted}
+                    onChange={onChange}
+                    className="mt-1"
+                  />
+                  <span>
+                    I agree to the <Link to="/privacy" className="text-blue-600 font-black">Privacy Policy</Link>.
+                  </span>
+                </label>
+              </div>
             </form>
 
             <p className="text-center mt-8 text-xs font-bold text-gray-400 uppercase tracking-widest">

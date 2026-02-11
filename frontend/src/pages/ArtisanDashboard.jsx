@@ -38,6 +38,12 @@ const ArtisanDashboard = () => {
   const [newPhoto, setNewPhoto] = useState(null); // FIXED BUG HERE
   const [uploading, setUploading] = useState(false);
   const [portfolioUploading, setPortfolioUploading] = useState(false);
+  const [analytics, setAnalytics] = useState({
+    totalEarnedThisMonth: 0,
+    profileViewsToday: 0,
+    successRate: 0
+  });
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
 
   // --- WALLET/WITHDRAWAL ADDITIONS ---
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
@@ -55,10 +61,11 @@ const ArtisanDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       
-      const [jobRes, profileRes, transRes] = await Promise.all([
+      const [jobRes, profileRes, transRes, analyticsRes] = await Promise.all([
         axios.get(`${API_BASE}/jobs/my-jobs`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API_BASE}/auth/profile`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${API_BASE}/transactions/my-transactions`, { headers: { Authorization: `Bearer ${token}` } })
+        axios.get(`${API_BASE}/transactions/my-transactions`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_BASE}/jobs/artisan/analytics/me`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
       
       const artisanJobs = jobRes.data;
@@ -66,6 +73,7 @@ const ArtisanDashboard = () => {
 
       setJobs(artisanJobs);
       setTransactions(transRes.data);
+      setAnalytics(analyticsRes.data || {});
       setUser(freshUser); 
       localStorage.setItem('user', JSON.stringify(freshUser)); 
 
@@ -138,6 +146,44 @@ const ArtisanDashboard = () => {
       toast.error("Upload failed");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDownloadInvoice = async (jobId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_BASE}/jobs/${jobId}/invoice`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `invoice-${jobId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error("Invoice download failed");
+    }
+  };
+
+  const handleUpgradeToGold = async () => {
+    try {
+      setSubscriptionLoading(true);
+      const token = localStorage.getItem('token');
+      const res = await axios.post(`${API_BASE}/payment/subscription/initialize`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.data.authorization_url) {
+        window.location.href = res.data.authorization_url;
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not start subscription payment");
+    } finally {
+      setSubscriptionLoading(false);
     }
   };
 
@@ -272,6 +318,53 @@ const ArtisanDashboard = () => {
             </motion.div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+            <motion.div variants={itemVariants}
+              className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl p-8 rounded-[2rem] border border-white/40 dark:border-white/10 shadow-xl">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Total Earned This Month</p>
+              <h3 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic">GHS {analytics.totalEarnedThisMonth || 0}</h3>
+            </motion.div>
+
+            <motion.div variants={itemVariants}
+              className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl p-8 rounded-[2rem] border border-white/40 dark:border-white/10 shadow-xl">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Profile Views Today</p>
+              <h3 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic">{analytics.profileViewsToday || 0}</h3>
+            </motion.div>
+
+            <motion.div variants={itemVariants}
+              className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl p-8 rounded-[2rem] border border-white/40 dark:border-white/10 shadow-xl">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Success Rate</p>
+              <h3 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter italic">{analytics.successRate || 0}%</h3>
+            </motion.div>
+          </div>
+
+          <motion.div variants={itemVariants} className="mb-16 bg-white/40 dark:bg-white/5 backdrop-blur-3xl p-8 rounded-[2rem] border border-white/40 dark:border-white/10 shadow-xl flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">HireMe Gold</p>
+              <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter italic mt-2">
+                {analytics.isGoldPro ? "Active Pro Tier" : "Unlock Premium Placement"}
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-300 mt-2">
+                Top search placement, faster verification priority, and high-value job access.
+              </p>
+              {analytics.subscriptionExpiresAt && (
+                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-3">
+                  Expires: {new Date(analytics.subscriptionExpiresAt).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+
+            {!analytics.isGoldPro && (
+              <button
+                onClick={handleUpgradeToGold}
+                disabled={subscriptionLoading}
+                className="bg-blue-600 text-white px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl disabled:opacity-60"
+              >
+                {subscriptionLoading ? "Connecting..." : "Upgrade to Gold"}
+              </button>
+            )}
+          </motion.div>
+
           <motion.h3 variants={itemVariants} className="text-2xl font-black text-gray-900 dark:text-white uppercase italic mb-10 tracking-tighter">Live <span className="text-blue-600">Engagements</span></motion.h3>
           
           <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
@@ -296,16 +389,26 @@ const ArtisanDashboard = () => {
 
                   <div className="flex items-center justify-between mt-auto">
                     <p className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter italic">GHS {job.amount || job.price}</p>
-                    {job.status === 'paid' && (
-                      <motion.button 
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => handleFinishJob(job._id)}
-                        className="px-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-black text-[10px] font-black uppercase tracking-widest rounded-[1.5rem] shadow-2xl transition-all"
-                      >
-                        Mark Finished
-                      </motion.button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {job.status === 'paid' && (
+                        <motion.button 
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleFinishJob(job._id)}
+                          className="px-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-black text-[10px] font-black uppercase tracking-widest rounded-[1.5rem] shadow-2xl transition-all"
+                        >
+                          Mark Finished
+                        </motion.button>
+                      )}
+                      {job.status === 'completed' && (
+                        <button
+                          onClick={() => handleDownloadInvoice(job._id)}
+                          className="px-6 py-4 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-[1.2rem]"
+                        >
+                          Invoice PDF
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               )) : (

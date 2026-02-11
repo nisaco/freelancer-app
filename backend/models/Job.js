@@ -4,11 +4,17 @@ const jobSchema = new mongoose.Schema({
   client: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   artisan: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   amount: { type: Number, required: true },
-  date: { type: String, required: true },
+  date: { type: Date, required: true },
   description: { type: String, required: true },
-  // 1. ADD THIS FIELD (Since your error says it's required)
-  serviceType: { type: String }, 
-  // 2. FIX THE ENUM (Make sure 'pending_payment' is allowed)
+  serviceType: { type: String, default: 'General Service' },
+  paymentReference: { type: String, default: null },
+  isHighValue: { type: Boolean, default: false },
+  rating: { type: Number, min: 1, max: 5 },
+  reviewComment: { type: String, default: '' },
+  completedAt: { type: Date, default: null },
+  escrowReleasedAt: { type: Date, default: null },
+  invoiceNumber: { type: String, default: null },
+  invoiceIssuedAt: { type: Date, default: null },
   status: { 
     type: String, 
     enum: ['pending_payment', 'awaiting_confirmation', 'paid', 'completed', 'cancelled', 'pending'], 

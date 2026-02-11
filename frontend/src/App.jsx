@@ -18,6 +18,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ArtisanProfile from './pages/ArtisanProfile';
 import Messages from './pages/Messages';
 import Inbox from './pages/Inbox';
+import TermsAndConditions from './pages/TermsAndConditions';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -28,6 +30,8 @@ const AnimatedRoutes = () => {
         <Route path="/" element={<Welcome />} /> 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
         
         {/* Protected Routes */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

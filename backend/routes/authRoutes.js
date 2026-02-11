@@ -7,7 +7,8 @@ const {
   registerUser, 
   loginUser, 
   getProfile, 
-  handleOnboarding 
+  handleOnboarding,
+  getPolicies
 } = require('../controllers/authController');
 
 // --- ROUTES ---
@@ -40,6 +41,7 @@ router.post('/update-photo', protect, upload.single('profilePic'), async (req, r
 // 2. Public Routes
 router.post('/register', registerUser);
 router.post('/login', loginUser);
+router.get('/policies', getPolicies);
 
 // 3. Private Routes
 router.get('/profile', protect, getProfile);
