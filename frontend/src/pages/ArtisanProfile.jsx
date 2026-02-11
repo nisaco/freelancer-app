@@ -153,6 +153,26 @@ const ArtisanProfile = () => {
             </div>
           </div>
 
+          <div className="mt-14">
+            <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter mb-8">
+              Work <span className="text-blue-600">Gallery</span>
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {(artisan.portfolio || []).length > 0 ? (artisan.portfolio || []).slice(0, 12).map((entry, idx) => {
+                const imageUrl = entry.imageUrl || entry;
+                return (
+                  <div key={`${imageUrl}-${idx}`} className="rounded-2xl overflow-hidden border border-white/30 bg-white/40 dark:bg-white/5 shadow-lg">
+                    <img src={imageUrl} alt="Portfolio item" className="w-full h-32 md:h-40 object-cover" />
+                  </div>
+                );
+              }) : (
+                <div className="col-span-full py-14 text-center bg-white/10 rounded-[2rem] border border-dashed border-white/20">
+                  <p className="text-gray-400 font-black uppercase text-[10px] tracking-widest italic">No portfolio images uploaded yet.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* REVIEWS GALLERY */}
           <div className="mt-24">
             <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter mb-10">

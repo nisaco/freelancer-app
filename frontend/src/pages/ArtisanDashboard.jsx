@@ -37,6 +37,7 @@ const ArtisanDashboard = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [newPhoto, setNewPhoto] = useState(null); // FIXED BUG HERE
   const [uploading, setUploading] = useState(false);
+  const [portfolioUploading, setPortfolioUploading] = useState(false);
 
   // --- WALLET/WITHDRAWAL ADDITIONS ---
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
@@ -137,6 +138,45 @@ const ArtisanDashboard = () => {
       toast.error("Upload failed");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handlePortfolioUpload = async (files) => {
+    if (!files || files.length === 0) return;
+    setPortfolioUploading(true);
+    const formData = new FormData();
+    Array.from(files).forEach((file) => formData.append('portfolio', file));
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.put(`${API_BASE}/artisan/portfolio`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const nextUser = { ...user, portfolio: res.data.portfolio || [] };
+      setUser(nextUser);
+      localStorage.setItem('user', JSON.stringify(nextUser));
+      toast.success("Portfolio uploaded");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Portfolio upload failed");
+    } finally {
+      setPortfolioUploading(false);
+    }
+  };
+
+  const deletePortfolioItem = async (index) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.delete(`${API_BASE}/artisan/portfolio/${index}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const nextUser = { ...user, portfolio: res.data.portfolio || [] };
+      setUser(nextUser);
+      localStorage.setItem('user', JSON.stringify(nextUser));
+      toast.success("Portfolio item removed");
+    } catch (err) {
+      toast.error("Delete failed");
     }
   };
 
@@ -309,6 +349,9 @@ const ArtisanDashboard = () => {
               API_BASE={API_BASE} 
               handlePhotoUpload={handlePhotoUpload}
               uploading={uploading}
+              handlePortfolioUpload={handlePortfolioUpload}
+              deletePortfolioItem={deletePortfolioItem}
+              portfolioUploading={portfolioUploading}
             />
           )}
           {isWithdrawOpen && (
@@ -348,7 +391,7 @@ const WithdrawModal = ({ isOpen, onClose, onConfirm }) => {
   );
 };
 
-const SettingsDrawer = ({ user, setUser, onClose, API_BASE, handlePhotoUpload, uploading }) => {
+const SettingsDrawer = ({ user, setUser, onClose, API_BASE, handlePhotoUpload, uploading, handlePortfolioUpload, deletePortfolioItem, portfolioUploading }) => {
   const [editData, setEditData] = useState({
     phone: user.phone || '',
     bio: user.bio || '',
@@ -401,6 +444,38 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE, handlePhotoUpload, u
               <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter">Update Identity</h3>
               <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">Visible to all clients</p>
             </div>
+          </div>
+        </div>
+
+        <div className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl p-6 rounded-[2rem] border border-white/30 shadow-xl mb-8">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">Portfolio Gallery</h4>
+            <label className="bg-blue-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest cursor-pointer">
+              {portfolioUploading ? "Uploading..." : "Add Images"}
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handlePortfolioUpload(e.target.files)}
+              />
+            </label>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {(user.portfolio || []).length > 0 ? (user.portfolio || []).map((item, index) => (
+              <div key={`${item.imageUrl}-${index}`} className="relative group">
+                <img src={item.imageUrl} alt="Portfolio" className="w-full h-20 object-cover rounded-xl border border-white/30" />
+                <button
+                  type="button"
+                  onClick={() => deletePortfolioItem(index)}
+                  className="absolute top-1 right-1 bg-black/70 text-white w-6 h-6 rounded-full text-xs hidden group-hover:flex items-center justify-center"
+                >
+                  x
+                </button>
+              </div>
+            )) : (
+              <p className="col-span-3 text-[10px] font-black uppercase tracking-widest text-gray-400">No portfolio images yet.</p>
+            )}
           </div>
         </div>
 

@@ -8,12 +8,19 @@ const Notification = require('../models/Notification');
 // @route   GET /api/jobs/available
 exports.getAvailableArtisans = async (req, res) => {
   try {
-    const artisans = await User.find({ role: 'artisan' })
-      .select('username profilePic isVerified location category price bio rating reviewCount');
+    const { location } = req.query;
+    const userQuery = { role: 'artisan' };
+
+    if (location) {
+      userQuery.location = { $regex: location, $options: 'i' };
+    }
+
+    const artisans = await User.find(userQuery)
+      .select('username profilePic isVerified location category price bio rating reviewCount portfolio');
 
     const profiles = await ArtisanProfile.find();
 
-    const formattedArtisans = artisans.map(user => {
+    let formattedArtisans = artisans.map(user => {
       const profile = profiles.find(p => p.user && p.user.toString() === user._id.toString());
       
       return {
@@ -26,9 +33,17 @@ exports.getAvailableArtisans = async (req, res) => {
         isVerified: user.isVerified,
         location: profile?.location || user.location || 'Accra, Ghana',
         rating: user.rating || 5,
-        reviewCount: user.reviewCount || 0
+        reviewCount: user.reviewCount || 0,
+        portfolio: profile?.portfolio?.length ? profile.portfolio : (user.portfolio || [])
       };
     });
+
+    if (location) {
+      const locationTerm = location.toLowerCase();
+      formattedArtisans = formattedArtisans.filter((artisan) =>
+        (artisan.location || '').toLowerCase().includes(locationTerm)
+      );
+    }
 
     res.status(200).json(formattedArtisans);
   } catch (error) {

@@ -54,6 +54,67 @@ const ReviewModal = ({ isOpen, onClose, onConfirm, artisanName }) => {
   );
 };
 
+const DisputeModal = ({ isOpen, onClose, onSubmit, job }) => {
+  const [reason, setReason] = useState("Service quality issue");
+  const [description, setDescription] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) {
+      setReason("Service quality issue");
+      setDescription("");
+    }
+  }, [isOpen]);
+
+  if (!isOpen || !job) return null;
+
+  return (
+    <div className="fixed inset-0 z-[220] flex items-center justify-center bg-black/70 backdrop-blur-lg p-4">
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-[2.5rem] p-8 border border-white/20 shadow-2xl"
+      >
+        <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">
+          Raise Dispute
+        </h2>
+        <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-2">
+          Job: {job.description || "Service Request"}
+        </p>
+        <div className="mt-6 space-y-4">
+          <select
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-black/20 border border-gray-100 dark:border-white/10 dark:text-white font-semibold"
+          >
+            <option>Service quality issue</option>
+            <option>No-show by artisan</option>
+            <option>Overcharge/amount dispute</option>
+            <option>Safety concern</option>
+            <option>Other</option>
+          </select>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Tell admin what happened and what resolution you want."
+            className="w-full h-32 p-4 rounded-2xl bg-gray-50 dark:bg-black/20 border border-gray-100 dark:border-white/10 dark:text-white font-medium"
+          />
+          <div className="flex gap-3">
+            <button onClick={onClose} className="flex-1 py-3 text-[10px] font-black uppercase text-gray-500">
+              Cancel
+            </button>
+            <button
+              onClick={() => onSubmit({ reason, description })}
+              className="flex-[2] py-3 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest"
+            >
+              Submit Ticket
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 // --- SUB-COMPONENT: BOOKING MODAL (Your Logic Preserved) ---
 const BookingModal = ({ artisan, onClose, themeColor }) => {
   const [bookingData, setBookingData] = useState({ date: '', description: '' });
@@ -135,12 +196,15 @@ const Dashboard = () => {
   const navigate = useNavigate();  
   const [artisans, setArtisans] = useState([]);
   const [myJobs, setMyJobs] = useState([]);
+  const [myDisputes, setMyDisputes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
   const [view, setView] = useState("Marketplace"); 
   const [filter, setFilter] = useState("All");
   const [selectedArtisan, setSelectedArtisan] = useState(null);
   const [reviewingJob, setReviewingJob] = useState(null); 
+  const [disputeJob, setDisputeJob] = useState(null);
   const [activeTheme, setActiveTheme] = useState({ name: 'All', color: '#2563EB', glow: 'rgba(37, 99, 235, 0.15)' });
 
   const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://hireme-bk0l.onrender.com/api';
@@ -155,18 +219,28 @@ const Dashboard = () => {
   ];
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchData(locationFilter);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [locationFilter]);
 
-  const fetchData = async () => {
+  const fetchData = async (locationValue = "") => {
     try {
       const token = localStorage.getItem('token');
+      const params = locationValue ? { location: locationValue } : undefined;
       const [artRes, jobRes] = await Promise.all([
-        axios.get(`${API_BASE}/jobs/available`),
-        axios.get(`${API_BASE}/jobs/client`, { headers: { Authorization: `Bearer ${token}` } })
+        axios.get(`${API_BASE}/jobs/available`, { params }),
+        axios.get(`${API_BASE}/jobs/client`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
       setArtisans(artRes.data);
       setMyJobs(jobRes.data);
+      if (token) {
+        const disputeRes = await axios.get(`${API_BASE}/disputes/my`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setMyDisputes(disputeRes.data || []);
+      }
     } catch (err) { 
       console.error(err);
       toast.error("Error loading dashboard data"); 
@@ -191,11 +265,34 @@ const Dashboard = () => {
     } catch (err) { toast.error("Release failed."); }
   };
 
+  const handleCreateDispute = async ({ reason, description }) => {
+    if (!disputeJob?._id) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_BASE}/disputes`, {
+        jobId: disputeJob._id,
+        reason,
+        description
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Dispute ticket submitted to admin");
+      setDisputeJob(null);
+      fetchData(locationFilter);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to submit dispute");
+    }
+  };
+
   const filteredArtisans = artisans.filter(a => {
     const term = search.toLowerCase();
-    const matchesSearch = a.username.toLowerCase().includes(term) || (a.category && a.category.toLowerCase().includes(term));
+    const matchesSearch =
+      a.username.toLowerCase().includes(term) ||
+      (a.category && a.category.toLowerCase().includes(term)) ||
+      (a.location && a.location.toLowerCase().includes(term));
     const matchesCategory = filter === "All" || a.category === filter;
-    return matchesSearch && matchesCategory;
+    const matchesLocation = !locationFilter || (a.location || '').toLowerCase().includes(locationFilter.toLowerCase());
+    return matchesSearch && matchesCategory && matchesLocation;
   });
 
   return (
@@ -228,18 +325,28 @@ const Dashboard = () => {
             {view === "Marketplace" ? (
               <motion.div key="market" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                 
-                <div className="max-w-2xl mx-auto mb-16">
-                  <div className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl rounded-[2.5rem] shadow-2xl p-2 flex items-center border border-white/40 dark:border-white/10 transition-all focus-within:border-blue-500/50">
+                <div className="max-w-4xl mx-auto mb-12 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl rounded-[2.5rem] shadow-2xl p-2 flex items-center border border-white/40 dark:border-white/10 transition-all focus-within:border-blue-500/50 min-w-0">
                     <div className="pl-6 text-gray-400"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></div>
                     <input type="text" placeholder="Search for professionals..." className="w-full px-5 py-5 outline-none font-bold text-gray-700 dark:text-white bg-transparent placeholder:text-gray-300" onChange={(e) => setSearch(e.target.value)} />
                   </div>
+                  <div className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl rounded-[2.5rem] shadow-2xl p-2 flex items-center border border-white/40 dark:border-white/10 transition-all focus-within:border-blue-500/50 min-w-0">
+                    <div className="pl-6 text-gray-400">📍</div>
+                    <input
+                      type="text"
+                      value={locationFilter}
+                      placeholder="Near me: East Legon, Kumasi, Takoradi..."
+                      className="w-full px-5 py-5 outline-none font-bold text-gray-700 dark:text-white bg-transparent placeholder:text-gray-300"
+                      onChange={(e) => setLocationFilter(e.target.value)}
+                    />
+                  </div>
                 </div>
 
-                <div className="flex justify-start md:justify-center mb-20 overflow-x-auto no-scrollbar px-4">
-                  <div className="bg-white/30 dark:bg-black/20 p-2 rounded-full border border-white/20 flex gap-2 shadow-2xl backdrop-blur-md">
+                <div className="w-full flex justify-start md:justify-center mb-20 overflow-x-auto no-scrollbar px-2">
+                  <div className="bg-white/30 dark:bg-black/20 p-2 rounded-full border border-white/20 flex gap-2 shadow-2xl backdrop-blur-md w-max min-w-full md:min-w-0 md:w-auto">
                     {categories.map((cat) => (
                       <button key={cat.name} onClick={() => { setFilter(cat.name); setActiveTheme({ name: cat.name, color: cat.color, glow: `${cat.color}22` }); }}
-                        className={`relative z-10 px-8 py-4 rounded-full text-[9px] font-black uppercase tracking-[0.2em] flex-shrink-0 transition-all ${filter === cat.name ? 'text-white' : 'text-gray-400'}`}>
+                        className={`relative z-10 px-5 md:px-8 py-4 rounded-full text-[9px] font-black uppercase tracking-[0.15em] flex-shrink-0 transition-all whitespace-nowrap ${filter === cat.name ? 'text-white' : 'text-gray-400'}`}>
                         <span className="mr-2">{cat.icon}</span> {cat.name}
                         {filter === cat.name && <motion.div layoutId="pill" className="absolute inset-0 -z-10 rounded-full shadow-lg" style={{ backgroundColor: cat.color }} />}
                       </button>
@@ -247,43 +354,53 @@ const Dashboard = () => {
                   </div>
                 </div>
 
-                <motion.div layout className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-20">
+                <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-20 w-full min-w-0">
                   {filteredArtisans.map((artisan, i) => (
                     <ArtisanCard key={artisan._id} artisan={artisan} index={i} themeColor={activeTheme.color} onBook={() => setSelectedArtisan(artisan)} />
                   ))}
                 </motion.div>
               </motion.div>
             ) : (
-              <motion.div key="jobs" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="max-w-4xl mx-auto space-y-8 pb-20">
+              <motion.div key="jobs" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="max-w-5xl mx-auto space-y-8 pb-20 w-full min-w-0">
                 <h2 className="text-4xl font-black tracking-tighter uppercase mb-12 italic text-gray-900 dark:text-white">Active <span className="text-blue-600">Bookings</span></h2>
                 {myJobs.length > 0 ? myJobs.map(job => (
-                  <div key={job._id} className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl p-8 rounded-[3rem] border border-white/40 dark:border-white/10 shadow-xl flex flex-col md:flex-row justify-between items-center group hover:shadow-2xl transition-all duration-500">
-                    <div className="flex items-center gap-8">
-                      <div className="w-20 h-20 rounded-[2rem] bg-gray-50 dark:bg-gray-800 overflow-hidden border-2 border-white dark:border-white/10 shadow-lg">
+                  <div key={job._id} className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl p-6 md:p-8 rounded-[2.5rem] border border-white/40 dark:border-white/10 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-5 group hover:shadow-2xl transition-all duration-500 w-full min-w-0">
+                    <div className="flex items-center gap-4 md:gap-6 min-w-0 w-full md:w-auto">
+                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-[1.4rem] md:rounded-[2rem] bg-gray-50 dark:bg-gray-800 overflow-hidden border-2 border-white dark:border-white/10 shadow-lg shrink-0">
                         <img src={job.artisan?.profilePic || `https://ui-avatars.com/api/?name=${job.artisan?.username}`} className="w-full h-full object-cover" />
                       </div>
-                      <div>
-                        <h4 className="text-xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter">{job.artisan?.username || 'Guest Pro'}</h4>
-                        <div className="flex gap-3 mt-2">
+                      <div className="min-w-0">
+                        <h4 className="text-lg md:text-xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter truncate">{job.artisan?.username || 'Guest Pro'}</h4>
+                        <div className="flex flex-wrap gap-2 md:gap-3 mt-2">
                            <button onClick={() => navigate(`/messages/${job.artisan?._id}`)} className="text-[8px] font-black uppercase tracking-widest bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-lg">Message</button>
                            <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.3em] self-center">GHS {job.amount || job.price}</p>
                         </div>
                       </div>
                     </div>
-                    <div className="flex flex-col items-center md:items-end mt-6 md:mt-0 gap-4">
+                    <div className="flex flex-col items-start md:items-end gap-3 w-full md:w-auto">
                         <p className={`text-[9px] font-black uppercase tracking-[0.3em] px-4 py-2 rounded-full ${job.status === 'awaiting_confirmation' ? 'bg-blue-600 text-white animate-pulse shadow-lg shadow-blue-500/30' : 'bg-gray-100 dark:bg-white/10 text-gray-400'}`}>
                           {job.status.replace('_', ' ')}
                         </p>
-                        {job.status === 'awaiting_confirmation' && (
-                          <motion.button 
-                            whileHover={{ scale: 1.05 }} 
-                            whileTap={{ scale: 0.95 }} 
-                            onClick={() => setReviewingJob(job)} 
-                            className="bg-green-600 text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-green-500/30 hover:bg-black transition-all"
-                          >
-                            Release Funds
-                          </motion.button>
-                        )}
+                        <div className="flex flex-wrap gap-2">
+                          {job.status === 'awaiting_confirmation' && (
+                            <motion.button 
+                              whileHover={{ scale: 1.05 }} 
+                              whileTap={{ scale: 0.95 }} 
+                              onClick={() => setReviewingJob(job)} 
+                              className="bg-green-600 text-white px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-green-500/30 hover:bg-black transition-all"
+                            >
+                              Release Funds
+                            </motion.button>
+                          )}
+                          {job.status !== 'completed' && (
+                            <button
+                              onClick={() => setDisputeJob(job)}
+                              className="bg-red-100 text-red-700 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-red-200"
+                            >
+                              Raise Dispute
+                            </button>
+                          )}
+                        </div>
                     </div>
                   </div>
                 )) : (
@@ -291,6 +408,29 @@ const Dashboard = () => {
                     <p className="text-gray-400 font-black uppercase text-[10px] tracking-[0.5em]">No bookings found</p>
                   </div>
                 )}
+
+                <div className="pt-4">
+                  <h3 className="text-2xl font-black tracking-tighter uppercase italic mb-5 text-gray-900 dark:text-white">
+                    My <span className="text-blue-600">Disputes</span>
+                  </h3>
+                  <div className="space-y-3">
+                    {myDisputes.length > 0 ? myDisputes.slice(0, 6).map((d) => (
+                      <div key={d._id} className="bg-white/30 dark:bg-white/5 border border-white/20 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-xs font-black text-gray-900 dark:text-white tracking-tight">{d.ticketId}</p>
+                          <p className="text-[10px] text-gray-500 font-semibold truncate">{d.reason}</p>
+                        </div>
+                        <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-full ${
+                          d.status === 'resolved' ? 'bg-green-500 text-white' : 'bg-yellow-500 text-black'
+                        }`}>
+                          {d.status.replace('_', ' ')}
+                        </span>
+                      </div>
+                    )) : (
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">No dispute tickets yet.</p>
+                    )}
+                  </div>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -305,6 +445,14 @@ const Dashboard = () => {
               artisanName={reviewingJob.artisan?.username} 
               onClose={() => setReviewingJob(null)} 
               onConfirm={handleConfirmCompletion} 
+            />
+          )}
+          {disputeJob && (
+            <DisputeModal
+              isOpen={!!disputeJob}
+              job={disputeJob}
+              onClose={() => setDisputeJob(null)}
+              onSubmit={handleCreateDispute}
             />
           )}
         </AnimatePresence>

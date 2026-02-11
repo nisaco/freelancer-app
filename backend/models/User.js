@@ -69,6 +69,11 @@ const userSchema = new mongoose.Schema({
   profilePic: { 
     type: String 
   }, // Cloudinary URL
+  portfolio: [{
+    imageUrl: { type: String, required: true },
+    caption: { type: String, default: '' },
+    uploadedAt: { type: Date, default: Date.now }
+  }],
   phone: { 
     type: String 
   },

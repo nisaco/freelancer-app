@@ -21,6 +21,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
+const disputeRoutes = require('./routes/disputeRoutes');
 
 // Middleware
 app.use(express.json({ limit: '10mb' }));
@@ -55,6 +56,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/disputes', disputeRoutes);
 
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
