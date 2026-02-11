@@ -3,6 +3,8 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const http = require('http');
+const { initSocket } = require('./socket');
 
 // Load env vars
 dotenv.config();
@@ -76,4 +78,6 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+const server = http.createServer(app);
+initSocket(server);
+server.listen(PORT, () => console.log(`Server started on port ${PORT}`));

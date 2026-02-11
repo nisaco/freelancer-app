@@ -5,6 +5,7 @@ const User = require('../models/User');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const {
   getAvailableArtisans,
+  getFeaturedArtisans,
   getArtisanProfile,
   getArtisanAnalytics,
   getArtisanAvailability,
@@ -19,6 +20,7 @@ const ARTISAN_EARNINGS_RATIO = 0.8;
 
 // Marketplace + artisan profile
 router.get('/available', getAvailableArtisans);
+router.get('/featured', getFeaturedArtisans);
 router.get('/artisan/analytics/me', protect, authorize('artisan'), getArtisanAnalytics);
 router.put('/artisan/availability/me', protect, authorize('artisan'), updateMyAvailability);
 router.get('/artisan/:id/availability', getArtisanAvailability);

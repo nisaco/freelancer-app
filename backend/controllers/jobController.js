@@ -1,7 +1,7 @@
 const Job = require('../models/Job');
 const User = require('../models/User');
 const ArtisanProfile = require('../models/ArtisanProfile');
-const Notification = require('../models/Notification');
+const { createNotification } = require('../utils/notifications');
 const { sendWhatsAppJobAlert } = require('../utils/whatsapp');
 
 const ARTISAN_EARNINGS_RATIO = 0.8;
@@ -84,6 +84,70 @@ exports.getAvailableArtisans = async (req, res) => {
   } catch (error) {
     console.error("Fetch Artisans Error:", error);
     res.status(500).json({ message: 'Error fetching marketplace data' });
+  }
+};
+
+// @desc    Featured artisans for homepage
+// @route   GET /api/jobs/featured
+exports.getFeaturedArtisans = async (req, res) => {
+  try {
+    const minRating = Number(req.query.minRating || 4.5);
+    const minCompletedJobs = Number(req.query.minCompletedJobs || 5);
+    const limit = Math.min(Number(req.query.limit || 8), 20);
+
+    const completedJobs = await Job.aggregate([
+      { $match: { status: 'completed' } },
+      {
+        $group: {
+          _id: '$artisan',
+          completedJobs: { $sum: 1 }
+        }
+      },
+      { $match: { completedJobs: { $gte: minCompletedJobs } } }
+    ]);
+
+    if (!completedJobs.length) {
+      return res.json([]);
+    }
+
+    const completedMap = new Map(
+      completedJobs.map((entry) => [String(entry._id), entry.completedJobs])
+    );
+    const artisanIds = completedJobs.map((entry) => entry._id);
+
+    const artisans = await User.find({
+      _id: { $in: artisanIds },
+      role: 'artisan',
+      rating: { $gte: minRating }
+    }).select('username profilePic isVerified location category price bio rating reviewCount subscriptionTier subscriptionStatus subscriptionExpiresAt');
+
+    const featured = artisans
+      .map((artisan) => ({
+        _id: artisan._id,
+        username: artisan.username,
+        category: artisan.category || 'General Artisan',
+        bio: artisan.bio || 'Professional artisan ready to help.',
+        price: artisan.price || 0,
+        profilePic: artisan.profilePic,
+        isVerified: artisan.isVerified,
+        location: artisan.location || 'Accra, Ghana',
+        rating: artisan.rating || 0,
+        reviewCount: artisan.reviewCount || 0,
+        completedJobs: completedMap.get(String(artisan._id)) || 0,
+        subscriptionTier: artisan.subscriptionTier || 'free',
+        isGoldPro: isGoldActive(artisan)
+      }))
+      .sort((a, b) => {
+        if ((b.rating || 0) !== (a.rating || 0)) return (b.rating || 0) - (a.rating || 0);
+        if ((b.completedJobs || 0) !== (a.completedJobs || 0)) return (b.completedJobs || 0) - (a.completedJobs || 0);
+        return (b.reviewCount || 0) - (a.reviewCount || 0);
+      })
+      .slice(0, limit);
+
+    res.json(featured);
+  } catch (error) {
+    console.error("Featured Artisans Error:", error);
+    res.status(500).json({ message: 'Failed to fetch featured artisans' });
   }
 };
 
@@ -271,7 +335,7 @@ exports.createJob = async (req, res) => {
       status: 'pending'
     });
 
-    await Notification.create({
+    await createNotification({
       recipient: artisanId,
       type: 'NEW_BOOKING',
       relatedId: job._id,
@@ -326,7 +390,7 @@ exports.updateJobStatus = async (req, res) => {
     job.status = status;
 
     if (status === 'awaiting_confirmation') {
-      await Notification.create({
+      await createNotification({
         recipient: job.client,
         message: 'Job complete. Confirm delivery to release escrow funds.',
         type: 'JOB_COMPLETED',
@@ -359,7 +423,7 @@ exports.updateJobStatus = async (req, res) => {
         await artisan.save();
       }
 
-      await Notification.create({
+      await createNotification({
         recipient: job.artisan,
         message: `Escrow released for ${job.serviceType}. Funds are now available in wallet.`,
         type: 'PAYMENT_RECEIVED',

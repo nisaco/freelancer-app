@@ -3,9 +3,9 @@ const router = express.Router();
 const axios = require('axios');
 const Job = require('../models/Job');
 const User = require('../models/User');
-const Notification = require('../models/Notification');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { sendWhatsAppJobAlert } = require('../utils/whatsapp');
+const { createNotification } = require('../utils/notifications');
 
 const ARTISAN_EARNINGS_RATIO = 0.8;
 const HIGH_VALUE_JOB_THRESHOLD = Number(process.env.HIGH_VALUE_JOB_THRESHOLD || 1000);
@@ -51,7 +51,7 @@ const activateGoldSubscription = async (userId, reference) => {
   user.subscriptionReference = reference;
   await user.save();
 
-  await Notification.create({
+  await createNotification({
     recipient: user._id,
     type: 'SYSTEM',
     message: `HireMe Gold activated. Your subscription is active until ${expires.toDateString()}.`
@@ -74,7 +74,7 @@ const settleJobPayment = async (reference) => {
     job.status = 'paid';
     await job.save();
 
-    await Notification.create({
+    await createNotification({
       recipient: job.artisan,
       type: 'NEW_BOOKING',
       relatedId: job._id,
@@ -156,7 +156,7 @@ router.post('/initialize', protect, async (req, res) => {
     job.paymentReference = response.data.data.reference;
     await job.save();
 
-    await Notification.create({
+    await createNotification({
       recipient: artisanId,
       type: 'NEW_BOOKING',
       relatedId: job._id,

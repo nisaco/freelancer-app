@@ -1,8 +1,27 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 
 const Welcome = () => {
+  const [featuredArtisans, setFeaturedArtisans] = useState([]);
+
+  const API_BASE = window.location.hostname === 'localhost'
+    ? 'http://localhost:5000/api'
+    : 'https://hireme-bk0l.onrender.com/api';
+
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      try {
+        const res = await axios.get(`${API_BASE}/jobs/featured`);
+        setFeaturedArtisans(res.data || []);
+      } catch (error) {
+        setFeaturedArtisans([]);
+      }
+    };
+    fetchFeatured();
+  }, [API_BASE]);
+
   return (
     <div className="relative min-h-screen flex flex-col overflow-hidden transition-colors duration-700">
       {/* 1. THE LIVING BACKGROUND (From your index.css) */}
@@ -140,6 +159,56 @@ Cleaning Services etc. Just Sign up as Artisan to be in business or Client to en
           <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-yellow-400/10 rounded-full blur-3xl animate-pulse" />
         </motion.div>
       </main>
+
+      <section className="relative z-10 max-w-7xl mx-auto w-full px-8 pb-24">
+        <div className="flex items-end justify-between gap-6 mb-10">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-blue-600 dark:text-blue-400 mb-3">Trusted Picks</p>
+            <h3 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter text-gray-900 dark:text-white">
+              Featured Artisans
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 max-w-xl font-medium">
+              Top-rated pros with 4.5+ stars and at least 5 completed jobs.
+            </p>
+          </div>
+          <Link to="/register" className="text-[10px] font-black uppercase tracking-widest text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 px-5 py-3 rounded-2xl hover:border-blue-600 hover:text-blue-600 transition-colors">
+            Explore All
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+          {featuredArtisans.length > 0 ? featuredArtisans.map((artisan) => (
+            <motion.div
+              key={artisan._id}
+              whileHover={{ y: -4 }}
+              className="rounded-[2rem] border border-white/40 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-xl p-5 shadow-xl"
+            >
+              <div className="w-full h-44 rounded-[1.5rem] overflow-hidden mb-4">
+                <img
+                  src={artisan.profilePic || `https://ui-avatars.com/api/?name=${artisan.username}&background=random`}
+                  alt={artisan.username}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-600 mb-2">{artisan.category || 'General Service'}</p>
+              <h4 className="text-xl font-black uppercase italic tracking-tighter text-gray-900 dark:text-white truncate">
+                {artisan.username}
+              </h4>
+              <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 mt-2">
+                ⭐ {Number(artisan.rating || 0).toFixed(1)} | {artisan.completedJobs || 0} completed jobs
+              </p>
+              <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">
+                {artisan.location || 'Accra, Ghana'}
+              </p>
+              <p className="mt-4 text-lg font-black text-gray-900 dark:text-white">GHS {artisan.price || 0}</p>
+            </motion.div>
+          )) : (
+            <div className="col-span-full rounded-3xl border border-dashed border-gray-300 dark:border-gray-700 p-10 text-center">
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">No featured artisans yet</p>
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 };

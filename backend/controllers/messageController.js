@@ -1,4 +1,5 @@
 const Message = require('../models/Message');
+const { emitToUser } = require('../socket');
 
 // @desc    Get chat history between two users
 // @route   GET /api/messages/:recipientId
@@ -46,6 +47,8 @@ exports.sendMessage = async (req, res) => {
       recipient,
       content: messageContent
     });
+
+    emitToUser(recipient, 'message:new', { message: newMessage });
 
     res.status(201).json(newMessage);
   } catch (error) {

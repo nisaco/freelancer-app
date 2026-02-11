@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import { connectSocket, disconnectSocket } from '../services/socket';
 
 const Navbar = () => {
   const [notifications, setNotifications] = useState([]);
@@ -20,18 +21,45 @@ const Navbar = () => {
     : 'https://hireme-bk0l.onrender.com/api';
 
   useEffect(() => {
+    if (!token) return undefined;
+
+    const socket = connectSocket(token);
+
+    const handleNotification = ({ notification }) => {
+      if (!notification) return;
+      setNotifications((prev) => {
+        const deduped = prev.filter((entry) => entry._id !== notification._id);
+        return [notification, ...deduped].slice(0, 20);
+      });
+      setUnreadNotifs((count) => count + 1);
+    };
+
+    const handleMessage = () => {
+      setUnreadMessages((count) => count + 1);
+    };
+
+    socket?.on('notification:new', handleNotification);
+    socket?.on('message:new', handleMessage);
+
+    // Fallback refresh in case of socket disconnects.
+    const interval = setInterval(() => {
+      fetchUnreadCounts();
+    }, 120000);
+
+    return () => {
+      socket?.off('notification:new', handleNotification);
+      socket?.off('message:new', handleMessage);
+      clearInterval(interval);
+      disconnectSocket();
+    };
+  }, [token]);
+
+  useEffect(() => {
     if (token) {
       fetchNotifications();
-      fetchUnreadCounts(); // NEW: Initial fetch for badge counts
-      
-      // Poll for new data every 30 seconds
-      const interval = setInterval(() => {
-        fetchNotifications();
-        fetchUnreadCounts();
-      }, 30000);
-      return () => clearInterval(interval);
+      fetchUnreadCounts();
     }
-  }, [token, location.pathname]); // Re-fetch on route change
+  }, [token, location.pathname]);
 
   const fetchNotifications = async () => {
     try {
