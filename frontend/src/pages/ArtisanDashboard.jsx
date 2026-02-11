@@ -28,6 +28,48 @@ const itemVariants = {
   }
 };
 
+const getVerificationTimelineState = (artisan) => {
+  const hasIdUploaded = Boolean(artisan?.ghanaCardImage || artisan?.ghanaCardNumber);
+  const isVerified = Boolean(artisan?.isVerified);
+  const isUnderReview = Boolean(artisan?.isPending) || (hasIdUploaded && !isVerified);
+
+  const steps = [
+    {
+      key: 'uploaded',
+      label: 'ID Uploaded',
+      description: hasIdUploaded ? 'Documents on file' : 'Upload Ghana Card to start review',
+      done: hasIdUploaded,
+      active: !hasIdUploaded
+    },
+    {
+      key: 'review',
+      label: 'Under Review',
+      description: isUnderReview || isVerified ? 'Admin review in progress/completed' : 'Waiting for document upload',
+      done: isUnderReview || isVerified,
+      active: isUnderReview && !isVerified
+    },
+    {
+      key: 'verified',
+      label: 'Verified',
+      description: isVerified ? 'Trust badge is active' : 'Pending approval',
+      done: isVerified,
+      active: isVerified
+    }
+  ];
+
+  let title = 'Verification not started';
+  let note = 'Submit your Ghana Card to begin identity checks.';
+  if (isVerified) {
+    title = 'Verification complete';
+    note = 'Your account is verified. Clients can see your trust badge.';
+  } else if (isUnderReview) {
+    title = 'Verification in progress';
+    note = 'Your documents are under review. You will be notified once approved.';
+  }
+
+  return { steps, title, note, hasIdUploaded, isVerified };
+};
+
 const ArtisanDashboard = () => {
   const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
@@ -56,6 +98,24 @@ const ArtisanDashboard = () => {
   useEffect(() => {
     fetchArtisanData();
   }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return undefined;
+
+    const interval = setInterval(async () => {
+      try {
+        const profileRes = await axios.get(`${API_BASE}/auth/profile`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setUser((prev) => ({ ...prev, ...profileRes.data }));
+      } catch (error) {
+        // Keep silent here; dashboard already handles primary sync errors.
+      }
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [API_BASE]);
 
   const fetchArtisanData = async () => {
     try {
@@ -232,6 +292,8 @@ const ArtisanDashboard = () => {
     </div>
   );
 
+  const verification = getVerificationTimelineState(user);
+
   return (
     <PageTransition>
       <div className="relative min-h-screen flex flex-col transition-colors duration-700">
@@ -267,25 +329,59 @@ const ArtisanDashboard = () => {
             </motion.button>
           </motion.div>
 
-          {!user.isVerified && (
-            <motion.div
-              variants={itemVariants}
-              className="mb-10 bg-yellow-50/80 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/40 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-            >
+          <motion.div
+            variants={itemVariants}
+            className="mb-12 bg-white/50 dark:bg-white/5 border border-white/40 dark:border-white/10 rounded-[2.5rem] p-6 md:p-8 backdrop-blur-2xl shadow-xl"
+          >
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-yellow-700 dark:text-yellow-300">Verification Required</p>
-                <p className="text-sm font-bold text-yellow-900 dark:text-yellow-100 mt-2">
-                  Upload your Ghana Card and profile details to get verified and unlock full trust features.
-                </p>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600 dark:text-blue-400">Identity Verification</p>
+                <h3 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-gray-900 dark:text-white mt-2">
+                  {verification.title}
+                </h3>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-300 mt-2">{verification.note}</p>
               </div>
-              <button
-                onClick={() => navigate('/profile-setup')}
-                className="bg-yellow-500 text-black px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest self-start md:self-auto"
-              >
-                Submit Documents
-              </button>
-            </motion.div>
-          )}
+              {!verification.isVerified && (
+                <button
+                  onClick={() => navigate('/profile-setup')}
+                  className="bg-gray-900 dark:bg-white text-white dark:text-black px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest self-start md:self-auto"
+                >
+                  {verification.hasIdUploaded ? 'Update Documents' : 'Submit Documents'}
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {verification.steps.map((step) => (
+                <div
+                  key={step.key}
+                  className={`rounded-2xl border p-5 transition-all ${
+                    step.done
+                      ? 'bg-green-50/80 dark:bg-green-900/20 border-green-200 dark:border-green-700/30'
+                      : step.active
+                        ? 'bg-yellow-50/80 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700/30'
+                        : 'bg-gray-50/80 dark:bg-black/20 border-gray-200 dark:border-white/10'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-300">{step.label}</p>
+                    <span
+                      className={`w-7 h-7 rounded-xl flex items-center justify-center text-[11px] font-black ${
+                        step.done
+                          ? 'bg-green-600 text-white'
+                          : step.active
+                            ? 'bg-yellow-500 text-black'
+                            : 'bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+                      }`}
+                    >
+                      {step.done ? 'OK' : step.active ? '...' : '--'}
+                    </span>
+                  </div>
+                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-300">{step.description}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             <motion.div variants={itemVariants}
