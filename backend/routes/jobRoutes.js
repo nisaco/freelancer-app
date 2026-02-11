@@ -7,6 +7,8 @@ const {
   getAvailableArtisans,
   getArtisanProfile,
   getArtisanAnalytics,
+  getArtisanAvailability,
+  updateMyAvailability,
   createJob,
   getArtisanReviews,
   updateJobStatus,
@@ -18,6 +20,8 @@ const ARTISAN_EARNINGS_RATIO = 0.8;
 // Marketplace + artisan profile
 router.get('/available', getAvailableArtisans);
 router.get('/artisan/analytics/me', protect, authorize('artisan'), getArtisanAnalytics);
+router.put('/artisan/availability/me', protect, authorize('artisan'), updateMyAvailability);
+router.get('/artisan/:id/availability', getArtisanAvailability);
 router.get('/artisan/:id', getArtisanProfile);
 
 // Booking creation

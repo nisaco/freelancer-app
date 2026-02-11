@@ -7,6 +7,8 @@ const jobSchema = new mongoose.Schema({
   date: { type: Date, required: true },
   description: { type: String, required: true },
   serviceType: { type: String, default: 'General Service' },
+  scheduledStartAt: { type: Date, default: null },
+  scheduledEndAt: { type: Date, default: null },
   paymentReference: { type: String, default: null },
   isHighValue: { type: Boolean, default: false },
   rating: { type: Number, min: 1, max: 5 },

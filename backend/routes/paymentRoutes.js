@@ -5,6 +5,7 @@ const Job = require('../models/Job');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
 const { protect, authorize } = require('../middleware/authMiddleware');
+const { sendWhatsAppJobAlert } = require('../utils/whatsapp');
 
 const ARTISAN_EARNINGS_RATIO = 0.8;
 const HIGH_VALUE_JOB_THRESHOLD = Number(process.env.HIGH_VALUE_JOB_THRESHOLD || 1000);
@@ -15,6 +16,16 @@ const isGoldActive = (user) => {
   if (user.subscriptionTier !== 'gold' || user.subscriptionStatus !== 'active') return false;
   if (!user.subscriptionExpiresAt) return true;
   return new Date(user.subscriptionExpiresAt) > new Date();
+};
+
+const overlaps = (startA, endA, startB, endB) => startA < endB && endA > startB;
+
+const buildRequestedWindow = (date, scheduledStartAt, scheduledEndAt) => {
+  const start = scheduledStartAt ? new Date(scheduledStartAt) : new Date(date);
+  const end = scheduledEndAt
+    ? new Date(scheduledEndAt)
+    : new Date(start.getTime() + (2 * 60 * 60 * 1000));
+  return { start, end };
 };
 
 const verifyWithPaystack = async (reference) => {
@@ -77,7 +88,7 @@ const settleJobPayment = async (reference) => {
 // Initialize standard job payment
 router.post('/initialize', protect, async (req, res) => {
   try {
-    const { artisanId, amount, date, description, category } = req.body;
+    const { artisanId, amount, date, description, category, scheduledStartAt, scheduledEndAt } = req.body;
     const numericAmount = Number(amount || 0);
 
     if (!artisanId || !numericAmount || !date || !description) {
@@ -87,6 +98,22 @@ router.post('/initialize', protect, async (req, res) => {
     const artisan = await User.findById(artisanId);
     if (!artisan || artisan.role !== 'artisan') {
       return res.status(404).json({ message: 'Selected artisan was not found' });
+    }
+
+    const { start, end } = buildRequestedWindow(date, scheduledStartAt, scheduledEndAt);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start >= end) {
+      return res.status(400).json({ message: 'Invalid scheduling window' });
+    }
+
+    const hasConflict = (artisan.busySlots || []).some((slot) => {
+      const busyStart = new Date(slot.start);
+      const busyEnd = new Date(slot.end);
+      return overlaps(start, end, busyStart, busyEnd);
+    });
+    if (hasConflict) {
+      return res.status(409).json({
+        message: 'Selected artisan is not available in the requested time window. Please choose another slot.'
+      });
     }
 
     if (numericAmount >= HIGH_VALUE_JOB_THRESHOLD && !isGoldActive(artisan)) {
@@ -100,6 +127,8 @@ router.post('/initialize', protect, async (req, res) => {
       artisan: artisanId,
       amount: numericAmount,
       date,
+      scheduledStartAt: start,
+      scheduledEndAt: end,
       description,
       serviceType: category || 'General Service',
       isHighValue: numericAmount >= HIGH_VALUE_JOB_THRESHOLD,
@@ -126,6 +155,22 @@ router.post('/initialize', protect, async (req, res) => {
 
     job.paymentReference = response.data.data.reference;
     await job.save();
+
+    await Notification.create({
+      recipient: artisanId,
+      type: 'NEW_BOOKING',
+      relatedId: job._id,
+      message: `New booking request for ${category || 'General Service'}.`
+    });
+
+    const whatsappPhone = artisan.whatsappPhone || artisan.phone;
+    if (artisan.whatsappOptIn !== false && whatsappPhone) {
+      await sendWhatsAppJobAlert({
+        phone: whatsappPhone,
+        serviceType: category || 'General Service',
+        location: artisan.location || ''
+      });
+    }
 
     res.json(response.data.data);
   } catch (error) {

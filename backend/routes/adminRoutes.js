@@ -3,6 +3,8 @@ const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
+const Dispute = require('../models/Dispute');
+const Message = require('../models/Message');
 const { verifyArtisan } = require('../controllers/authController');
 
 // --- SECURITY MIDDLEWARE: ADMIN ONLY ---
@@ -91,5 +93,76 @@ router.get('/artisans', protect, adminOnly, async (req, res) => {
 
 // 5. The Verification Action
 router.put('/verify/:id', protect, adminOnly, verifyArtisan);
+
+// 6. Dispute dashboard summary
+router.get('/disputes/summary', protect, adminOnly, async (req, res) => {
+  try {
+    const [open, underReview, resolved] = await Promise.all([
+      Dispute.countDocuments({ status: 'open' }),
+      Dispute.countDocuments({ status: 'under_review' }),
+      Dispute.countDocuments({ status: 'resolved' })
+    ]);
+
+    res.json({
+      total: open + underReview + resolved,
+      open,
+      underReview,
+      resolved
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to load dispute summary" });
+  }
+});
+
+// 7. Dispute list for admin dashboard
+router.get('/disputes', protect, adminOnly, async (req, res) => {
+  try {
+    const { status } = req.query;
+    const query = {};
+    if (status && ['open', 'under_review', 'resolved'].includes(status)) {
+      query.status = status;
+    }
+
+    const disputes = await Dispute.find(query)
+      .populate('job', 'serviceType amount status date scheduledStartAt scheduledEndAt')
+      .populate('client', 'username email')
+      .populate('artisan', 'username email')
+      .populate('raisedBy', 'username role')
+      .populate('resolvedBy', 'username')
+      .sort({ createdAt: -1 });
+
+    res.json(disputes);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to load disputes" });
+  }
+});
+
+// 8. Dispute detail with messages and photos
+router.get('/disputes/:id', protect, adminOnly, async (req, res) => {
+  try {
+    const dispute = await Dispute.findById(req.params.id)
+      .populate('job')
+      .populate('client', 'username email')
+      .populate('artisan', 'username email')
+      .populate('raisedBy', 'username role')
+      .populate('evidence.uploadedBy', 'username role')
+      .populate('resolvedBy', 'username');
+
+    if (!dispute) return res.status(404).json({ message: 'Dispute not found' });
+
+    const messages = await Message.find({
+      $or: [
+        { sender: dispute.client._id, recipient: dispute.artisan._id },
+        { sender: dispute.artisan._id, recipient: dispute.client._id }
+      ]
+    })
+      .select('sender recipient content createdAt')
+      .sort({ createdAt: 1 });
+
+    res.json({ dispute, messages, evidence: dispute.evidence || [] });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to load dispute detail" });
+  }
+});
 
 module.exports = router;

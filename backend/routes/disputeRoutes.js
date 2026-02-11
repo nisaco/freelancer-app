@@ -8,9 +8,9 @@ const User = require('../models/User');
 
 const ARTISAN_SHARE_RATIO = 0.9;
 
-router.post('/', protect, authorize('client'), async (req, res) => {
+router.post('/', protect, async (req, res) => {
   try {
-    const { jobId, reason, description } = req.body;
+    const { jobId, reason, description, evidence } = req.body;
 
     if (!jobId || !reason) {
       return res.status(400).json({ message: 'jobId and reason are required' });
@@ -19,8 +19,10 @@ router.post('/', protect, authorize('client'), async (req, res) => {
     const job = await Job.findById(jobId);
     if (!job) return res.status(404).json({ message: 'Job not found' });
 
-    if (job.client.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Only the client for this job can open a dispute' });
+    const isClient = job.client.toString() === req.user._id.toString();
+    const isArtisan = job.artisan.toString() === req.user._id.toString();
+    if (!isClient && !isArtisan) {
+      return res.status(403).json({ message: 'Only participants in this job can open a dispute' });
     }
 
     const existing = await Dispute.findOne({ job: job._id });
@@ -28,18 +30,32 @@ router.post('/', protect, authorize('client'), async (req, res) => {
       return res.status(409).json({ message: 'A dispute already exists for this job', dispute: existing });
     }
 
+    const normalizedEvidence = Array.isArray(evidence)
+      ? evidence
+          .map((item) => ({
+            imageUrl: item?.imageUrl,
+            note: item?.note || '',
+            uploadedBy: req.user._id
+          }))
+          .filter((item) => item.imageUrl)
+      : [];
+
     const dispute = await Dispute.create({
       job: job._id,
       client: job.client,
       artisan: job.artisan,
       reason,
-      description: description || ''
+      description: description || '',
+      raisedBy: req.user._id,
+      evidence: normalizedEvidence
     });
 
     const hydrated = await Dispute.findById(dispute._id)
       .populate('job')
       .populate('client', 'username email')
-      .populate('artisan', 'username email');
+      .populate('artisan', 'username email')
+      .populate('raisedBy', 'username role')
+      .populate('evidence.uploadedBy', 'username role');
 
     res.status(201).json(hydrated);
   } catch (error) {
@@ -56,6 +72,7 @@ router.get('/my', protect, async (req, res) => {
       .populate('job')
       .populate('client', 'username')
       .populate('artisan', 'username')
+      .populate('raisedBy', 'username role')
       .sort({ createdAt: -1 });
 
     res.json(disputes);
@@ -66,10 +83,17 @@ router.get('/my', protect, async (req, res) => {
 
 router.get('/admin', protect, authorize('admin'), async (req, res) => {
   try {
-    const disputes = await Dispute.find()
+    const { status } = req.query;
+    const query = {};
+    if (status && ['open', 'under_review', 'resolved'].includes(status)) {
+      query.status = status;
+    }
+
+    const disputes = await Dispute.find(query)
       .populate('job')
       .populate('client', 'username email')
       .populate('artisan', 'username email')
+      .populate('raisedBy', 'username role')
       .populate('resolvedBy', 'username')
       .sort({ createdAt: -1 });
 
@@ -85,6 +109,8 @@ router.get('/admin/:id', protect, authorize('admin'), async (req, res) => {
       .populate('job')
       .populate('client', 'username email')
       .populate('artisan', 'username email')
+      .populate('raisedBy', 'username role')
+      .populate('evidence.uploadedBy', 'username role')
       .populate('resolvedBy', 'username');
 
     if (!dispute) return res.status(404).json({ message: 'Dispute not found' });
@@ -101,6 +127,45 @@ router.get('/admin/:id', protect, authorize('admin'), async (req, res) => {
     res.json({ dispute, messages });
   } catch (error) {
     res.status(500).json({ message: 'Failed to load dispute detail' });
+  }
+});
+
+router.put('/:id/evidence', protect, async (req, res) => {
+  try {
+    const { imageUrl, note } = req.body;
+    if (!imageUrl) return res.status(400).json({ message: 'imageUrl is required' });
+
+    const dispute = await Dispute.findById(req.params.id);
+    if (!dispute) return res.status(404).json({ message: 'Dispute not found' });
+
+    const isClient = dispute.client.toString() === req.user._id.toString();
+    const isArtisan = dispute.artisan.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+    if (!isClient && !isArtisan && !isAdmin) {
+      return res.status(403).json({ message: 'You are not allowed to add evidence to this dispute' });
+    }
+
+    dispute.evidence.push({
+      imageUrl,
+      note: note || '',
+      uploadedBy: req.user._id
+    });
+    if (dispute.status === 'open') {
+      dispute.status = 'under_review';
+    }
+    await dispute.save();
+
+    const hydrated = await Dispute.findById(dispute._id)
+      .populate('job')
+      .populate('client', 'username email')
+      .populate('artisan', 'username email')
+      .populate('raisedBy', 'username role')
+      .populate('evidence.uploadedBy', 'username role')
+      .populate('resolvedBy', 'username');
+
+    res.json(hydrated);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to add evidence' });
   }
 });
 
@@ -154,6 +219,8 @@ router.put('/admin/:id/resolve', protect, authorize('admin'), async (req, res) =
       .populate('job')
       .populate('client', 'username email')
       .populate('artisan', 'username email')
+      .populate('raisedBy', 'username role')
+      .populate('evidence.uploadedBy', 'username role')
       .populate('resolvedBy', 'username');
 
     res.json(hydrated);

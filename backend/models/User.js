@@ -139,6 +139,19 @@ const userSchema = new mongoose.Schema({
   phone: { 
     type: String 
   },
+  whatsappPhone: {
+    type: String
+  },
+  whatsappOptIn: {
+    type: Boolean,
+    default: true
+  },
+  busySlots: [{
+    start: { type: Date, required: true },
+    end: { type: Date, required: true },
+    note: { type: String, default: '' },
+    location: { type: String, default: '' }
+  }],
 
   // --- REPUTATION SYSTEM ---
   rating: { 

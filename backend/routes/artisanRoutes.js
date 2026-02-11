@@ -40,7 +40,7 @@ router.get('/me', protect, async (req, res) => {
 // --- 3. UPDATE PROFILE ---
 router.put('/update-profile', protect, async (req, res) => {
     try {
-        const { phone, bio, price, location, profilePic, momoNumber, momoNetwork } = req.body;
+        const { phone, bio, price, location, profilePic, momoNumber, momoNetwork, whatsappPhone, whatsappOptIn } = req.body;
         const user = await User.findById(req.user._id);
 
         if (user) {
@@ -51,6 +51,10 @@ router.put('/update-profile', protect, async (req, res) => {
             user.profilePic = profilePic || user.profilePic;
             user.momoNumber = momoNumber || user.momoNumber;
             user.momoNetwork = momoNetwork || user.momoNetwork;
+            user.whatsappPhone = whatsappPhone || user.whatsappPhone;
+            if (whatsappOptIn !== undefined) {
+                user.whatsappOptIn = Boolean(whatsappOptIn);
+            }
             
             const updatedUser = await user.save();
             const responseUser = updatedUser.toObject();

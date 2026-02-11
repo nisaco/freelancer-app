@@ -2,6 +2,7 @@ const Job = require('../models/Job');
 const User = require('../models/User');
 const ArtisanProfile = require('../models/ArtisanProfile');
 const Notification = require('../models/Notification');
+const { sendWhatsAppJobAlert } = require('../utils/whatsapp');
 
 const ARTISAN_EARNINGS_RATIO = 0.8;
 
@@ -17,6 +18,16 @@ const isGoldActive = (user) => {
   return new Date(user.subscriptionExpiresAt) > new Date();
 };
 
+const overlaps = (startA, endA, startB, endB) => startA < endB && endA > startB;
+
+const buildRequestedWindow = (date, scheduledStartAt, scheduledEndAt) => {
+  const start = scheduledStartAt ? new Date(scheduledStartAt) : new Date(date);
+  const end = scheduledEndAt
+    ? new Date(scheduledEndAt)
+    : new Date(start.getTime() + (2 * 60 * 60 * 1000)); // default 2-hour slot
+  return { start, end };
+};
+
 // @desc    Get all artisans for the Marketplace
 // @route   GET /api/jobs/available
 exports.getAvailableArtisans = async (req, res) => {
@@ -29,7 +40,7 @@ exports.getAvailableArtisans = async (req, res) => {
     }
 
     const artisans = await User.find(userQuery)
-      .select('username profilePic isVerified location category price bio rating reviewCount portfolio subscriptionTier subscriptionStatus subscriptionExpiresAt');
+      .select('username profilePic isVerified location category price bio rating reviewCount portfolio subscriptionTier subscriptionStatus subscriptionExpiresAt busySlots');
 
     const profiles = await ArtisanProfile.find();
 
@@ -50,7 +61,8 @@ exports.getAvailableArtisans = async (req, res) => {
         reviewCount: user.reviewCount || 0,
         portfolio: profile?.portfolio?.length ? profile.portfolio : (user.portfolio || []),
         subscriptionTier: user.subscriptionTier || 'free',
-        isGoldPro: gold
+        isGoldPro: gold,
+        busySlots: user.busySlots || []
       };
     });
 
@@ -80,7 +92,7 @@ exports.getAvailableArtisans = async (req, res) => {
 exports.getArtisanProfile = async (req, res) => {
   try {
     const artisan = await User.findOne({ _id: req.params.id, role: 'artisan' })
-      .select('username profilePic isVerified location category price bio rating reviewCount portfolio subscriptionTier subscriptionStatus subscriptionExpiresAt profileViewsTotal profileViewsToday profileViewsDate');
+      .select('username profilePic isVerified location category price bio rating reviewCount portfolio subscriptionTier subscriptionStatus subscriptionExpiresAt profileViewsTotal profileViewsToday profileViewsDate busySlots');
 
     if (!artisan) {
       return res.status(404).json({ message: 'Artisan not found' });
@@ -109,11 +121,67 @@ exports.getArtisanProfile = async (req, res) => {
       reviewCount: artisan.reviewCount || 0,
       portfolio: artisan.portfolio || [],
       subscriptionTier: artisan.subscriptionTier || 'free',
-      isGoldPro: isGoldActive(artisan)
+      isGoldPro: isGoldActive(artisan),
+      busySlots: artisan.busySlots || []
     });
   } catch (error) {
     console.error("Get Artisan Profile Error:", error);
     res.status(500).json({ message: 'Failed to fetch artisan profile' });
+  }
+};
+
+// @desc    Get availability calendar for an artisan
+// @route   GET /api/jobs/artisan/:id/availability
+exports.getArtisanAvailability = async (req, res) => {
+  try {
+    const artisan = await User.findOne({ _id: req.params.id, role: 'artisan' })
+      .select('busySlots username');
+
+    if (!artisan) return res.status(404).json({ message: 'Artisan not found' });
+
+    const now = new Date();
+    const upcomingBusySlots = (artisan.busySlots || [])
+      .filter((slot) => new Date(slot.end) > now)
+      .sort((a, b) => new Date(a.start) - new Date(b.start));
+
+    res.json({
+      artisanId: artisan._id,
+      artisanName: artisan.username,
+      busySlots: upcomingBusySlots
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to load artisan availability' });
+  }
+};
+
+// @desc    Artisan updates busy slots calendar
+// @route   PUT /api/jobs/artisan/availability/me
+exports.updateMyAvailability = async (req, res) => {
+  try {
+    const { busySlots } = req.body;
+    if (!Array.isArray(busySlots)) {
+      return res.status(400).json({ message: 'busySlots must be an array' });
+    }
+
+    const normalized = busySlots
+      .map((slot) => ({
+        start: new Date(slot.start),
+        end: new Date(slot.end),
+        note: slot.note || '',
+        location: slot.location || ''
+      }))
+      .filter((slot) => !Number.isNaN(slot.start.getTime()) && !Number.isNaN(slot.end.getTime()) && slot.start < slot.end)
+      .sort((a, b) => a.start - b.start);
+
+    const artisan = await User.findOne({ _id: req.user._id, role: 'artisan' });
+    if (!artisan) return res.status(404).json({ message: 'Artisan account not found' });
+
+    artisan.busySlots = normalized;
+    await artisan.save();
+
+    res.json({ message: 'Availability updated', busySlots: artisan.busySlots });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update availability' });
   }
 };
 
@@ -167,8 +235,30 @@ exports.getArtisanAnalytics = async (req, res) => {
 
 // @desc    Create a new job request
 exports.createJob = async (req, res) => {
-  const { artisanId, serviceType, description, date, amount } = req.body;
+  const { artisanId, serviceType, description, date, amount, scheduledStartAt, scheduledEndAt } = req.body;
   try {
+    const artisan = await User.findOne({ _id: artisanId, role: 'artisan' }).select('busySlots phone whatsappPhone whatsappOptIn location');
+    if (!artisan) {
+      return res.status(404).json({ message: 'Artisan not found' });
+    }
+
+    const { start, end } = buildRequestedWindow(date, scheduledStartAt, scheduledEndAt);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start >= end) {
+      return res.status(400).json({ message: 'Invalid scheduling window' });
+    }
+
+    const hasConflict = (artisan.busySlots || []).some((slot) => {
+      const busyStart = new Date(slot.start);
+      const busyEnd = new Date(slot.end);
+      return overlaps(start, end, busyStart, busyEnd);
+    });
+
+    if (hasConflict) {
+      return res.status(409).json({
+        message: 'Selected artisan is not available in the requested time window. Please choose another slot.'
+      });
+    }
+
     const job = await Job.create({
       client: req.user.id,
       artisan: artisanId,
@@ -176,8 +266,27 @@ exports.createJob = async (req, res) => {
       description,
       amount: amount || 0,
       date: new Date(date),
+      scheduledStartAt: start,
+      scheduledEndAt: end,
       status: 'pending'
     });
+
+    await Notification.create({
+      recipient: artisanId,
+      type: 'NEW_BOOKING',
+      relatedId: job._id,
+      message: `New job request for ${serviceType || 'General Service'}.`
+    });
+
+    const whatsappPhone = artisan.whatsappPhone || artisan.phone;
+    if (artisan.whatsappOptIn !== false && whatsappPhone) {
+      await sendWhatsAppJobAlert({
+        phone: whatsappPhone,
+        serviceType: serviceType || 'General Service',
+        location: artisan.location || ''
+      });
+    }
+
     res.status(201).json(job);
   } catch (error) {
     console.error("Create Job Error:", error);

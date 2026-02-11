@@ -32,6 +32,21 @@ const disputeSchema = new mongoose.Schema({
     default: '',
     trim: true
   },
+  raisedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  evidence: [{
+    imageUrl: { type: String, required: true },
+    note: { type: String, default: '', trim: true },
+    uploadedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    uploadedAt: { type: Date, default: Date.now }
+  }],
   status: {
     type: String,
     enum: ['open', 'under_review', 'resolved'],
