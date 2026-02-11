@@ -86,37 +86,37 @@ const Messages = () => {
           <div className="orb orb-2" />
         </div>
 
-        <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col pt-24 pb-10 px-6 relative z-10">
+        <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col pt-24 md:pt-28 pb-6 md:pb-10 px-3 md:px-6 relative z-10">
           
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl rounded-[3.5rem] border border-white/30 dark:border-white/10 shadow-2xl flex-1 flex flex-col overflow-hidden h-[75vh]"
+            className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl rounded-[2rem] md:rounded-[3.5rem] border border-white/30 dark:border-white/10 shadow-2xl flex-1 flex flex-col overflow-hidden h-[78vh] md:h-[75vh]"
           >
             
             {/* CHAT HEADER */}
-            <div className="p-8 border-b border-white/10 flex items-center justify-between bg-white/20 dark:bg-black/20">
-              <div className="flex items-center gap-5">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+            <div className="p-4 md:p-8 border-b border-white/10 flex items-center justify-between gap-3 bg-white/20 dark:bg-black/20">
+              <div className="flex items-center gap-3 md:gap-5 min-w-0">
+                <div className="w-11 h-11 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-lg shadow-blue-500/20 shrink-0">
                   <span className="font-black text-lg tracking-tighter">
                     {recipientId.slice(-2).toUpperCase()}
                   </span>
                 </div>
-                <div>
-                  <h2 className="text-sm font-black uppercase tracking-widest dark:text-white italic">Secure Channel</h2>
+                <div className="min-w-0">
+                  <h2 className="text-[11px] md:text-sm font-black uppercase tracking-widest dark:text-white italic truncate">Secure Channel</h2>
                   <div className="flex items-center gap-2 mt-1">
                     <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                    <p className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em]">Verified Connection</p>
+                    <p className="text-[8px] md:text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] truncate">Verified Connection</p>
                   </div>
                 </div>
               </div>
-              <button onClick={() => navigate(-1)} className="text-[10px] font-black text-gray-400 hover:text-black dark:hover:text-white uppercase tracking-widest transition-colors">
+              <button onClick={() => navigate(-1)} className="text-[9px] md:text-[10px] font-black text-gray-400 hover:text-black dark:hover:text-white uppercase tracking-widest transition-colors shrink-0">
                 Close Chat
               </button>
             </div>
 
             {/* MESSAGE STREAM */}
-            <div className="flex-1 overflow-y-auto p-8 space-y-6 no-scrollbar bg-white/5">
+            <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-4 md:space-y-6 no-scrollbar bg-white/5">
               {messages.length > 0 ? messages.map((msg, i) => {
                 const senderId = typeof msg.sender === 'string' ? msg.sender : msg.sender?._id;
                 const isMe = senderId === user?._id;
@@ -127,7 +127,7 @@ const Messages = () => {
                     key={i} 
                     className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`max-w-[75%] p-5 rounded-[2rem] shadow-sm ${
+                    <div className={`max-w-[85%] md:max-w-[75%] p-4 md:p-5 rounded-[1.3rem] md:rounded-[2rem] shadow-sm ${
                       isMe 
                       ? 'bg-blue-600 text-white rounded-tr-none' 
                       : 'bg-white dark:bg-gray-800 dark:text-white rounded-tl-none border border-white/20'
@@ -140,7 +140,7 @@ const Messages = () => {
                   </motion.div>
                 );
               }) : (
-                <div className="h-full flex flex-col items-center justify-center opacity-30 italic">
+              <div className="h-full flex flex-col items-center justify-center opacity-30 italic px-4 text-center">
                   <p className="text-[10px] font-black uppercase tracking-[0.4em]">No messages yet</p>
                   <p className="text-[8px] font-bold mt-2">Start the conversation below</p>
                 </div>
@@ -149,18 +149,18 @@ const Messages = () => {
             </div>
 
             {/* INPUT CONSOLE */}
-            <form onSubmit={handleSendMessage} className="p-8 bg-white/30 dark:bg-black/30 backdrop-blur-xl border-t border-white/10 flex gap-4">
+            <form onSubmit={handleSendMessage} className="p-4 md:p-8 bg-white/30 dark:bg-black/30 backdrop-blur-xl border-t border-white/10 flex gap-3 md:gap-4">
               <input 
                 type="text" 
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Type a message to this professional..."
-                className="flex-1 bg-white/50 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-2xl px-8 py-5 outline-none focus:ring-2 focus:ring-blue-600 dark:text-white font-bold placeholder:text-gray-400 transition-all"
+                className="flex-1 bg-white/50 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-xl md:rounded-2xl px-4 md:px-8 py-3 md:py-5 outline-none focus:ring-2 focus:ring-blue-600 dark:text-white font-bold placeholder:text-gray-400 transition-all text-sm md:text-base"
               />
               <motion.button 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="bg-gray-900 dark:bg-white text-white dark:text-black px-10 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl transition-all"
+                className="bg-gray-900 dark:bg-white text-white dark:text-black px-5 md:px-10 rounded-xl md:rounded-2xl font-black uppercase text-[9px] md:text-[10px] tracking-widest shadow-2xl transition-all"
               >
                 Send
               </motion.button>

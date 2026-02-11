@@ -3,6 +3,7 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import PageTransition from '../components/PageTransition';
 
@@ -28,6 +29,7 @@ const itemVariants = {
 };
 
 const ArtisanDashboard = () => {
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState({}); // Start with empty, fetch fresh
@@ -178,6 +180,26 @@ const ArtisanDashboard = () => {
               </svg>
             </motion.button>
           </motion.div>
+
+          {!user.isVerified && (
+            <motion.div
+              variants={itemVariants}
+              className="mb-10 bg-yellow-50/80 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/40 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+            >
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-yellow-700 dark:text-yellow-300">Verification Required</p>
+                <p className="text-sm font-bold text-yellow-900 dark:text-yellow-100 mt-2">
+                  Upload your Ghana Card and profile details to get verified and unlock full trust features.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate('/profile-setup')}
+                className="bg-yellow-500 text-black px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest self-start md:self-auto"
+              >
+                Submit Documents
+              </button>
+            </motion.div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             <motion.div variants={itemVariants}
@@ -338,7 +360,7 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE, handlePhotoUpload, u
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API_BASE}/auth/profile`, editData, {
+      await axios.put(`${API_BASE}/artisan/update-profile`, editData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const updatedUser = { ...user, ...editData };

@@ -13,20 +13,21 @@ router.put('/profile-setup', protect, authorize('artisan'), upload.fields([
     const { category, price, location, bio, ghanaCardNumber } = req.body;
     
     // Get the URLs from Cloudinary (provided by multer)
-    const profilePicUrl = req.files['profilePic'] ? req.files['profilePic'][0].path : '';
-    const ghanaCardUrl = req.files['ghanaCardImage'] ? req.files['ghanaCardImage'][0].path : '';
+    const profilePicUrl = req.files['profilePic'] ? req.files['profilePic'][0].path : undefined;
+    const ghanaCardUrl = req.files['ghanaCardImage'] ? req.files['ghanaCardImage'][0].path : undefined;
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
       {
-        category,
-        price,
-        location,
-        bio,
-        ghanaCardNumber,
-        profilePic: profilePicUrl,
-        ghanaCardImage: ghanaCardUrl,
-        isPending: true // Mark as ready for your review
+        ...(category ? { category } : {}),
+        ...(price ? { price } : {}),
+        ...(location ? { location } : {}),
+        ...(bio ? { bio } : {}),
+        ...(ghanaCardNumber ? { ghanaCardNumber } : {}),
+        ...(profilePicUrl ? { profilePic: profilePicUrl } : {}),
+        ...(ghanaCardUrl ? { ghanaCardImage: ghanaCardUrl } : {}),
+        isPending: true,
+        isVerified: false
       },
       { new: true }
     );

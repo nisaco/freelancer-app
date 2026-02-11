@@ -37,7 +37,7 @@ router.get('/stats', protect, adminOnly, async (req, res) => {
     const pendingArtisansList = await User.find({ 
       role: 'artisan', 
       isVerified: false,
-      ghanaCard: { $exists: true, $ne: '' } 
+      ghanaCardImage: { $exists: true, $ne: '' } 
     }).select('-password');
 
     // --- FIX: SEND THE ACTUAL VARIABLES INSTEAD OF 0 AND [] ---
@@ -67,12 +67,25 @@ router.get('/pending-artisans', protect, adminOnly, async (req, res) => {
     const pending = await User.find({ 
       role: 'artisan', 
       isVerified: false,
-      ghanaCard: { $exists: true, $ne: '' } 
+      ghanaCardImage: { $exists: true, $ne: '' } 
     }).select('-password');
     res.json(pending);
   } catch (err) {
     console.error("Admin Fetch Error:", err);
     res.status(500).json({ message: "Error fetching pending artisans" });
+  }
+});
+
+// 5. Get all artisans for verification management
+router.get('/artisans', protect, adminOnly, async (req, res) => {
+  try {
+    const artisans = await User.find({ role: 'artisan' })
+      .select('-password')
+      .sort({ createdAt: -1 });
+    res.json(artisans);
+  } catch (err) {
+    console.error("Admin Artisan Fetch Error:", err);
+    res.status(500).json({ message: "Error fetching artisans" });
   }
 });
 

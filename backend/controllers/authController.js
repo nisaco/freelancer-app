@@ -55,7 +55,9 @@ exports.loginUser = async (req, res) => {
         price: user.price,
         location: user.location,
         isVerified: user.isVerified,
+        isPending: user.isPending,
         profilePic: user.profilePic,
+        ghanaCardImage: user.ghanaCardImage,
         token: generateToken(user._id),
       });
     } else {
@@ -91,7 +93,9 @@ exports.handleOnboarding = async (req, res) => {
       }
       
       if (req.files['ghanaCard']) {
-        user.ghanaCard = req.files['ghanaCard'][0].path; 
+        user.ghanaCardImage = req.files['ghanaCard'][0].path; 
+        user.isPending = true;
+        user.isVerified = false;
       }
     }
 
@@ -99,7 +103,9 @@ exports.handleOnboarding = async (req, res) => {
     res.status(200).json({ 
       message: "Documents uploaded. Verification pending.",
       profilePic: user.profilePic,
-      ghanaCard: user.ghanaCard 
+      ghanaCardImage: user.ghanaCardImage,
+      isPending: user.isPending,
+      isVerified: user.isVerified
     });
   } catch (error) {
     console.error(error);
@@ -110,21 +116,33 @@ exports.handleOnboarding = async (req, res) => {
 // @desc    Verify an Artisan
 exports.verifyArtisan = async (req, res) => {
   try {
+    const { status = 'approve' } = req.body;
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    user.isVerified = true; 
+    if (status === 'approve') {
+      user.isVerified = true;
+      user.isPending = false;
+    } else if (status === 'reject' || status === 'unverify') {
+      user.isVerified = false;
+      user.isPending = false;
+    } else {
+      return res.status(400).json({ message: "Invalid status. Use approve, reject, or unverify." });
+    }
+
     await user.save();
 
     // Trigger a notification for the artisan
     // This will now work because we imported the Notification model
     await Notification.create({
       recipient: user._id,
-      message: "Congratulations! Your identity has been verified. You now have the verified badge.",
-      type: "JOB_COMPLETED" // Or add a 'SYSTEM' type to your model enum
+      message: status === 'approve'
+        ? "Congratulations! Your identity has been verified. You now have the verified badge."
+        : "Your verification was not approved yet. Please update your documents and submit again.",
+      type: "SYSTEM"
     });
 
-    res.json({ message: "Artisan verified successfully", user });
+    res.json({ message: `Artisan ${status} successful`, user });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Verification failed" });

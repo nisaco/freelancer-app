@@ -16,7 +16,7 @@ exports.getUnreadCount = async (req, res) => {
   try {
     const notifCount = await Notification.countDocuments({ 
       recipient: req.user.id, 
-      read: false 
+      isRead: false 
     });
     
     const msgCount = await Message.countDocuments({ 
@@ -35,8 +35,8 @@ exports.getUnreadCount = async (req, res) => {
 exports.markAsRead = async (req, res) => {
   try {
     await Notification.updateMany(
-      { recipient: req.user.id, read: false },
-      { $set: { read: true } }
+      { recipient: req.user.id, isRead: false },
+      { $set: { isRead: true } }
     );
     res.json({ message: 'Notifications cleared' });
   } catch (error) {

@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Job = require('../models/Job'); // Import the Job model for intelligence
+const Notification = require('../models/Notification');
 
 // @desc    Get platform metrics, pending artisans, and financial intelligence
 // @route   GET /api/admin/stats
@@ -10,7 +11,7 @@ exports.getAdminStats = async (req, res) => {
       User.countDocuments({ role: 'artisan' }),
       User.countDocuments({ role: 'client' }),
       // KEEPING YOUR LOGIC: isPending and isVerified checks
-      User.find({ isPending: true, isVerified: false })
+      User.find({ role: 'artisan', isVerified: false, ghanaCardImage: { $exists: true, $ne: '' } })
         .select('username email category location ghanaCardNumber ghanaCardImage'),
       
       // NEW: Calculate Total Network Volume
@@ -62,12 +63,14 @@ exports.verifyArtisan = async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // KEEPING YOUR LOGIC EXACTLY AS IT WAS
     if (status === 'approve') {
       user.isVerified = true;
       user.isPending = false;
-    } else {
+    } else if (status === 'reject' || status === 'unverify') {
+      user.isVerified = false;
       user.isPending = false; 
+    } else {
+      return res.status(400).json({ message: 'Invalid status' });
     }
 
     await user.save();
@@ -78,7 +81,9 @@ exports.verifyArtisan = async (req, res) => {
   // Notify the Artisan
   await Notification.create({
     recipient: user._id,
-    message: `Congratulations! Your professional identity has been verified. You are now live on the marketplace.`,
-    type: 'system'
+    message: status === 'approve'
+      ? 'Congratulations! Your professional identity has been verified. You are now live on the marketplace.'
+      : 'Verification not approved yet. Please upload clear documents and submit again.',
+    type: 'SYSTEM'
   });
 }

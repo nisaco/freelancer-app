@@ -76,7 +76,7 @@ const Navbar = () => {
   };
 
   // Derived count for notifications
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter(n => !(n.isRead ?? n.read)).length;
 
   return (
     <nav className="fixed top-0 left-0 w-full z-[100] px-6 py-4 flex justify-between items-center bg-white/10 dark:bg-black/10 backdrop-blur-2xl border-b border-white/20">
@@ -147,7 +147,7 @@ const Navbar = () => {
 
                 <div className="max-h-80 overflow-y-auto no-scrollbar space-y-3">
                   {notifications.length > 0 ? notifications.map((n) => (
-                    <div key={n._id} className={`p-4 rounded-2xl border transition-all ${n.read ? 'bg-gray-50/50 dark:bg-white/5 border-transparent' : 'bg-blue-50/50 dark:bg-blue-600/10 border-blue-100 dark:border-blue-900/30'}`}>
+                    <div key={n._id} className={`p-4 rounded-2xl border transition-all ${(n.isRead ?? n.read) ? 'bg-gray-50/50 dark:bg-white/5 border-transparent' : 'bg-blue-50/50 dark:bg-blue-600/10 border-blue-100 dark:border-blue-900/30'}`}>
                       <p className="text-[11px] font-bold text-gray-800 dark:text-gray-200 leading-relaxed">{n.message || n.content}</p>
                       <p className="text-[8px] font-black text-blue-500 mt-2 uppercase tracking-tighter">
                         {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

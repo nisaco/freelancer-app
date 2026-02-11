@@ -34,7 +34,7 @@ const AnimatedRoutes = () => {
         <Route path="/profile-setup" element={<ProtectedRoute role="artisan"><ProfileSetup /></ProtectedRoute>} />
         <Route path="/artisan-dashboard" element={<ProtectedRoute role="artisan"><ArtisanDashboard /></ProtectedRoute>} />
         <Route path="/admin-dashboard" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
-        <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/onboarding" element={<ProtectedRoute role="artisan"><Onboarding /></ProtectedRoute>} />
         <Route path="/admin-terminal" element={<AdminDashboard />} />
         <Route path="/payment/callback" element={<PaymentCallback />} />
         <Route path="/artisan/:id" element={<ArtisanProfile />} />

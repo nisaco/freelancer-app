@@ -35,29 +35,34 @@ const Inbox = () => {
         <Navbar />
         <div className="living-bg"><div className="orb orb-1" /><div className="orb orb-2" /></div>
 
-        <div className="max-w-4xl mx-auto w-full pt-28 px-6 relative z-10">
-          <h1 className="text-4xl md:text-6xl font-black text-gray-900 dark:text-white tracking-tighter uppercase italic mb-12">
+        <div className="max-w-4xl mx-auto w-full pt-24 md:pt-28 px-3 md:px-6 relative z-10">
+          <h1 className="text-3xl md:text-6xl font-black text-gray-900 dark:text-white tracking-tighter uppercase italic mb-8 md:mb-12">
             Your <span className="text-blue-600">Hub</span>
           </h1>
 
           <div className="space-y-4">
+            {loading && (
+              <div className="py-8 text-center">
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Loading conversations...</p>
+              </div>
+            )}
             {conversations.length > 0 ? conversations.map((chat) => (
               <motion.div 
                 whileHover={{ x: 10 }}
                 key={chat.otherUser._id}
                 onClick={() => navigate(`/messages/${chat.otherUser._id}`)}
-                className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl p-6 rounded-[2.5rem] border border-white/20 shadow-xl flex justify-between items-center cursor-pointer group"
+                className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl p-4 md:p-6 rounded-[1.8rem] md:rounded-[2.5rem] border border-white/20 shadow-xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 cursor-pointer group"
               >
-                <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-black text-xl shadow-lg">
+                <div className="flex items-center gap-4 md:gap-6 min-w-0">
+                  <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-blue-600 flex items-center justify-center text-white font-black text-lg md:text-xl shadow-lg shrink-0">
                     {chat.otherUser.username.slice(0, 1).toUpperCase()}
                   </div>
-                  <div>
-                    <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase italic">{chat.otherUser.username}</h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{chat.lastMessage}</p>
+                  <div className="min-w-0">
+                    <h3 className="text-base md:text-lg font-black text-gray-900 dark:text-white uppercase italic truncate">{chat.otherUser.username}</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 break-all">{chat.lastMessage}</p>
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="text-left sm:text-right w-full sm:w-auto">
                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Open Chat</p>
                 </div>
               </motion.div>

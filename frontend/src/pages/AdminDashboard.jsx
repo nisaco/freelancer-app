@@ -32,6 +32,7 @@ const AdminDashboard = () => {
     recentTransactions: [] 
   });
   const [payouts, setPayouts] = useState([]);
+  const [allArtisans, setAllArtisans] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const API_BASE = window.location.hostname === 'localhost' 
@@ -41,6 +42,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchData();
     fetchPayouts();
+    fetchAllArtisans();
   }, []);
 
   const fetchData = async () => {
@@ -71,6 +73,18 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchAllArtisans = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_BASE}/admin/artisans`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setAllArtisans(res.data || []);
+    } catch (err) {
+      console.error("Artisan list load failed");
+    }
+  };
+
   const handleVerify = async (id, status) => {
     try {
       const token = localStorage.getItem('token');
@@ -79,6 +93,7 @@ const AdminDashboard = () => {
       });
       toast.success(`Identity ${status === 'approve' ? 'Verified' : 'Rejected'}`);
       fetchData(); 
+      fetchAllArtisans();
     } catch (err) {
       toast.error("Action failed");
     }
@@ -146,8 +161,8 @@ const AdminDashboard = () => {
                 <AnimatePresence mode="popLayout">
                   {/* SHIELD: Safe mapping with fallback array */}
                   {(data?.pendingArtisans || []).map((artisan) => (
-                    <motion.div key={artisan._id} layout variants={itemVariants} exit={{ opacity: 0, x: 20 }} className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl p-6 rounded-[2rem] border border-white/40 shadow-xl flex justify-between items-center group">
-                      <div className="flex items-center gap-6">
+                    <motion.div key={artisan._id} layout variants={itemVariants} exit={{ opacity: 0, x: 20 }} className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl p-6 rounded-[2rem] border border-white/40 shadow-xl flex flex-col md:flex-row md:justify-between md:items-center gap-5 group">
+                      <div className="flex items-center gap-4 md:gap-6">
                         <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 overflow-hidden border-2 border-white"><img src={`https://ui-avatars.com/api/?name=${artisan.username}&background=random`} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt="" /></div>
                         <div>
                           <h4 className="font-black text-lg text-gray-900 dark:text-white uppercase italic tracking-tighter">{artisan.username}</h4>
@@ -155,12 +170,17 @@ const AdminDashboard = () => {
                           <a href={artisan.ghanaCardImage} target="_blank" rel="noreferrer" className="text-gray-400 text-[8px] font-bold underline mt-1 inline-block uppercase tracking-widest">Verify ID</a>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => handleVerify(artisan._id, 'approve')} className="bg-green-600 text-white px-6 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg">Approve</button>
-                        <button onClick={() => handleVerify(artisan._id, 'reject')} className="bg-white/10 text-red-500 px-6 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest border border-red-500/20">Reject</button>
+                      <div className="flex w-full md:w-auto gap-2">
+                        <button onClick={() => handleVerify(artisan._id, 'approve')} className="bg-green-600 text-white px-5 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg flex-1 md:flex-none">Approve</button>
+                        <button onClick={() => handleVerify(artisan._id, 'reject')} className="bg-white/10 text-red-500 px-5 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest border border-red-500/20 flex-1 md:flex-none">Reject</button>
                       </div>
                     </motion.div>
                   ))}
+                  {(data?.pendingArtisans || []).length === 0 && (
+                    <div className="py-14 text-center bg-white/10 rounded-[2rem] border border-dashed border-white/20">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">No pending artisan verification requests.</p>
+                    </div>
+                  )}
                 </AnimatePresence>
               </div>
             </motion.div>
@@ -182,6 +202,29 @@ const AdminDashboard = () => {
               </div>
             </motion.div>
           </div>
+
+          <motion.div variants={itemVariants} className="pb-12">
+            <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter mb-8">Artisan <span className="text-blue-600">Verification Manager</span></h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {(allArtisans || []).map((artisan) => (
+                <div key={artisan._id} className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl p-5 rounded-[1.8rem] border border-white/20 shadow-lg flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-sm font-black text-gray-900 dark:text-white uppercase italic truncate">{artisan.username}</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">{artisan.category || 'Artisan'}</p>
+                  </div>
+                  {artisan.isVerified ? (
+                    <button onClick={() => handleVerify(artisan._id, 'unverify')} className="bg-red-100 text-red-700 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap">
+                      Unverify
+                    </button>
+                  ) : (
+                    <button onClick={() => handleVerify(artisan._id, 'approve')} className="bg-blue-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap">
+                      Verify Now
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </motion.div>
 
           {/* PAYOUT MANAGEMENT SECTION */}
           <motion.div variants={itemVariants} className="pb-24">

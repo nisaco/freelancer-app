@@ -14,7 +14,9 @@ const ProfileSetup = () => {
     location: '',
     bio: '',
     ghanaCardNumber: '',
-    price: ''
+    price: '',
+    profilePic: null,
+    ghanaCardImage: null
   });
 
   const categories = ['Plumber', 'Electrician', 'Carpenter', 'Mason', 'Painter', 'Mechanic'];
@@ -32,35 +34,41 @@ const ProfileSetup = () => {
 
     const finalCategory = isOther ? formData.customCategory : formData.category;
 
-    const profileData = {
-      serviceCategory: finalCategory,
-      location: formData.location,
-      bio: formData.bio,
-      startingPrice: formData.price,
-      ghanaCardNumber: formData.ghanaCardNumber
-    };
+    if (!formData.ghanaCardImage) {
+      setLoading(false);
+      return toast.warn("Please upload your Ghana Card photo for verification.");
+    }
+
+    const payload = new FormData();
+    payload.append('category', finalCategory);
+    payload.append('location', formData.location);
+    payload.append('bio', formData.bio);
+    payload.append('price', formData.price);
+    payload.append('ghanaCardNumber', formData.ghanaCardNumber);
+    if (formData.profilePic) payload.append('profilePic', formData.profilePic);
+    payload.append('ghanaCardImage', formData.ghanaCardImage);
 
     try {
       const token = localStorage.getItem('token');
       const API_URL = window.location.hostname === 'localhost' 
-        ? 'http://localhost:5000/api/artisan/profile' 
-        : 'https://hireme-bk0l.onrender.com/api/artisan/profile';
+        ? 'http://localhost:5000/api/upload/profile-setup' 
+        : 'https://hireme-bk0l.onrender.com/api/upload/profile-setup';
 
-      // Submit to the Artisan Profile route
-      const response = await axios.post(API_URL, profileData, {
-        headers: { Authorization: `Bearer ${token}` }
+      const response = await axios.put(API_URL, payload, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
       });
 
-      // Update LocalStorage with the fresh user data from the server
-      // This fixes the "Guest" issue immediately
-      localStorage.setItem('user', JSON.stringify(response.data));
+      localStorage.setItem('user', JSON.stringify(response.data.user));
 
-      toast.success("Profile updated successfully!");
+      toast.success("Profile and verification documents submitted.");
       navigate('/artisan-dashboard');
       
     } catch (err) {
       console.error(err);
-      toast.error("Failed to save profile.");
+      toast.error(err.response?.data?.message || "Failed to save profile.");
     } finally {
       setLoading(false);
     }
@@ -101,8 +109,35 @@ const ProfileSetup = () => {
           </div>
 
           <div>
+             <label className="block text-sm font-bold text-gray-700 mb-2">Ghana Card Number</label>
+             <input type="text" name="ghanaCardNumber" placeholder="GHA-XXXXXXXXX-X" onChange={handleInputChange} required className="w-full p-4 bg-gray-50 rounded-xl border border-gray-100" />
+          </div>
+
+          <div>
              <label className="block text-sm font-bold text-gray-700 mb-2">Bio</label>
              <textarea name="bio" placeholder="Experience..." onChange={handleInputChange} required className="w-full p-4 bg-gray-50 rounded-xl border border-gray-100 h-32" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Profile Photo (Optional)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setFormData({ ...formData, profilePic: e.target.files[0] || null })}
+                className="w-full p-4 bg-gray-50 rounded-xl border border-gray-100"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Ghana Card Photo (Required)</label>
+              <input
+                type="file"
+                accept="image/*"
+                required
+                onChange={(e) => setFormData({ ...formData, ghanaCardImage: e.target.files[0] || null })}
+                className="w-full p-4 bg-gray-50 rounded-xl border border-gray-100"
+              />
+            </div>
           </div>
 
           <button 
