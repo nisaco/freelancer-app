@@ -1,4 +1,4 @@
-﻿const axios = require('axios');
+const axios = require('axios');
 const Job = require('../models/Job'); // Ensure you have this model!
 
 // --- 1. INITIALIZE PAYMENT ---
@@ -26,11 +26,12 @@ exports.initializePayment = async (req, res) => {
         });
 
         // 3. PREPARE PAYSTACK PARAMS
+        const frontendUrl = process.env.FRONTEND_URL || 'https://linkupgh.live';
         const params = {
             email: email,
             amount: Math.round(amount * 100), // GHS to Pesewas
             currency: 'GHS',
-            callback_url: "https://linkup-bk0l.onrender.com/payment/callback",
+            callback_url: `${frontendUrl}/payment/callback`,
             // Use metadata to keep track of the Job ID during payment
             metadata: {
                 jobId: newJob._id,
@@ -96,3 +97,4 @@ await Notification.create({
   message: `New Booking! A client has paid GHS ${amount} for your services. Check your dashboard.`,
   type: 'booking'
 });
+

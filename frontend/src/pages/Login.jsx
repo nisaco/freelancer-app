@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -18,7 +18,7 @@ const Login = () => {
       // KEEPING YOUR LOGIC: Localhost vs Render switch
       const API_URL = window.location.hostname === 'localhost' 
         ? 'http://localhost:5000/api/auth/login' 
-        : 'https://linkup-bk0l.onrender.com/api/auth/login';
+        : 'https://linkupgh.live/api/auth/login';
 
       const res = await axios.post(API_URL, formData);
       localStorage.setItem('user', JSON.stringify(res.data));
@@ -118,3 +118,4 @@ const Login = () => {
 };
 
 export default Login;
+

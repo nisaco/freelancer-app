@@ -1,11 +1,11 @@
-﻿import { io } from 'socket.io-client';
+import { io } from 'socket.io-client';
 
 let socketInstance = null;
 let activeToken = null;
 
 const SOCKET_BASE = window.location.hostname === 'localhost'
   ? 'http://localhost:5000'
-  : 'https://linkup-bk0l.onrender.com';
+  : 'https://linkupgh.live';
 
 export const connectSocket = (token) => {
   if (!token) return null;
@@ -36,4 +36,5 @@ export const disconnectSocket = () => {
 };
 
 export const getSocket = () => socketInstance;
+
 

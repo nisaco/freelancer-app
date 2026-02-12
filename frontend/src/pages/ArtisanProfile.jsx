@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -27,7 +27,7 @@ const BookingModal = ({ artisan, onClose, themeColor }) => {
       const token = localStorage.getItem('token');
       const API_BASE = window.location.hostname === 'localhost' 
         ? 'http://localhost:5000/api' 
-        : 'https://linkup-bk0l.onrender.com/api';
+        : 'https://linkupgh.live/api';
 
       const res = await axios.post(`${API_BASE}/payment/initialize`, {
         artisanId: artisan._id,
@@ -80,7 +80,7 @@ const ArtisanProfile = () => {
   const [isModalOpen, setIsModalOpen] = useState(false); 
   const [reviews, setReviews] = useState([]);
 
-  const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://linkup-bk0l.onrender.com/api';
+  const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://linkupgh.live/api';
 
   useEffect(() => {
     const fetchArtisan = async () => {
@@ -222,4 +222,5 @@ const ArtisanProfile = () => {
 };
 
 export default ArtisanProfile;
+
 

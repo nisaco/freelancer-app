@@ -28,7 +28,25 @@ const disputeRoutes = require('./routes/disputeRoutes');
 // Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
-app.use(cors());
+const allowedOrigins = (process.env.CORS_ORIGIN || [
+  'https://linkupgh.live',
+  'https://www.linkupgh.live',
+  'https://linkup-bk0l.onrender.com',
+  'http://localhost:5173',
+  'http://localhost:3000'
+].join(','))
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  }
+}));
 
 // Connect to Database
 const connectDB = async () => {
@@ -81,3 +99,4 @@ const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
 initSocket(server);
 server.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+

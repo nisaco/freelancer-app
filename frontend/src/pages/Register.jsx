@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -36,7 +36,7 @@ const Register = () => {
       // KEEPING YOUR LOGIC: Dynamic API URL switching
       const API_URL = window.location.hostname === 'localhost' 
         ? 'http://localhost:5000/api/auth/register' 
-        : 'https://linkup-bk0l.onrender.com/api/auth/register';
+        : 'https://linkupgh.live/api/auth/register';
 
       const res = await axios.post(API_URL, formData);
       
@@ -202,4 +202,5 @@ const Register = () => {
 };
 
 export default Register;
+
 

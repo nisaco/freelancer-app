@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,7 +21,7 @@ const Messages = () => {
 
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
-    : 'https://linkup-bk0l.onrender.com/api';
+    : 'https://linkupgh.live/api';
 
   useEffect(() => {
     if (!token || !user) {
@@ -174,4 +174,5 @@ const Messages = () => {
 };
 
 export default Messages;
+
 

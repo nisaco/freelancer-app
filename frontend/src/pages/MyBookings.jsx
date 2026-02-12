@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
@@ -15,7 +15,7 @@ const MyBookings = () => {
         const token = localStorage.getItem('token');
         const API_BASE = window.location.hostname === 'localhost' 
           ? 'http://localhost:5000/api' 
-          : 'https://linkup-bk0l.onrender.com/api';
+          : 'https://linkupgh.live/api';
         
         const res = await axios.get(`${API_BASE}/jobs/client`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -128,3 +128,4 @@ console.log("Status:", booking.status, "Phone:", booking.artisan?.phone);
   );
 };
 export default MyBookings;
+

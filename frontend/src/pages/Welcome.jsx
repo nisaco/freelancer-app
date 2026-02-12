@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import axios from 'axios';
@@ -8,7 +8,7 @@ const Welcome = () => {
 
   const API_BASE = window.location.hostname === 'localhost'
     ? 'http://localhost:5000/api'
-    : 'https://linkup-bk0l.onrender.com/api';
+    : 'https://linkupgh.live/api';
 
   useEffect(() => {
     const fetchFeatured = async () => {
@@ -214,4 +214,5 @@ Cleaning Services etc. Just Sign up as Artisan to be in business or Client to en
 };
 
 export default Welcome;
+
 

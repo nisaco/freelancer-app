@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
@@ -129,7 +129,7 @@ const BookingModal = ({ artisan, onClose, themeColor }) => {
       const token = localStorage.getItem('token');
       const API_BASE = window.location.hostname === 'localhost' 
         ? 'http://localhost:5000/api' 
-        : 'https://linkup-bk0l.onrender.com/api';
+        : 'https://linkupgh.live/api';
 
       const res = await axios.post(`${API_BASE}/payment/initialize`, {
         artisanId: artisan._id,
@@ -207,7 +207,7 @@ const Dashboard = () => {
   const [disputeJob, setDisputeJob] = useState(null);
   const [activeTheme, setActiveTheme] = useState({ name: 'All', color: '#2563EB', glow: 'rgba(37, 99, 235, 0.15)' });
 
-  const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://linkup-bk0l.onrender.com/api';
+  const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://linkupgh.live/api';
 
   const categories = [
     { name: 'All', icon: 'âœ¦', color: '#2563EB' },
@@ -532,4 +532,5 @@ const ArtisanCard = ({ artisan, index, themeColor, onBook }) => {
 };
 
 export default Dashboard;
+
 

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -18,7 +18,7 @@ const Navbar = () => {
 
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
-    : 'https://linkup-bk0l.onrender.com/api';
+    : 'https://linkupgh.live/api';
 
   useEffect(() => {
     if (!token) return undefined;
@@ -236,4 +236,5 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
 

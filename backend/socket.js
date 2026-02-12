@@ -4,9 +4,25 @@ const jwt = require('jsonwebtoken');
 let ioInstance = null;
 
 const initSocket = (httpServer) => {
+  const allowedOrigins = (process.env.CORS_ORIGIN || [
+    'https://linkupgh.live',
+    'https://www.linkupgh.live',
+    'https://linkup-bk0l.onrender.com',
+    'http://localhost:5173',
+    'http://localhost:3000'
+  ].join(','))
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   ioInstance = new Server(httpServer, {
     cors: {
-      origin: '*',
+      origin(origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+        return callback(new Error('Not allowed by CORS'));
+      },
       methods: ['GET', 'POST']
     }
   });
@@ -46,3 +62,4 @@ const emitToUser = (userId, event, payload) => {
 };
 
 module.exports = { initSocket, emitToUser };
+

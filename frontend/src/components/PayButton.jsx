@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import axios from 'axios';
 
 const PayButton = ({ amount, email }) => {
@@ -8,7 +8,7 @@ const PayButton = ({ amount, email }) => {
       // 1. Setup the Backend URL based on where the app is running
       const API_BASE_URL = window.location.hostname === 'localhost' 
         ? 'http://localhost:5000/api/payment/pay' 
-        : 'https://linkup-bk0l.onrender.com/api/payment/pay';
+        : 'https://linkupgh.live/api/payment/pay';
 
       // 2. Call your backend to initialize payment
       // Note: Paystack takes amount in Pesewas, but our backend handles the *100
@@ -43,3 +43,4 @@ const PayButton = ({ amount, email }) => {
 };
 
 export default PayButton;
+

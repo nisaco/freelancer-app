@@ -10,6 +10,15 @@ const { createNotification } = require('../utils/notifications');
 const ARTISAN_EARNINGS_RATIO = 0.8;
 const HIGH_VALUE_JOB_THRESHOLD = Number(process.env.HIGH_VALUE_JOB_THRESHOLD || 1000);
 const GOLD_SUBSCRIPTION_PRICE = Number(process.env.GOLD_SUBSCRIPTION_PRICE || 39);
+const DEFAULT_FRONTEND_URL = process.env.FRONTEND_URL || 'https://linkupgh.live';
+const ALLOWED_FRONTEND_ORIGINS = (process.env.CORS_ORIGIN || [
+  'https://linkupgh.live',
+  'https://www.linkupgh.live',
+  'https://linkup-bk0l.onrender.com'
+].join(','))
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 const isGoldActive = (user) => {
   if (!user) return false;
@@ -34,6 +43,14 @@ const verifyWithPaystack = async (reference) => {
     { headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` } }
   );
   return response.data.data;
+};
+
+const resolveFrontendUrl = (req) => {
+  const origin = req.get('origin');
+  if (origin && ALLOWED_FRONTEND_ORIGINS.includes(origin)) {
+    return origin;
+  }
+  return DEFAULT_FRONTEND_URL;
 };
 
 const activateGoldSubscription = async (userId, reference) => {
@@ -88,6 +105,7 @@ const settleJobPayment = async (reference) => {
 // Initialize standard job payment
 router.post('/initialize', protect, async (req, res) => {
   try {
+    const frontendUrl = resolveFrontendUrl(req);
     const { artisanId, amount, date, description, category, scheduledStartAt, scheduledEndAt } = req.body;
     const numericAmount = Number(amount || 0);
 
@@ -139,7 +157,7 @@ router.post('/initialize', protect, async (req, res) => {
       email: req.user.email,
       amount: Math.round(numericAmount * 100),
       currency: 'GHS',
-      callback_url: `${process.env.FRONTEND_URL}/payment/callback?type=job`,
+      callback_url: `${frontendUrl}/payment/callback?type=job`,
       metadata: {
         purchaseType: 'job',
         jobId: job._id,
@@ -182,11 +200,12 @@ router.post('/initialize', protect, async (req, res) => {
 // Initialize LinkUp Gold subscription payment
 router.post('/subscription/initialize', protect, authorize('artisan'), async (req, res) => {
   try {
+    const frontendUrl = resolveFrontendUrl(req);
     const paystackData = {
       email: req.user.email,
       amount: Math.round(GOLD_SUBSCRIPTION_PRICE * 100),
       currency: 'GHS',
-      callback_url: `${process.env.FRONTEND_URL}/payment/callback?type=subscription`,
+      callback_url: `${frontendUrl}/payment/callback?type=subscription`,
       metadata: {
         purchaseType: 'subscription',
         userId: req.user._id,
@@ -239,13 +258,14 @@ router.get('/callback', async (req, res) => {
 
 // Legacy verify route (redirect flow compatibility)
 router.get('/verify', async (req, res) => {
+  const frontendUrl = resolveFrontendUrl(req);
   const { reference } = req.query;
-  if (!reference) return res.redirect(`${process.env.FRONTEND_URL}/payment-failed`);
+  if (!reference) return res.redirect(`${frontendUrl}/payment-failed`);
 
   try {
     const data = await verifyWithPaystack(reference);
     if (data.status !== 'success') {
-      return res.redirect(`${process.env.FRONTEND_URL}/payment-failed`);
+      return res.redirect(`${frontendUrl}/payment-failed`);
     }
 
     const metadata = data.metadata || {};
@@ -253,14 +273,14 @@ router.get('/verify', async (req, res) => {
 
     if (purchaseType === 'subscription') {
       await activateGoldSubscription(metadata.userId, reference);
-      return res.redirect(`${process.env.FRONTEND_URL}/artisan-dashboard?subscription=success`);
+      return res.redirect(`${frontendUrl}/artisan-dashboard?subscription=success`);
     }
 
     await settleJobPayment(reference);
-    return res.redirect(`${process.env.FRONTEND_URL}/payment-success?reference=${reference}`);
+    return res.redirect(`${frontendUrl}/payment-success?reference=${reference}`);
   } catch (error) {
     console.error("Verification Error:", error.response?.data || error.message);
-    return res.redirect(`${process.env.FRONTEND_URL}/payment-failed`);
+    return res.redirect(`${frontendUrl}/payment-failed`);
   }
 });
 

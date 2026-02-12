@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts';
@@ -93,7 +93,7 @@ const ArtisanDashboard = () => {
 
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
-    : 'https://linkup-bk0l.onrender.com/api';
+    : 'https://linkupgh.live/api';
 
   useEffect(() => {
     fetchArtisanData();
@@ -631,7 +631,7 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE, handlePhotoUpload, u
           <div className="flex items-center gap-6">
             <div className="relative group w-24 h-24">
               <img 
-                src={user.profilePic ? (user.profilePic.startsWith('http') ? user.profilePic : `https://linkup-bk0l.onrender.com/${user.profilePic}`) : `https://ui-avatars.com/api/?name=${user.username}`} 
+                src={user.profilePic ? (user.profilePic.startsWith('http') ? user.profilePic : `https://linkupgh.live/${user.profilePic}`) : `https://ui-avatars.com/api/?name=${user.username}`} 
                 className="w-full h-full rounded-3xl object-cover border-4 border-white shadow-lg" 
               />
               <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 cursor-pointer transition-all">
@@ -703,4 +703,5 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE, handlePhotoUpload, u
 };
 
 export default ArtisanDashboard;
+
 

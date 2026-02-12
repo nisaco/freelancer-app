@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -15,7 +15,7 @@ const PaymentCallback = () => {
   useEffect(() => {
     const verifyPayment = async () => {
       try {
-        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://linkup-bk0l.onrender.com/api';
+        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://linkupgh.live/api';
         const res = await axios.get(`${API_BASE}/payment/callback?reference=${reference}`);
 
         if (res.data.status === 'success' || res.data.data?.status === 'success') {
@@ -74,4 +74,5 @@ const PaymentCallback = () => {
 };
 
 export default PaymentCallback;
+
 
