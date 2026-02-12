@@ -31,7 +31,6 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 const allowedOrigins = (process.env.CORS_ORIGIN || [
   'https://linkupgh.live',
   'https://www.linkupgh.live',
-  'https://hireme-bk0l.onrender.com',
   'https://linkup-bk0l.onrender.com',
   'http://localhost:5173',
   'http://localhost:3000'
