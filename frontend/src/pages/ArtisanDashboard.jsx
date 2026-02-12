@@ -595,7 +595,9 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE, handlePhotoUpload, u
     phone: user.phone || '',
     bio: user.bio || '',
     price: user.price || 0,
-    location: user.location || ''
+    location: user.location || '',
+    workExperience: user.workExperience || '',
+    educationBackground: user.educationBackground || ''
   });
 
   const handleUpdate = async (e) => {
@@ -694,6 +696,14 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE, handlePhotoUpload, u
           <div className="space-y-2">
             <label className="text-[9px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">Professional Bio</label>
             <textarea value={editData.bio} className="w-full p-5 bg-gray-100 dark:bg-black/20 rounded-2xl font-medium h-32 border-none focus:ring-2 focus:ring-blue-600 outline-none text-gray-900 dark:text-white" onChange={(e) => setEditData({...editData, bio: e.target.value})} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[9px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">Work Experience (Optional)</label>
+            <textarea value={editData.workExperience} className="w-full p-5 bg-gray-100 dark:bg-black/20 rounded-2xl font-medium h-28 border-none focus:ring-2 focus:ring-blue-600 outline-none text-gray-900 dark:text-white" onChange={(e) => setEditData({...editData, workExperience: e.target.value})} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[9px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">Education Background (Optional)</label>
+            <textarea value={editData.educationBackground} className="w-full p-5 bg-gray-100 dark:bg-black/20 rounded-2xl font-medium h-28 border-none focus:ring-2 focus:ring-blue-600 outline-none text-gray-900 dark:text-white" onChange={(e) => setEditData({...editData, educationBackground: e.target.value})} />
           </div>
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" className="w-full bg-blue-600 text-white py-6 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl shadow-blue-500/40 mt-8">Update Identity</motion.button>
         </form>

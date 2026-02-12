@@ -6,6 +6,24 @@ import { toast } from 'react-toastify';
 import Navbar from '../components/Navbar';
 import PageTransition from '../components/PageTransition';
 
+const StarRating = ({ value = 0, size = "w-4 h-4" }) => {
+  const rounded = Math.round(Number(value || 0));
+  return (
+    <div className="flex items-center gap-1">
+      {Array.from({ length: 5 }).map((_, idx) => (
+        <svg
+          key={idx}
+          className={`${size} ${idx < rounded ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'}`}
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.089 3.35a1 1 0 00.95.69h3.522c.969 0 1.371 1.24.588 1.81l-2.85 2.07a1 1 0 00-.363 1.118l1.089 3.35c.3.921-.755 1.688-1.538 1.118l-2.85-2.07a1 1 0 00-1.176 0l-2.85 2.07c-.783.57-1.838-.197-1.539-1.118l1.09-3.35a1 1 0 00-.364-1.118l-2.85-2.07c-.783-.57-.38-1.81.588-1.81H6.01a1 1 0 00.951-.69l1.088-3.35z" />
+        </svg>
+      ))}
+    </div>
+  );
+};
+
 // --- VERIFIED BADGE COMPONENT (TikTok/LinkedIn Style) ---
 const VerifiedBadge = ({ size = "w-6 h-6" }) => (
   <svg className={`${size} text-blue-500 fill-current shadow-xl inline-block ml-2`} viewBox="0 0 24 24">
@@ -125,6 +143,12 @@ const ArtisanProfile = () => {
                 {artisan.isVerified && <VerifiedBadge size="w-10 h-10" />}
               </div>
               <p className="text-xl font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">{artisan.category}</p>
+              <div className="mt-4 flex items-center justify-center md:justify-start gap-3">
+                <StarRating value={artisan.rating} />
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                  {Number(artisan.rating || 0).toFixed(1)} ({artisan.reviewCount || 0} reviews)
+                </p>
+              </div>
             </div>
           </motion.div>
 
@@ -148,6 +172,21 @@ const ArtisanProfile = () => {
               >
                 Ask a Question
               </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10">
+            <div className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl p-8 rounded-[2.5rem] border border-white/40 dark:border-white/10">
+              <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest mb-4">Work Experience</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                {artisan.workExperience || 'No work experience provided yet.'}
+              </p>
+            </div>
+            <div className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl p-8 rounded-[2.5rem] border border-white/40 dark:border-white/10">
+              <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest mb-4">Education Background</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                {artisan.educationBackground || 'No education background provided yet.'}
+              </p>
             </div>
           </div>
 
@@ -196,7 +235,7 @@ const ArtisanProfile = () => {
                       </div>
                     </div>
                     <div className="flex text-yellow-400 text-xs">
-                      {Array.from({ length: rev.rating }).map((_, i) => <span key={i}>*</span>)}
+                      <StarRating value={rev.rating} size="w-3.5 h-3.5" />
                     </div>
                   </div>
                   <p className="text-gray-600 dark:text-gray-400 text-sm italic font-medium leading-relaxed">

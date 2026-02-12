@@ -40,7 +40,7 @@ exports.getAvailableArtisans = async (req, res) => {
     }
 
     const artisans = await User.find(userQuery)
-      .select('username profilePic isVerified location category price bio rating reviewCount portfolio subscriptionTier subscriptionStatus subscriptionExpiresAt busySlots');
+      .select('username profilePic isVerified location category price bio workExperience educationBackground rating reviewCount portfolio subscriptionTier subscriptionStatus subscriptionExpiresAt busySlots');
 
     const profiles = await ArtisanProfile.find();
 
@@ -53,6 +53,8 @@ exports.getAvailableArtisans = async (req, res) => {
         username: user.username,
         category: profile?.serviceCategory || user.category || 'General Artisan',
         bio: profile?.bio || user.bio || 'Professional artisan ready to help.',
+        workExperience: user.workExperience || '',
+        educationBackground: user.educationBackground || '',
         price: profile?.startingPrice || user.price || 0,
         profilePic: profile?.profileImage || user.profilePic,
         isVerified: user.isVerified,
@@ -119,7 +121,7 @@ exports.getFeaturedArtisans = async (req, res) => {
       _id: { $in: artisanIds },
       role: 'artisan',
       rating: { $gte: minRating }
-    }).select('username profilePic isVerified location category price bio rating reviewCount subscriptionTier subscriptionStatus subscriptionExpiresAt');
+    }).select('username profilePic isVerified location category price bio workExperience educationBackground rating reviewCount subscriptionTier subscriptionStatus subscriptionExpiresAt');
 
     const featured = artisans
       .map((artisan) => ({
@@ -127,6 +129,8 @@ exports.getFeaturedArtisans = async (req, res) => {
         username: artisan.username,
         category: artisan.category || 'General Artisan',
         bio: artisan.bio || 'Professional artisan ready to help.',
+        workExperience: artisan.workExperience || '',
+        educationBackground: artisan.educationBackground || '',
         price: artisan.price || 0,
         profilePic: artisan.profilePic,
         isVerified: artisan.isVerified,
@@ -156,7 +160,7 @@ exports.getFeaturedArtisans = async (req, res) => {
 exports.getArtisanProfile = async (req, res) => {
   try {
     const artisan = await User.findOne({ _id: req.params.id, role: 'artisan' })
-      .select('username profilePic isVerified location category price bio rating reviewCount portfolio subscriptionTier subscriptionStatus subscriptionExpiresAt profileViewsTotal profileViewsToday profileViewsDate busySlots');
+      .select('username profilePic isVerified location category price bio workExperience educationBackground rating reviewCount portfolio subscriptionTier subscriptionStatus subscriptionExpiresAt profileViewsTotal profileViewsToday profileViewsDate busySlots');
 
     if (!artisan) {
       return res.status(404).json({ message: 'Artisan not found' });
@@ -177,6 +181,8 @@ exports.getArtisanProfile = async (req, res) => {
       username: artisan.username,
       category: artisan.category || 'General Artisan',
       bio: artisan.bio || 'Professional artisan ready to help.',
+      workExperience: artisan.workExperience || '',
+      educationBackground: artisan.educationBackground || '',
       price: artisan.price || 0,
       profilePic: artisan.profilePic,
       isVerified: artisan.isVerified,

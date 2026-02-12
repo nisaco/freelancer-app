@@ -6,6 +6,24 @@ import Navbar from '../components/Navbar';
 import PageTransition from '../components/PageTransition';
 import { toast } from 'react-toastify';
 
+const StarRating = ({ value = 0, size = 'w-3.5 h-3.5' }) => {
+  const rounded = Math.round(Number(value || 0));
+  return (
+    <div className="flex items-center gap-1">
+      {Array.from({ length: 5 }).map((_, idx) => (
+        <svg
+          key={idx}
+          className={`${size} ${idx < rounded ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'}`}
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.089 3.35a1 1 0 00.95.69h3.522c.969 0 1.371 1.24.588 1.81l-2.85 2.07a1 1 0 00-.363 1.118l1.089 3.35c.3.921-.755 1.688-1.538 1.118l-2.85-2.07a1 1 0 00-1.176 0l-2.85 2.07c-.783.57-1.838-.197-1.539-1.118l1.09-3.35a1 1 0 00-.364-1.118l-2.85-2.07c-.783-.57-.38-1.81.588-1.81H6.01a1 1 0 00.951-.69l1.088-3.35z" />
+        </svg>
+      ))}
+    </div>
+  );
+};
+
 // --- SUB-COMPONENT: REVIEW MODAL (New Elite Addition) ---
 const ReviewModal = ({ isOpen, onClose, onConfirm, artisanName }) => {
   const [rating, setRating] = useState(5);
@@ -29,7 +47,9 @@ const ReviewModal = ({ isOpen, onClose, onConfirm, artisanName }) => {
               onClick={() => setRating(star)}
               className={`text-4xl transition-all ${star <= rating ? 'text-yellow-400 scale-110' : 'text-gray-300 dark:text-gray-700'}`}
             >
-              *
+              <svg className={`w-9 h-9 ${star <= rating ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-700'}`} viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.089 3.35a1 1 0 00.95.69h3.522c.969 0 1.371 1.24.588 1.81l-2.85 2.07a1 1 0 00-.363 1.118l1.089 3.35c.3.921-.755 1.688-1.538 1.118l-2.85-2.07a1 1 0 00-1.176 0l-2.85 2.07c-.783.57-1.838-.197-1.539-1.118l1.09-3.35a1 1 0 00-.364-1.118l-2.85-2.07c-.783-.57-.38-1.81.588-1.81H6.01a1 1 0 00.951-.69l1.088-3.35z" />
+              </svg>
             </button>
           ))}
         </div>
@@ -511,7 +531,16 @@ const ArtisanCard = ({ artisan, index, themeColor, onBook }) => {
         <div className="flex-1" onClick={() => navigate(`/artisan/${artisan._id}`)}>
           <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter leading-[0.8] mb-2 uppercase italic">{artisan.username}</h3>
           <p className="text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: themeColor }}>{artisan.category}</p>
+          <div className="mt-3 flex items-center gap-2">
+            <StarRating value={artisan.rating} />
+            <p className="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+              {Number(artisan.rating || 0).toFixed(1)} ({artisan.reviewCount || 0})
+            </p>
+          </div>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-6 line-clamp-3 font-medium italic leading-relaxed">{artisan.bio || "Verified professional elite artisan."}</p>
+          <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-3 line-clamp-2 font-semibold">
+            {artisan.workExperience || artisan.educationBackground || 'No additional profile details yet.'}
+          </p>
         </div>
         <div className="mt-10 pt-8 border-t border-gray-100 dark:border-white/5 flex items-center justify-between">
           <button 

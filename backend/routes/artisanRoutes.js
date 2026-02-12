@@ -40,18 +40,32 @@ router.get('/me', protect, async (req, res) => {
 // --- 3. UPDATE PROFILE ---
 router.put('/update-profile', protect, async (req, res) => {
     try {
-        const { phone, bio, price, location, profilePic, momoNumber, momoNetwork, whatsappPhone, whatsappOptIn } = req.body;
+        const {
+            phone,
+            bio,
+            price,
+            location,
+            profilePic,
+            momoNumber,
+            momoNetwork,
+            whatsappPhone,
+            whatsappOptIn,
+            workExperience,
+            educationBackground
+        } = req.body;
         const user = await User.findById(req.user._id);
 
         if (user) {
-            user.phone = phone || user.phone;
-            user.bio = bio || user.bio;
-            user.price = price !== undefined ? Number(price) : user.price;
-            user.location = location || user.location;
-            user.profilePic = profilePic || user.profilePic;
-            user.momoNumber = momoNumber || user.momoNumber;
-            user.momoNetwork = momoNetwork || user.momoNetwork;
-            user.whatsappPhone = whatsappPhone || user.whatsappPhone;
+            if (Object.prototype.hasOwnProperty.call(req.body, 'phone')) user.phone = phone || '';
+            if (Object.prototype.hasOwnProperty.call(req.body, 'bio')) user.bio = bio || '';
+            if (Object.prototype.hasOwnProperty.call(req.body, 'price')) user.price = price !== undefined ? Number(price) : user.price;
+            if (Object.prototype.hasOwnProperty.call(req.body, 'location')) user.location = location || '';
+            if (Object.prototype.hasOwnProperty.call(req.body, 'profilePic')) user.profilePic = profilePic || '';
+            if (Object.prototype.hasOwnProperty.call(req.body, 'momoNumber')) user.momoNumber = momoNumber || '';
+            if (Object.prototype.hasOwnProperty.call(req.body, 'momoNetwork')) user.momoNetwork = momoNetwork || '';
+            if (Object.prototype.hasOwnProperty.call(req.body, 'whatsappPhone')) user.whatsappPhone = whatsappPhone || '';
+            if (Object.prototype.hasOwnProperty.call(req.body, 'workExperience')) user.workExperience = workExperience || '';
+            if (Object.prototype.hasOwnProperty.call(req.body, 'educationBackground')) user.educationBackground = educationBackground || '';
             if (whatsappOptIn !== undefined) {
                 user.whatsappOptIn = Boolean(whatsappOptIn);
             }

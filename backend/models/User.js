@@ -128,6 +128,14 @@ const userSchema = new mongoose.Schema({
   bio: { 
     type: String 
   },
+  workExperience: {
+    type: String,
+    default: ''
+  },
+  educationBackground: {
+    type: String,
+    default: ''
+  },
   profilePic: { 
     type: String 
   }, // Cloudinary URL
