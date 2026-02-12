@@ -111,7 +111,7 @@ const Navbar = () => {
       
       {/* LOGO */}
       <Link to="/" className="text-2xl font-black italic tracking-tighter text-gray-900 dark:text-white">
-        HIRE<span className="text-blue-600">ME</span>
+        LINK<span className="text-blue-600">UP</span>
       </Link>
 
       <div className="flex items-center gap-2 md:gap-6">

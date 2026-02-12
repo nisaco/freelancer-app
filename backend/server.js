@@ -85,6 +85,14 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 //  THE GLUE CODE (Production Mode)
 // =================================================================
 if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    const host = req.get('host') || '';
+    if (host.includes('hireme-bk0l.onrender.com')) {
+      return res.redirect(301, `https://linkupgh.live${req.originalUrl}`);
+    }
+    return next();
+  });
+
   const buildPath = path.join(__dirname, '../frontend/dist');
   app.use(express.static(buildPath));
 
