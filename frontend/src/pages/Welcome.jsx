@@ -8,7 +8,7 @@ const Welcome = () => {
 
   const API_BASE = window.location.hostname === 'localhost'
     ? 'http://localhost:5000/api'
-    : 'https://linkupgh.live/api';
+    : '/api';
 
   useEffect(() => {
     const fetchFeatured = async () => {
@@ -65,7 +65,7 @@ const Welcome = () => {
             animate={{ opacity: 1 }}
             className="bg-blue-500/10 text-blue-600 dark:text-blue-400 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-8 inline-block"
           >
-            ðŸ“ Premium Artisans Across Ghana
+            Premium Artisans Across Ghana
           </motion.span>
           
           <h2 className="text-6xl lg:text-8xl font-black text-gray-900 dark:text-white leading-[0.9] mb-8 uppercase italic tracking-tighter">
@@ -127,7 +127,11 @@ Cleaning Services etc. Just Sign up as Artisan to be in business or Client to en
           <div className="relative z-10 bg-white/40 dark:bg-white/5 backdrop-blur-3xl border border-white/40 dark:border-white/10 rounded-[4rem] p-10 lg:p-16 shadow-2xl shadow-blue-500/10">
              <div className="space-y-10">
                 <div className="flex items-center gap-8 group">
-                  <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center text-2xl shadow-xl shadow-blue-200 dark:shadow-none group-hover:rotate-12 transition-transform">âœ…</div>
+                  <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center text-2xl shadow-xl shadow-blue-200 dark:shadow-none group-hover:rotate-12 transition-transform">
+                    <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
                   <div>
                     <p className="text-xl font-black text-gray-900 dark:text-white uppercase italic">Verified Pros</p>
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Background Checked</p>
@@ -137,7 +141,11 @@ Cleaning Services etc. Just Sign up as Artisan to be in business or Client to en
                 <div className="h-px w-full bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-800 to-transparent" />
                 
                 <div className="flex items-center gap-8 group">
-                  <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-3xl flex items-center justify-center text-2xl shadow-xl group-hover:-rotate-12 transition-transform">ðŸ›¡ï¸</div>
+                  <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-3xl flex items-center justify-center text-2xl shadow-xl group-hover:-rotate-12 transition-transform">
+                    <svg className="w-8 h-8 text-gray-800 dark:text-gray-100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                      <path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
                   <div>
                     <p className="text-xl font-black text-gray-900 dark:text-white uppercase italic">Secure Escrow</p>
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Payment Protection</p>
@@ -195,7 +203,7 @@ Cleaning Services etc. Just Sign up as Artisan to be in business or Client to en
                 {artisan.username}
               </h4>
               <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 mt-2">
-                â­ {Number(artisan.rating || 0).toFixed(1)} | {artisan.completedJobs || 0} completed jobs
+                * {Number(artisan.rating || 0).toFixed(1)} | {artisan.completedJobs || 0} completed jobs
               </p>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">
                 {artisan.location || 'Accra, Ghana'}
@@ -214,5 +222,6 @@ Cleaning Services etc. Just Sign up as Artisan to be in business or Client to en
 };
 
 export default Welcome;
+
 
 

@@ -10,7 +10,7 @@ const Inbox = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
-  const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://linkupgh.live/api';
+  const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : '/api';
 
   useEffect(() => {
     const fetchInbox = async () => {
@@ -79,5 +79,6 @@ const Inbox = () => {
 };
 
 export default Inbox;
+
 
 

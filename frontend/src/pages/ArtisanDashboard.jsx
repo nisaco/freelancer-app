@@ -93,7 +93,7 @@ const ArtisanDashboard = () => {
 
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
-    : 'https://linkupgh.live/api';
+    : '/api';
 
   useEffect(() => {
     fetchArtisanData();
@@ -409,7 +409,7 @@ const ArtisanDashboard = () => {
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Platform Reputation</p>
               <div className="flex items-center gap-3">
                  <span className="text-5xl font-black text-gray-900 dark:text-white italic">{user.rating || "5.0"}</span>
-                 <span className="text-2xl text-yellow-400">â˜…</span>
+                 <span className="text-2xl text-yellow-400">*</span>
               </div>
             </motion.div>
           </div>
@@ -521,11 +521,11 @@ const ArtisanDashboard = () => {
               <div key={t._id} className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl p-6 rounded-[2rem] border border-white/10 flex justify-between items-center transition-all hover:bg-white/60">
                 <div className="flex items-center gap-6">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black shadow-lg ${t.status === 'completed' ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}>
-                    {t.status === 'completed' ? 'âœ“' : '!'}
+                    {t.status === 'completed' ? 'OK' : '!'}
                   </div>
                   <div>
                     <h4 className="text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tighter">Payout to {t.momoNumber}</h4>
-                    <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1">{t.network} â€¢ {new Date(t.createdAt).toLocaleDateString()}</p>
+                    <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1">{t.network} - {new Date(t.createdAt).toLocaleDateString()}</p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -624,14 +624,14 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE, handlePhotoUpload, u
       >
         <div className="flex justify-between items-center mb-16">
           <h2 className="text-4xl font-black uppercase italic tracking-tighter text-gray-900 dark:text-white">Profile <span className="text-blue-600">Setup</span></h2>
-          <button onClick={onClose} className="text-gray-300 hover:text-black dark:hover:text-white text-4xl font-light">Ã—</button>
+          <button onClick={onClose} className="text-gray-300 hover:text-black dark:hover:text-white text-4xl font-light">X</button>
         </div>
 
         <div className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl p-8 rounded-[3rem] border border-white/40 shadow-xl mb-10">
           <div className="flex items-center gap-6">
             <div className="relative group w-24 h-24">
               <img 
-                src={user.profilePic ? (user.profilePic.startsWith('http') ? user.profilePic : `https://linkupgh.live/${user.profilePic}`) : `https://ui-avatars.com/api/?name=${user.username}`} 
+                src={user.profilePic ? (user.profilePic.startsWith('http') ? user.profilePic : `/${user.profilePic}`) : `https://ui-avatars.com/api/?name=${user.username}`} 
                 className="w-full h-full rounded-3xl object-cover border-4 border-white shadow-lg" 
               />
               <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 cursor-pointer transition-all">
@@ -703,5 +703,6 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE, handlePhotoUpload, u
 };
 
 export default ArtisanDashboard;
+
 
 

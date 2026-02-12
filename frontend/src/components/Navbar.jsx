@@ -18,7 +18,7 @@ const Navbar = () => {
 
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
-    : 'https://linkupgh.live/api';
+    : '/api';
 
   useEffect(() => {
     if (!token) return undefined;
@@ -236,5 +236,6 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
 
 

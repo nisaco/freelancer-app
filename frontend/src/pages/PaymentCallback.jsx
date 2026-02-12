@@ -15,7 +15,7 @@ const PaymentCallback = () => {
   useEffect(() => {
     const verifyPayment = async () => {
       try {
-        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://linkupgh.live/api';
+        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : '/api';
         const res = await axios.get(`${API_BASE}/payment/callback?reference=${reference}`);
 
         if (res.data.status === 'success' || res.data.data?.status === 'success') {
@@ -74,5 +74,6 @@ const PaymentCallback = () => {
 };
 
 export default PaymentCallback;
+
 
 

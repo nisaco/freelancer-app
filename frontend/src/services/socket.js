@@ -5,7 +5,7 @@ let activeToken = null;
 
 const SOCKET_BASE = window.location.hostname === 'localhost'
   ? 'http://localhost:5000'
-  : 'https://linkupgh.live';
+  : window.location.origin;
 
 export const connectSocket = (token) => {
   if (!token) return null;

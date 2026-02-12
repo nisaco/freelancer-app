@@ -27,7 +27,7 @@ const BookingModal = ({ artisan, onClose, themeColor }) => {
       const token = localStorage.getItem('token');
       const API_BASE = window.location.hostname === 'localhost' 
         ? 'http://localhost:5000/api' 
-        : 'https://linkupgh.live/api';
+        : '/api';
 
       const res = await axios.post(`${API_BASE}/payment/initialize`, {
         artisanId: artisan._id,
@@ -51,7 +51,7 @@ const BookingModal = ({ artisan, onClose, themeColor }) => {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
       <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-[3rem] p-10 shadow-2xl relative border border-white/20">
-        <button onClick={onClose} className="absolute top-6 right-8 text-2xl font-light text-gray-400">Ã—</button>
+        <button onClick={onClose} className="absolute top-6 right-8 text-2xl font-light text-gray-400">X</button>
         <h3 className="text-2xl font-black mb-6 uppercase italic text-gray-900 dark:text-white">Hire {artisan.username}</h3>
         <div className="space-y-6">
           <div>
@@ -80,7 +80,7 @@ const ArtisanProfile = () => {
   const [isModalOpen, setIsModalOpen] = useState(false); 
   const [reviews, setReviews] = useState([]);
 
-  const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://linkupgh.live/api';
+  const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : '/api';
 
   useEffect(() => {
     const fetchArtisan = async () => {
@@ -196,7 +196,7 @@ const ArtisanProfile = () => {
                       </div>
                     </div>
                     <div className="flex text-yellow-400 text-xs">
-                      {Array.from({ length: rev.rating }).map((_, i) => <span key={i}>â˜…</span>)}
+                      {Array.from({ length: rev.rating }).map((_, i) => <span key={i}>*</span>)}
                     </div>
                   </div>
                   <p className="text-gray-600 dark:text-gray-400 text-sm italic font-medium leading-relaxed">
@@ -222,5 +222,6 @@ const ArtisanProfile = () => {
 };
 
 export default ArtisanProfile;
+
 
 

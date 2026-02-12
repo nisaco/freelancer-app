@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const Job = require('../models/Job');
@@ -14,6 +14,7 @@ const DEFAULT_FRONTEND_URL = process.env.FRONTEND_URL || 'https://linkupgh.live'
 const ALLOWED_FRONTEND_ORIGINS = (process.env.CORS_ORIGIN || [
   'https://linkupgh.live',
   'https://www.linkupgh.live',
+  'https://hireme-bk0l.onrender.com',
   'https://linkup-bk0l.onrender.com'
 ].join(','))
   .split(',')

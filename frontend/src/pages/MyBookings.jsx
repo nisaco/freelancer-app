@@ -15,7 +15,7 @@ const MyBookings = () => {
         const token = localStorage.getItem('token');
         const API_BASE = window.location.hostname === 'localhost' 
           ? 'http://localhost:5000/api' 
-          : 'https://linkupgh.live/api';
+          : '/api';
         
         const res = await axios.get(`${API_BASE}/jobs/client`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -128,4 +128,5 @@ console.log("Status:", booking.status, "Phone:", booking.artisan?.phone);
   );
 };
 export default MyBookings;
+
 

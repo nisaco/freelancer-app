@@ -12,7 +12,7 @@ const Onboarding = () => {
 
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
-    : 'https://linkupgh.live/api';
+    : '/api';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -86,4 +86,5 @@ const Onboarding = () => {
 
 // --- THIS LINE FIXES THE BUILD ERROR ---
 export default Onboarding;
+
 

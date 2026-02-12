@@ -31,6 +31,7 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 const allowedOrigins = (process.env.CORS_ORIGIN || [
   'https://linkupgh.live',
   'https://www.linkupgh.live',
+  'https://hireme-bk0l.onrender.com',
   'https://linkup-bk0l.onrender.com',
   'http://localhost:5173',
   'http://localhost:3000'
@@ -88,7 +89,10 @@ if (process.env.NODE_ENV === 'production') {
   const buildPath = path.join(__dirname, '../frontend/dist');
   app.use(express.static(buildPath));
 
-  app.get(/^\/(?!api).*/, (req, res) => {
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads') || req.path.includes('.')) {
+      return next();
+    }
     res.sendFile(path.resolve(__dirname, '../frontend', 'dist', 'index.html'));
   });
 } else {

@@ -36,7 +36,7 @@ const Register = () => {
       // KEEPING YOUR LOGIC: Dynamic API URL switching
       const API_URL = window.location.hostname === 'localhost' 
         ? 'http://localhost:5000/api/auth/register' 
-        : 'https://linkupgh.live/api/auth/register';
+        : '/api/auth/register';
 
       const res = await axios.post(API_URL, formData);
       
@@ -138,7 +138,7 @@ const Register = () => {
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
-                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                  placeholder="********"
                   className="w-full mt-2 px-6 py-4 bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/5 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-bold text-gray-900 dark:text-white placeholder:text-gray-300"
                   value={password}
                   onChange={onChange}
@@ -202,5 +202,6 @@ const Register = () => {
 };
 
 export default Register;
+
 
 
