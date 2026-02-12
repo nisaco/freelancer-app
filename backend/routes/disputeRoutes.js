@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const Dispute = require('../models/Dispute');
 const Job = require('../models/Job');
@@ -15,12 +16,22 @@ router.post('/', protect, async (req, res) => {
     if (!jobId || !reason) {
       return res.status(400).json({ message: 'jobId and reason are required' });
     }
+    if (!mongoose.Types.ObjectId.isValid(jobId)) {
+      return res.status(400).json({ message: 'Invalid jobId' });
+    }
+    if (!req.user?._id) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
 
     const job = await Job.findById(jobId);
     if (!job) return res.status(404).json({ message: 'Job not found' });
 
-    const isClient = job.client.toString() === req.user._id.toString();
-    const isArtisan = job.artisan.toString() === req.user._id.toString();
+    const jobClientId = String(job.client?._id || job.client);
+    const jobArtisanId = String(job.artisan?._id || job.artisan);
+    const requesterId = String(req.user._id);
+
+    const isClient = jobClientId === requesterId;
+    const isArtisan = jobArtisanId === requesterId;
     if (!isClient && !isArtisan) {
       return res.status(403).json({ message: 'Only participants in this job can open a dispute' });
     }
@@ -59,7 +70,13 @@ router.post('/', protect, async (req, res) => {
 
     res.status(201).json(hydrated);
   } catch (error) {
-    console.error('Create dispute error:', error);
+    if (error?.code === 11000) {
+      return res.status(409).json({ message: 'A dispute already exists for this job' });
+    }
+    if (error?.name === 'CastError') {
+      return res.status(400).json({ message: 'Invalid dispute payload' });
+    }
+    console.error('Create dispute error:', error?.message || error);
     res.status(500).json({ message: 'Failed to create dispute' });
   }
 });

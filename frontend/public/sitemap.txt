@@ -3,3 +3,5 @@ https://linkupgh.live/login
 https://linkupgh.live/admin-dashboard
 https://linkupgh.live/artisan-dashboard
 https://linkupgh.live/dashboard
+https://linkupgh.live/inbox
+https://linkupgh.live/register
