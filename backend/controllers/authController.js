@@ -8,6 +8,8 @@ const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
 
+const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 // @desc    Register new user
 exports.registerUser = async (req, res) => {
   try {
@@ -68,12 +70,21 @@ exports.registerUser = async (req, res) => {
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const normalizedEmail = email?.trim().toLowerCase();
-    if (!normalizedEmail || !password) {
+    const rawIdentifier = email?.trim();
+    const normalizedEmail = rawIdentifier?.toLowerCase();
+    if (!rawIdentifier || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    const user = await User.findOne({ email: normalizedEmail });
+    let user = await User.findOne({ email: normalizedEmail });
+    if (!user) {
+      user = await User.findOne({
+        email: { $regex: `^${escapeRegex(rawIdentifier)}$`, $options: 'i' }
+      });
+    }
+    if (!user) {
+      user = await User.findOne({ username: rawIdentifier });
+    }
 
     let passwordMatches = false;
     if (user) {
@@ -81,7 +92,11 @@ exports.loginUser = async (req, res) => {
       const looksHashed = storedPassword.startsWith('$2a$') || storedPassword.startsWith('$2b$') || storedPassword.startsWith('$2y$');
 
       if (looksHashed) {
-        passwordMatches = await bcrypt.compare(password, storedPassword);
+        try {
+          passwordMatches = await bcrypt.compare(password, storedPassword);
+        } catch (e) {
+          passwordMatches = false;
+        }
       } else {
         // Legacy support: older accounts may have plain-text passwords.
         passwordMatches = password === storedPassword;
@@ -113,7 +128,7 @@ exports.loginUser = async (req, res) => {
         token: generateToken(user._id),
       });
     } else {
-      res.status(400).json({ message: 'Invalid credentials' });
+      res.status(401).json({ message: 'Invalid credentials' });
     }
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
