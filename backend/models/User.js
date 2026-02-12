@@ -136,6 +136,19 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  educationInstitution: {
+    type: String,
+    default: ''
+  },
+  educationStatus: {
+    type: String,
+    enum: ['', 'ongoing', 'completed'],
+    default: ''
+  },
+  educationCompletionYear: {
+    type: String,
+    default: ''
+  },
   profilePic: { 
     type: String 
   }, // Cloudinary URL

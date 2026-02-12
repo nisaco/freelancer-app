@@ -597,7 +597,10 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE, handlePhotoUpload, u
     price: user.price || 0,
     location: user.location || '',
     workExperience: user.workExperience || '',
-    educationBackground: user.educationBackground || ''
+    educationBackground: user.educationBackground || '',
+    educationInstitution: user.educationInstitution || '',
+    educationStatus: user.educationStatus || '',
+    educationCompletionYear: user.educationCompletionYear || ''
   });
 
   const handleUpdate = async (e) => {
@@ -704,6 +707,24 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE, handlePhotoUpload, u
           <div className="space-y-2">
             <label className="text-[9px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">Education Background (Optional)</label>
             <textarea value={editData.educationBackground} className="w-full p-5 bg-gray-100 dark:bg-black/20 rounded-2xl font-medium h-28 border-none focus:ring-2 focus:ring-blue-600 outline-none text-gray-900 dark:text-white" onChange={(e) => setEditData({...editData, educationBackground: e.target.value})} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[9px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">School / Institution (Optional)</label>
+            <input type="text" value={editData.educationInstitution} className="w-full p-5 bg-gray-100 dark:bg-black/20 rounded-2xl font-bold border-none focus:ring-2 focus:ring-blue-600 outline-none text-gray-900 dark:text-white" onChange={(e) => setEditData({...editData, educationInstitution: e.target.value})} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[9px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">Education Status</label>
+              <select value={editData.educationStatus} className="w-full p-5 bg-gray-100 dark:bg-black/20 rounded-2xl font-bold border-none focus:ring-2 focus:ring-blue-600 outline-none text-gray-900 dark:text-white" onChange={(e) => setEditData({...editData, educationStatus: e.target.value})}>
+                <option value="">Select status</option>
+                <option value="ongoing">Ongoing</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[9px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">Completion Year</label>
+              <input type="text" value={editData.educationCompletionYear} placeholder="e.g. 2024" className="w-full p-5 bg-gray-100 dark:bg-black/20 rounded-2xl font-bold border-none focus:ring-2 focus:ring-blue-600 outline-none text-gray-900 dark:text-white" onChange={(e) => setEditData({...editData, educationCompletionYear: e.target.value})} />
+            </div>
           </div>
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" className="w-full bg-blue-600 text-white py-6 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl shadow-blue-500/40 mt-8">Update Identity</motion.button>
         </form>

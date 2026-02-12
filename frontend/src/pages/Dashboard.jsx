@@ -539,7 +539,11 @@ const ArtisanCard = ({ artisan, index, themeColor, onBook }) => {
           </div>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-6 line-clamp-3 font-medium italic leading-relaxed">{artisan.bio || "Verified professional elite artisan."}</p>
           <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-3 line-clamp-2 font-semibold">
-            {artisan.workExperience || artisan.educationBackground || 'No additional profile details yet.'}
+            {artisan.workExperience
+              || (artisan.educationInstitution
+                ? `${artisan.educationInstitution}${artisan.educationStatus ? ` (${artisan.educationStatus})` : ''}`
+                : artisan.educationBackground)
+              || 'No additional profile details yet.'}
           </p>
         </div>
         <div className="mt-10 pt-8 border-t border-gray-100 dark:border-white/5 flex items-center justify-between">

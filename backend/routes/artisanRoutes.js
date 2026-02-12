@@ -51,7 +51,10 @@ router.put('/update-profile', protect, async (req, res) => {
             whatsappPhone,
             whatsappOptIn,
             workExperience,
-            educationBackground
+            educationBackground,
+            educationInstitution,
+            educationStatus,
+            educationCompletionYear
         } = req.body;
         const user = await User.findById(req.user._id);
 
@@ -66,6 +69,9 @@ router.put('/update-profile', protect, async (req, res) => {
             if (Object.prototype.hasOwnProperty.call(req.body, 'whatsappPhone')) user.whatsappPhone = whatsappPhone || '';
             if (Object.prototype.hasOwnProperty.call(req.body, 'workExperience')) user.workExperience = workExperience || '';
             if (Object.prototype.hasOwnProperty.call(req.body, 'educationBackground')) user.educationBackground = educationBackground || '';
+            if (Object.prototype.hasOwnProperty.call(req.body, 'educationInstitution')) user.educationInstitution = educationInstitution || '';
+            if (Object.prototype.hasOwnProperty.call(req.body, 'educationStatus')) user.educationStatus = educationStatus || '';
+            if (Object.prototype.hasOwnProperty.call(req.body, 'educationCompletionYear')) user.educationCompletionYear = educationCompletionYear || '';
             if (whatsappOptIn !== undefined) {
                 user.whatsappOptIn = Boolean(whatsappOptIn);
             }

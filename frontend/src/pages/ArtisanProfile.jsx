@@ -184,9 +184,32 @@ const ArtisanProfile = () => {
             </div>
             <div className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl p-8 rounded-[2.5rem] border border-white/40 dark:border-white/10">
               <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest mb-4">Education Background</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                {artisan.educationBackground || 'No education background provided yet.'}
-              </p>
+              {(artisan.educationInstitution || artisan.educationBackground || artisan.educationStatus || artisan.educationCompletionYear) ? (
+                <div className="space-y-2">
+                  {artisan.educationInstitution && (
+                    <p className="text-sm text-gray-800 dark:text-gray-200 font-bold">{artisan.educationInstitution}</p>
+                  )}
+                  {artisan.educationStatus && (
+                    <p className="text-xs font-black uppercase tracking-widest text-blue-600">
+                      {artisan.educationStatus === 'ongoing' ? 'Ongoing' : 'Completed'}
+                    </p>
+                  )}
+                  {artisan.educationCompletionYear && (
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                      Year: {artisan.educationCompletionYear}
+                    </p>
+                  )}
+                  {artisan.educationBackground && (
+                    <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                      {artisan.educationBackground}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                  No education background provided yet.
+                </p>
+              )}
             </div>
           </div>
 
