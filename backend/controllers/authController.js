@@ -21,7 +21,8 @@ exports.registerUser = async (req, res) => {
       acceptedPolicyVersion
     } = req.body;
 
-    if (!username || !email || !password) return res.status(400).json({ message: 'Please add all fields' });
+    const normalizedEmail = email?.trim().toLowerCase();
+    if (!username || !normalizedEmail || !password) return res.status(400).json({ message: 'Please add all fields' });
     if (!termsAccepted || !privacyAccepted) {
       return res.status(400).json({ message: 'You must accept Terms and Privacy Policy to create an account' });
     }
@@ -29,7 +30,7 @@ exports.registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Please re-accept the latest Terms and Privacy Policy' });
     }
 
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ email: normalizedEmail });
     if (userExists) return res.status(400).json({ message: 'User already exists' });
 
     const salt = await bcrypt.genSalt(10);
@@ -37,7 +38,7 @@ exports.registerUser = async (req, res) => {
 
     const user = await User.create({
       username,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       role: role || 'client',
       termsAccepted: true,
@@ -67,9 +68,32 @@ exports.registerUser = async (req, res) => {
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    const normalizedEmail = email?.trim().toLowerCase();
+    if (!normalizedEmail || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
 
-    if (user && (await bcrypt.compare(password, user.password))) {
+    const user = await User.findOne({ email: normalizedEmail });
+
+    let passwordMatches = false;
+    if (user) {
+      const storedPassword = user.password || '';
+      const looksHashed = storedPassword.startsWith('$2a$') || storedPassword.startsWith('$2b$') || storedPassword.startsWith('$2y$');
+
+      if (looksHashed) {
+        passwordMatches = await bcrypt.compare(password, storedPassword);
+      } else {
+        // Legacy support: older accounts may have plain-text passwords.
+        passwordMatches = password === storedPassword;
+        if (passwordMatches) {
+          const salt = await bcrypt.genSalt(10);
+          user.password = await bcrypt.hash(password, salt);
+          await user.save();
+        }
+      }
+    }
+
+    if (user && passwordMatches) {
       res.json({
         _id: user.id,
         username: user.username,
