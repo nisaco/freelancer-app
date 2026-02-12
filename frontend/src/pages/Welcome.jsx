@@ -221,7 +221,7 @@ Cleaning Services etc. Just Sign up as Artisan to be in business or Client to en
       <footer className="relative z-10 px-8 pb-8">
         <div className="max-w-7xl mx-auto border-t border-white/30 dark:border-white/10 pt-5 text-center">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
-            Copyright © {new Date().getFullYear()} LinkUp Gh. All rights reserved. Developed by J3Cube.
+            Copyright © {new Date().getFullYear()} LinkUp Gh. All rights reserved | Developed by J3Cube.
           </p>
         </div>
       </footer>
