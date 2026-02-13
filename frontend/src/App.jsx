@@ -21,6 +21,7 @@ import Messages from './pages/Messages';
 import Inbox from './pages/Inbox';
 import TermsAndConditions from './pages/TermsAndConditions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import ProfileSetup from './pages/ProfileSetup';
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -40,7 +41,7 @@ const AnimatedRoutes = () => {
         
         {/* New Robust Onboarding Flow */}
         <Route path="/artisan-setup" element={<ProtectedRoute role="artisan"><ArtisanSetup /></ProtectedRoute>} />
-        
+          <Route path="/profile-setup" element={<ProtectedRoute role="artisan"><ProfileSetup /></ProtectedRoute>} />      
         <Route path="/artisan-dashboard" element={<ProtectedRoute role="artisan"><ArtisanDashboard /></ProtectedRoute>} />
         <Route path="/admin-dashboard" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
         <Route path="/onboarding" element={<ProtectedRoute role="artisan"><Onboarding /></ProtectedRoute>} />
