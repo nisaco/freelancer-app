@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 
 const Welcome = () => {
   const [featuredArtisans, setFeaturedArtisans] = useState([]);
+  const navigate = useNavigate();
 
   const API_BASE = window.location.hostname === 'localhost'
     ? 'http://localhost:5000/api'
@@ -22,214 +23,297 @@ const Welcome = () => {
     fetchFeatured();
   }, [API_BASE]);
 
+  // Animation variants
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  };
+
+  const categories = [
+    { name: 'Plumbers', icon: '🚰', count: '120+ Pros' },
+    { name: 'Electricians', icon: '⚡', count: '85+ Pros' },
+    { name: 'Carpenters', icon: '🪚', count: '64+ Pros' },
+    { name: 'Masons', icon: '🧱', count: '40+ Pros' },
+    { name: 'Painters', icon: '🎨', count: '55+ Pros' },
+    { name: 'Mechanics', icon: '🔧', count: '30+ Pros' },
+  ];
+
   return (
-    <div className="relative min-h-screen flex flex-col overflow-hidden transition-colors duration-700">
-      {/* 1. THE LIVING BACKGROUND (From your index.css) */}
+    <div className="relative min-h-screen flex flex-col overflow-hidden bg-[#FAFBFF] dark:bg-[#0B0F1A] transition-colors duration-700">
+      
+      {/* 1. LIVING BACKGROUND - RESTORED 
+        Removed 'opacity-20' so your CSS in index.css controls the full vibrancy 
+      */}
       <div className="living-bg">
         <div className="orb orb-1" />
         <div className="orb orb-2" />
       </div>
 
       {/* --- NAV BAR --- */}
-      <nav className="relative z-50 flex justify-between items-center px-8 py-8 max-w-7xl mx-auto w-full">
-        <motion.h1 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-2xl font-black text-blue-600 dark:text-blue-400 tracking-tighter italic"
-        >
-          LINKUP
-        </motion.h1>
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center space-x-8"
-        >
-          <Link to="/login" className="text-gray-600 dark:text-gray-400 font-bold hover:text-blue-600 transition text-sm uppercase tracking-widest">Login</Link>
-          <Link to="/register" className="bg-gray-900 dark:bg-white text-white dark:text-black px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:scale-105 transition-all shadow-xl">
-            Get Started
+      <nav className="relative z-50 flex justify-between items-center px-6 md:px-12 py-6 max-w-7xl mx-auto w-full backdrop-blur-sm top-0 bg-white/50 dark:bg-[#0B0F1A]/50 border-b border-gray-100 dark:border-white/5">
+        <div className="flex items-center gap-2">
+           <h1 className="text-2xl font-black text-blue-600 dark:text-white tracking-tighter uppercase italic">
+            LinkUp
+          </h1>
+        </div>
+        <div className="flex gap-4 md:gap-8 items-center">
+          <Link to="/login" className="text-xs font-black uppercase tracking-widest text-gray-500 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white transition-colors">
+            Log In
           </Link>
-        </motion.div>
-      </nav>
-
-      {/* --- MAIN HERO SECTION --- */}
-      <main className="relative z-10 max-w-7xl mx-auto px-8 py-12 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center flex-grow">
-        
-        {/* LEFT CONTENT */}
-        <motion.div
-          initial={{ opacity: 0, x: -60 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-        >
-          <motion.span 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="bg-blue-500/10 text-blue-600 dark:text-blue-400 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-8 inline-block"
-          >
-            Premium Artisans Across Ghana
-          </motion.span>
-          
-          <h2 className="text-6xl lg:text-8xl font-black text-gray-900 dark:text-white leading-[0.9] mb-8 uppercase italic tracking-tighter">
-            Expert <br /> 
-            <span className="text-blue-600 relative">
-              Artisans.
-              <svg className="absolute -bottom-2 left-0 w-full h-3 text-blue-500/30" viewBox="0 0 100 10" preserveAspectRatio="none">
-                <path d="M0 5 Q 25 0 50 5 T 100 5" fill="none" stroke="currentColor" strokeWidth="8" />
-              </svg>
-            </span>
-            <br /> On Demand.
-          </h2>
-          
-          <p className="text-lg text-gray-500 dark:text-gray-400 mb-12 leading-relaxed max-w-lg font-medium">
-            Don't stress over Domestic, Industrial and commercial challenges anymore the professional are here!!
-Anything Construction, Carpentry, Electrical, Air-conditioning / Refrigerating, Plumbing Electronics, IT, Painting, Deco, 
-Cleaning Services etc. Just Sign up as Artisan to be in business or Client to enjoy the first Class professional Service we provide.
- <span className="text-gray-900 dark:text-white font-bold">Connect</span> today and your stressful moments are over with just a click. <span className="text-gray-900 dark:text-white font-bold"> Terms and Conditions</span> applied.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row items-center gap-8">
-            <Link to="/register">
-              <motion.button 
-                whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(59, 130, 246, 0.2)" }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-blue-600 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-2xl shadow-blue-300 dark:shadow-blue-900/20 transition-all"
-              >
-                Find an Artisan
-              </motion.button>
-            </Link>
-            
-            <div className="flex items-center gap-4">
-              <div className="flex -space-x-4">
-                {[1,2,3,4].map(i => (
-                  <motion.div 
-                    key={i} 
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    className="w-12 h-12 rounded-2xl bg-gray-200 dark:bg-gray-800 border-4 border-white dark:border-darkBg shadow-lg overflow-hidden"
-                  >
-                    <img src={`https://i.pravatar.cc/150?u=${i+10}`} alt="artisan" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all" />
-                  </motion.div>
-                ))}
-              </div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">500+ Verified <br />Pros in Accra</p>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* RIGHT VISUAL - GLASSMORPHISM CARD */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8, rotate: 5 }}
-          animate={{ opacity: 1, scale: 1, rotate: 0 }}
-          transition={{ duration: 1, ease: "easeOut" }}
-          className="relative"
-        >
-          {/* Main Glass Card */}
-          <div className="relative z-10 bg-white/40 dark:bg-white/5 backdrop-blur-3xl border border-white/40 dark:border-white/10 rounded-[4rem] p-10 lg:p-16 shadow-2xl shadow-blue-500/10">
-             <div className="space-y-10">
-                <div className="flex items-center gap-8 group">
-                  <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center text-2xl shadow-xl shadow-blue-200 dark:shadow-none group-hover:rotate-12 transition-transform">
-                    <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xl font-black text-gray-900 dark:text-white uppercase italic">Verified Pros</p>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Background Checked</p>
-                  </div>
-                </div>
-                
-                <div className="h-px w-full bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-800 to-transparent" />
-                
-                <div className="flex items-center gap-8 group">
-                  <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-3xl flex items-center justify-center text-2xl shadow-xl group-hover:-rotate-12 transition-transform">
-                    <svg className="w-8 h-8 text-gray-800 dark:text-gray-100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                      <path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xl font-black text-gray-900 dark:text-white uppercase italic">Secure Escrow</p>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Payment Protection</p>
-                  </div>
-                </div>
-
-                <motion.p 
-                  animate={{ opacity: [0.4, 0.8, 0.4] }}
-                  transition={{ repeat: Infinity, duration: 3 }}
-                  className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase text-center tracking-[0.5em] pt-4"
-                >
-                  "The best way to hire in Ghana"
-                </motion.p>
-             </div>
-          </div>
-
-          {/* Decorative Floating Blobs */}
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-400/20 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-yellow-400/10 rounded-full blur-3xl animate-pulse" />
-        </motion.div>
-      </main>
-
-      <section className="relative z-10 max-w-7xl mx-auto w-full px-8 pb-24">
-        <div className="flex items-end justify-between gap-6 mb-10">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-blue-600 dark:text-blue-400 mb-3">Trusted Picks</p>
-            <h3 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter text-gray-900 dark:text-white">
-              Featured Artisans
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 max-w-xl font-medium">
-              Top-rated pros with 4.5+ stars and at least 5 completed jobs.
-            </p>
-          </div>
-          <Link to="/register" className="text-[10px] font-black uppercase tracking-widest text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 px-5 py-3 rounded-2xl hover:border-blue-600 hover:text-blue-600 transition-colors">
-            Explore All
+          <Link to="/join">
+            <button className="bg-gray-900 dark:bg-white text-white dark:text-black px-6 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg hover:scale-105 transition-transform">
+              Join Now
+            </button>
           </Link>
         </div>
+      </nav>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-          {featuredArtisans.length > 0 ? featuredArtisans.map((artisan) => (
-            <motion.div
-              key={artisan._id}
-              whileHover={{ y: -4 }}
-              className="rounded-[2rem] border border-white/40 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-xl p-5 shadow-xl"
+      {/* --- HERO SECTION --- */}
+      <header className="relative z-10 pt-20 pb-32 px-6 text-center">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeInUp}
+          className="max-w-5xl mx-auto"
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 text-[10px] font-black uppercase tracking-[0.2em] mb-8 border border-blue-200 dark:border-blue-500/30">
+            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"/>
+            #1 Marketplace for Ghanaian Artisans
+          </div>
+          
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-900 dark:text-white tracking-tighter leading-[0.9] mb-8">
+            Hire Verified <br className="hidden md:block"/>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Professionals</span>
+          </h1>
+          
+          <p className="text-lg md:text-xl text-gray-500 dark:text-gray-400 font-medium max-w-2xl mx-auto leading-relaxed mb-12">
+            Don't risk your project. Find vetted plumbers, electricians, and carpenters with 
+            <span className="text-gray-900 dark:text-white font-bold"> secure escrow payments</span> and
+            <span className="text-gray-900 dark:text-white font-bold"> verified Ghana Card IDs</span>.
+          </p>
+
+          <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
+            <button 
+              onClick={() => navigate('/join')}
+              className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl shadow-blue-600/30 transition-all hover:-translate-y-1"
             >
-              <div className="w-full h-44 rounded-[1.5rem] overflow-hidden mb-4">
-                <img
-                  src={artisan.profilePic || `https://ui-avatars.com/api/?name=${artisan.username}&background=random`}
-                  alt={artisan.username}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-600 mb-2">{artisan.category || 'General Service'}</p>
-              <h4 className="text-xl font-black uppercase italic tracking-tighter text-gray-900 dark:text-white truncate">
-                {artisan.username}
-              </h4>
-              <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 mt-2">
-                * {Number(artisan.rating || 0).toFixed(1)} | {artisan.completedJobs || 0} completed jobs
-              </p>
-              <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">
-                {artisan.location || 'Accra, Ghana'}
-              </p>
-              <p className="mt-4 text-lg font-black text-gray-900 dark:text-white">GHS {artisan.price || 0}</p>
-            </motion.div>
-          )) : (
-            <div className="col-span-full rounded-3xl border border-dashed border-gray-300 dark:border-gray-700 p-10 text-center">
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">No featured artisans yet</p>
+              Hire a Pro
+            </button>
+            <button 
+              onClick={() => navigate('/join')}
+              className="w-full md:w-auto bg-white dark:bg-white/10 text-gray-900 dark:text-white border border-gray-200 dark:border-white/10 px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-50 dark:hover:bg-white/20 transition-all"
+            >
+              Earn Money
+            </button>
+          </div>
+        </motion.div>
+      </header>
+
+      {/* --- STATS STRIP --- */}
+      <section className="border-y border-gray-100 dark:border-white/5 bg-white/50 dark:bg-black/20 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
+          {[
+            { label: 'Total Pros', value: '500+' },
+            { label: 'Jobs Done', value: '2.5k+' },
+            { label: 'Secure Escrow', value: '100%' },
+            { label: 'Client Rating', value: '4.9/5' },
+          ].map((stat, i) => (
+            <div key={i} className="text-center">
+              <p className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-1">{stat.value}</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{stat.label}</p>
             </div>
-          )}
+          ))}
         </div>
       </section>
 
-      <footer className="relative z-10 px-8 pb-8">
-        <div className="max-w-7xl mx-auto border-t border-white/30 dark:border-white/10 pt-5 text-center">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
-            Copyright © {new Date().getFullYear()} LinkUp Gh. All rights reserved | Developed by J3Cube.
-          </p>
+      {/* --- POPULAR CATEGORIES --- */}
+      <section className="py-24 px-6 relative z-10">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-end mb-12">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter">
+                Popular <span className="text-blue-600">Services</span>
+              </h2>
+            </div>
+            <Link to="/join" className="hidden md:block text-xs font-black text-blue-600 uppercase tracking-widest hover:underline">View All Categories</Link>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {categories.map((cat, i) => (
+              <motion.div
+                key={i}
+                whileHover={{ y: -5 }}
+                className="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/5 p-6 rounded-[2rem] text-center cursor-pointer hover:border-blue-500 transition-colors shadow-sm hover:shadow-xl"
+                onClick={() => navigate('/join')}
+              >
+                <div className="text-4xl mb-4">{cat.icon}</div>
+                <h3 className="font-bold text-gray-900 dark:text-white text-sm">{cat.name}</h3>
+                <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">{cat.count}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* --- HOW IT WORKS --- */}
+      <section className="py-24 px-6 bg-gray-50 dark:bg-black/20 relative z-10">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter mb-4">
+              How LinkUp <span className="text-blue-600">Works</span>
+            </h2>
+            <p className="text-gray-500 max-w-xl mx-auto">Safe, simple, and secure. We protect both the client and the artisan.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            {[
+              { 
+                icon: "🔍", 
+                title: "1. Post or Search", 
+                desc: "Browse verified profiles or let us match you with the best artisan for your specific job." 
+              },
+              { 
+                icon: "🛡️", 
+                title: "2. Secure Deposit", 
+                desc: "Pay into our Escrow Vault. Funds are only released when you confirm the job is done correctly." 
+              },
+              { 
+                icon: "✅", 
+                title: "3. Job Done", 
+                desc: "The artisan completes the work. You approve it, release the funds, and leave a review." 
+              }
+            ].map((step, i) => (
+              <div key={i} className="bg-white dark:bg-white/5 p-8 rounded-[2.5rem] relative overflow-hidden">
+                <div className="absolute -right-4 -top-4 text-9xl opacity-5 font-black text-gray-900 dark:text-white select-none">{i+1}</div>
+                <div className="text-5xl mb-6">{step.icon}</div>
+                <h3 className="text-xl font-black text-gray-900 dark:text-white mb-3">{step.title}</h3>
+                <p className="text-sm text-gray-500 font-medium leading-relaxed">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* --- FEATURED ARTISANS --- */}
+      <section className="py-24 px-6 relative z-10">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-end mb-12">
+            <h2 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter">
+              Featured <span className="text-green-500">Elite Pros</span>
+            </h2>
+            <div className="flex gap-2">
+              <span className="w-3 h-3 rounded-full bg-red-500"/>
+              <span className="w-3 h-3 rounded-full bg-yellow-500"/>
+              <span className="w-3 h-3 rounded-full bg-green-500"/>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {featuredArtisans.length > 0 ? featuredArtisans.map((artisan, i) => (
+              <motion.div 
+                key={artisan._id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-white/80 dark:bg-white/5 backdrop-blur-md p-6 rounded-[2rem] border border-gray-100 dark:border-white/5 hover:border-blue-500 transition-colors group cursor-pointer shadow-lg"
+              >
+                <div className="relative mb-4 overflow-hidden rounded-2xl h-48">
+                  <img 
+                    src={artisan.profilePic || "https://via.placeholder.com/150"} 
+                    alt={artisan.username} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  />
+                  <div className="absolute top-3 left-3 bg-white/90 dark:bg-black/80 backdrop-blur px-3 py-1 rounded-full">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-gray-900 dark:text-white">{artisan.category}</span>
+                  </div>
+                </div>
+                <h4 className="text-lg font-black uppercase italic tracking-tighter text-gray-900 dark:text-white truncate">
+                  {artisan.username}
+                </h4>
+                <div className="flex items-center gap-1 mt-2 mb-3">
+                  <span className="text-yellow-400 text-xs">★</span>
+                  <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{Number(artisan.rating || 0).toFixed(1)}</span>
+                  <span className="text-[10px] text-gray-400">({artisan.completedJobs || 0} jobs)</span>
+                </div>
+                <div className="flex justify-between items-center border-t border-gray-100 dark:border-white/10 pt-4 mt-2">
+                  <p className="text-sm font-black text-gray-900 dark:text-white">GHS {artisan.price || 0}<span className="text-[10px] text-gray-400 font-normal">/hr</span></p>
+                  <Link to="/join" className="text-[10px] font-black uppercase text-blue-600 tracking-widest hover:underline">Hire Me</Link>
+                </div>
+              </motion.div>
+            )) : (
+              <div className="col-span-full rounded-[2rem] border-2 border-dashed border-gray-200 dark:border-white/10 p-12 text-center">
+                <p className="text-xs font-black uppercase tracking-[0.25em] text-gray-400">Loading Elite Artisans...</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* --- CTA SECTION --- */}
+      <section className="py-24 px-6 relative z-10">
+        <div className="max-w-7xl mx-auto bg-gradient-to-r from-blue-900 to-blue-700 rounded-[3rem] p-12 md:p-24 text-center relative overflow-hidden shadow-2xl">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
+          
+          <div className="relative z-10">
+            <h2 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter mb-8">
+              Ready to get <br/> the job done?
+            </h2>
+            <p className="text-blue-100 text-lg mb-10 max-w-2xl mx-auto">
+              Join thousands of Ghanaians using LinkUp to find reliable help or grow their business.
+            </p>
+            <button 
+              onClick={() => navigate('/join')}
+              className="bg-white text-blue-900 px-12 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 transition-transform shadow-xl"
+            >
+              Get Started Now
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* --- FOOTER --- */}
+      <footer className="bg-white dark:bg-[#05080F] border-t border-gray-100 dark:border-white/5 pt-20 pb-10 px-6 relative z-10">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+          <div className="col-span-1 md:col-span-1">
+            <h3 className="text-2xl font-black text-blue-600 dark:text-white tracking-tighter uppercase italic mb-6">LinkUp</h3>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              The #1 trusted marketplace for connecting clients with verified artisans in Ghana.
+            </p>
+          </div>
+          
+          <div>
+            <h4 className="font-bold text-gray-900 dark:text-white mb-4">Platform</h4>
+            <ul className="space-y-2 text-sm text-gray-500">
+              <li><Link to="/join" className="hover:text-blue-600">Find Artisans</Link></li>
+              <li><Link to="/join" className="hover:text-blue-600">Become a Pro</Link></li>
+              <li><Link to="/login" className="hover:text-blue-600">Sign In</Link></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-bold text-gray-900 dark:text-white mb-4">Support</h4>
+            <ul className="space-y-2 text-sm text-gray-500">
+              <li><a href="#" className="hover:text-blue-600">Help Center</a></li>
+              <li><Link to="/terms" className="hover:text-blue-600">Terms of Service</Link></li>
+              <li><Link to="/privacy" className="hover:text-blue-600">Privacy Policy</Link></li>
+            </ul>
+          </div>
+
+          <div>
+             <h4 className="font-bold text-gray-900 dark:text-white mb-4">Contact</h4>
+             <p className="text-sm text-gray-500">support@linkupgh.live</p>
+             <p className="text-sm text-gray-500">+233 55 123 4567</p>
+             <p className="text-sm text-gray-500 mt-2">Accra, Ghana</p>
+          </div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto pt-8 border-t border-gray-100 dark:border-white/5 text-center">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">© 2026 LinkUp Ghana. All rights reserved.</p>
         </div>
       </footer>
+
     </div>
   );
 };
 
 export default Welcome;
-
-
-

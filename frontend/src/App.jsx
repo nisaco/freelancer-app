@@ -7,8 +7,9 @@ import 'react-toastify/dist/ReactToastify.css';
 import PaymentCallback from './pages/PaymentCallback';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Join from './pages/Join'; // <--- NEW
+import ArtisanSetup from './pages/ArtisanSetup'; // <--- NEW
 import Dashboard from './pages/Dashboard';
-import ProfileSetup from './pages/ProfileSetup';
 import ArtisanDashboard from './pages/ArtisanDashboard';
 import Welcome from './pages/Welcome';
 import Onboarding from './pages/Onboarding';
@@ -28,6 +29,7 @@ const AnimatedRoutes = () => {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Welcome />} /> 
+        <Route path="/join" element={<Join />} /> {/* <--- NEW */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/terms" element={<TermsAndConditions />} />
@@ -35,7 +37,10 @@ const AnimatedRoutes = () => {
         
         {/* Protected Routes */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/profile-setup" element={<ProtectedRoute role="artisan"><ProfileSetup /></ProtectedRoute>} />
+        
+        {/* New Robust Onboarding Flow */}
+        <Route path="/artisan-setup" element={<ProtectedRoute role="artisan"><ArtisanSetup /></ProtectedRoute>} />
+        
         <Route path="/artisan-dashboard" element={<ProtectedRoute role="artisan"><ArtisanDashboard /></ProtectedRoute>} />
         <Route path="/admin-dashboard" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
         <Route path="/onboarding" element={<ProtectedRoute role="artisan"><Onboarding /></ProtectedRoute>} />

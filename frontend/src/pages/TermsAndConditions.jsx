@@ -1,45 +1,166 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import axios from 'axios';
+import { motion } from 'framer-motion';
+import { toast } from 'react-toastify';
 import PageTransition from '../components/PageTransition';
 
-const TermsAndConditions = () => {
+const Register = () => {
+  const [searchParams] = useSearchParams();
+  // Get role from URL (default to client if missing)
+  const initialRole = searchParams.get('role') || 'client';
+
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    password: '',
+    role: initialRole, // Pre-fill role
+    termsAccepted: false,
+    privacyAccepted: false,
+    acceptedPolicyVersion: '2026-02-11'
+  });
+  
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  // Update state if URL param changes
+  useEffect(() => {
+    const roleParam = searchParams.get('role');
+    if (roleParam) {
+      setFormData(prev => ({ ...prev, role: roleParam }));
+    }
+  }, [searchParams]);
+
+  const { username, email, password, role, termsAccepted, privacyAccepted } = formData;
+
+  const onChange = (e) => {
+    const { name, type, checked, value } = e.target;
+    setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    if (!termsAccepted || !privacyAccepted) {
+      return toast.error("Accept Terms and Privacy Policy to continue");
+    }
+    setLoading(true);
+    try {
+      const API_URL = window.location.hostname === 'localhost' 
+        ? 'http://localhost:5000/api/auth/register' 
+        : '/api/auth/register';
+
+      const res = await axios.post(API_URL, formData);
+      localStorage.setItem('user', JSON.stringify(res.data));
+      localStorage.setItem('token', res.data.token);
+      
+      toast.success("Account Created!");
+
+      // --- REDIRECT LOGIC ---
+      if (res.data.role === 'admin') navigate('/admin-dashboard');
+      else if (res.data.role === 'artisan') navigate('/artisan-setup'); // Redirect to NEW Wizard
+      else navigate('/dashboard');
+
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Registration failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <PageTransition>
-      <div className="min-h-screen bg-white dark:bg-[#0B0F1A] px-6 py-16">
-        <div className="max-w-4xl mx-auto bg-white/70 dark:bg-white/5 backdrop-blur-2xl border border-white/20 rounded-[2rem] p-8 md:p-12">
-          <h1 className="text-3xl md:text-5xl font-black tracking-tighter uppercase italic text-gray-900 dark:text-white">
-            Terms & Agreement
-          </h1>
-          <p className="text-[11px] font-black uppercase tracking-[0.3em] text-blue-600 mt-3">Version 2026-02-11</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFBFF] dark:bg-[#0B0F1A] px-4 py-12">
+        <div className="living-bg"><div className="orb orb-1 opacity-20" /></div>
 
-          <div className="mt-8 space-y-6 text-sm text-gray-700 dark:text-gray-200 leading-relaxed">
-            <section>
-              <h2 className="font-black uppercase text-gray-900 dark:text-white mb-2">Escrow Policy</h2>
-              <p>Money is held in escrow and released only after client confirmation that the job is complete.</p>
-            </section>
-            <section>
-              <h2 className="font-black uppercase text-gray-900 dark:text-white mb-2">Verification Policy</h2>
-              <p>Artisans must provide a valid Ghana Card number and a clear Ghana Card image before admin verification.</p>
-            </section>
-            <section>
-              <h2 className="font-black uppercase text-gray-900 dark:text-white mb-2">Conduct Policy</h2>
-              <p>No off-platform payments are allowed. This protects records, trust, and platform commission controls.</p>
-            </section>
-            <section>
-              <h2 className="font-black uppercase text-gray-900 dark:text-white mb-2">Dispute Policy</h2>
-              <p>Admin reviews evidence and may release funds to artisan, refund client, or hold funds pending additional review.</p>
-            </section>
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="bg-white/70 dark:bg-white/5 backdrop-blur-2xl p-8 md:p-12 rounded-[2.5rem] shadow-2xl w-full max-w-md border border-white/20"
+        >
+          <div className="text-center mb-10">
+            <h1 className="text-3xl font-black tracking-tighter text-gray-900 dark:text-white uppercase italic">
+              Join <span className="text-blue-600">LinkUp</span>
+            </h1>
+            <p className="text-xs font-bold text-gray-400 mt-2 uppercase tracking-widest">
+              {role === 'artisan' ? 'Create Professional Account' : 'Create Client Account'}
+            </p>
           </div>
 
-          <div className="mt-10">
-            <Link to="/register" className="inline-block bg-blue-600 text-white px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest">
-              Back to Signup
-            </Link>
-          </div>
-        </div>
+          <form onSubmit={onSubmit} className="space-y-5">
+            <div>
+              <input
+                type="text"
+                name="username"
+                value={username}
+                placeholder="Username"
+                className="w-full p-5 bg-white dark:bg-black/20 rounded-2xl font-bold border-none focus:ring-2 focus:ring-blue-600 outline-none text-gray-900 dark:text-white shadow-sm placeholder-gray-400 text-xs"
+                onChange={onChange}
+                required
+              />
+            </div>
+            <div>
+              <input
+                type="email"
+                name="email"
+                value={email}
+                placeholder="Email Address"
+                className="w-full p-5 bg-white dark:bg-black/20 rounded-2xl font-bold border-none focus:ring-2 focus:ring-blue-600 outline-none text-gray-900 dark:text-white shadow-sm placeholder-gray-400 text-xs"
+                onChange={onChange}
+                required
+              />
+            </div>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={password}
+                placeholder="Password"
+                className="w-full p-5 bg-white dark:bg-black/20 rounded-2xl font-bold border-none focus:ring-2 focus:ring-blue-600 outline-none text-gray-900 dark:text-white shadow-sm placeholder-gray-400 text-xs"
+                onChange={onChange}
+                required
+              />
+              <button 
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-5 bottom-4 text-[10px] font-black text-blue-600 uppercase tracking-tighter"
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
+            
+            {/* HIDDEN ROLE SELECTOR - Controlled by URL now */}
+            {/* We keep it hidden or read-only so they can't switch context easily without going back */}
+            
+            <div className="space-y-2 mt-4">
+              <label className="flex items-start gap-3 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                <input type="checkbox" name="termsAccepted" checked={termsAccepted} onChange={onChange} className="mt-1" />
+                <span>I agree to the <Link to="/terms" className="text-blue-600 font-black">Terms & Agreement</Link>.</span>
+              </label>
+              <label className="flex items-start gap-3 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                <input type="checkbox" name="privacyAccepted" checked={privacyAccepted} onChange={onChange} className="mt-1" />
+                <span>I agree to the <Link to="/privacy" className="text-blue-600 font-black">Privacy Policy</Link>.</span>
+              </label>
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gray-900 dark:bg-white text-white dark:text-black font-black py-5 rounded-2xl shadow-xl uppercase tracking-widest text-xs mt-4 disabled:opacity-50"
+            >
+              {loading ? "Creating Account..." : "Create Account"}
+            </motion.button>
+          </form>
+
+          <p className="text-center mt-8 text-xs font-bold text-gray-400 uppercase tracking-widest">
+            Already verified? <Link to="/login" className="text-blue-600 font-black hover:underline">Sign In</Link>
+          </p>
+        </motion.div>
       </div>
     </PageTransition>
   );
 };
 
-export default TermsAndConditions;
+export default Register;
