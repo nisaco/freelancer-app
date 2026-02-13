@@ -1,7 +1,39 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, useInView, animate } from 'framer-motion';
 import axios from 'axios';
+
+// --- NEW COMPONENT: Animated Counter ---
+const StatCounter = ({ value, label, suffix = "", prefix = "", decimals = 0 }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-50px" });
+  
+  useEffect(() => {
+    if (isInView && ref.current) {
+      const controls = animate(0, value, {
+        duration: 2.5,
+        ease: "easeOut",
+        onUpdate(val) {
+          if (ref.current) {
+            ref.current.textContent = val.toFixed(decimals);
+          }
+        }
+      });
+      return () => controls.stop();
+    }
+  }, [isInView, value, decimals]);
+
+  return (
+    <div className="text-center p-4">
+      <div className="flex items-center justify-center text-3xl md:text-5xl font-black text-gray-900 dark:text-white mb-2">
+        <span className="text-blue-600 dark:text-blue-400 mr-1">{prefix}</span>
+        <span ref={ref}>0</span>
+        <span className="text-blue-600 dark:text-blue-400 ml-1">{suffix}</span>
+      </div>
+      <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-[0.2em]">{label}</p>
+    </div>
+  );
+};
 
 const Welcome = () => {
   const [featuredArtisans, setFeaturedArtisans] = useState([]);
@@ -108,20 +140,13 @@ const Welcome = () => {
         </motion.div>
       </header>
 
-      {/* --- STATS STRIP --- */}
+      {/* --- ANIMATED STATS STRIP --- */}
       <section className="border-y border-white/20 dark:border-white/5 bg-white/30 dark:bg-black/20 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
-          {[
-            { label: 'Total Pros', value: '500+' },
-            { label: 'Jobs Done', value: '2.5k+' },
-            { label: 'Secure Escrow', value: '100%' },
-            { label: 'Client Rating', value: '4.9/5' },
-          ].map((stat, i) => (
-            <div key={i} className="text-center">
-              <p className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-1">{stat.value}</p>
-              <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{stat.label}</p>
-            </div>
-          ))}
+        <div className="max-w-7xl mx-auto px-6 py-16 grid grid-cols-2 md:grid-cols-4 gap-8">
+          <StatCounter label="Total Pros" value={500} suffix="+" />
+          <StatCounter label="Jobs Done" value={2.5} suffix="k+" decimals={1} />
+          <StatCounter label="Secure Escrow" value={100} suffix="%" />
+          <StatCounter label="Client Rating" value={4.9} suffix="/5" decimals={1} />
         </div>
       </section>
 
@@ -301,7 +326,7 @@ const Welcome = () => {
           <div>
              <h4 className="font-bold text-gray-900 dark:text-white mb-4">Contact</h4>
              <p className="text-sm text-gray-500">support@linkupgh.live</p>
-             <p className="text-sm text-gray-500">+233 54 980 0115</p>
+             <p className="text-sm text-gray-500">+233 55 123 4567</p>
              <p className="text-sm text-gray-500 mt-2">Accra, Ghana</p>
           </div>
         </div>
