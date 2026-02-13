@@ -22,6 +22,7 @@ import Inbox from './pages/Inbox';
 import TermsAndConditions from './pages/TermsAndConditions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import ProfileSetup from './pages/ProfileSetup';
+import AdminUsers from './pages/AdminUsers';
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -35,7 +36,10 @@ const AnimatedRoutes = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/terms" element={<TermsAndConditions />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
-        
+         <Route path="/admin-terminal" element={<AdminDashboard />} />
+        <Route path="/payment/callback" element={<PaymentCallback />} />
+        <Route path="/artisan/:id" element={<ArtisanProfile />} />
+        <Route path="/my-bookings" element={<MyBookings />} />
         {/* Protected Routes */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         
@@ -45,10 +49,8 @@ const AnimatedRoutes = () => {
         <Route path="/artisan-dashboard" element={<ProtectedRoute role="artisan"><ArtisanDashboard /></ProtectedRoute>} />
         <Route path="/admin-dashboard" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
         <Route path="/onboarding" element={<ProtectedRoute role="artisan"><Onboarding /></ProtectedRoute>} />
-        <Route path="/admin-terminal" element={<AdminDashboard />} />
-        <Route path="/payment/callback" element={<PaymentCallback />} />
-        <Route path="/artisan/:id" element={<ArtisanProfile />} />
-        <Route path="/my-bookings" element={<MyBookings />} />
+        <Route path="/admin-users" element={<ProtectedRoute role="admin"><AdminUsers /></ProtectedRoute>} />
+       
         <Route
           path="/messages"
           element={<ProtectedRoute><Navigate to="/inbox" replace /></ProtectedRoute>}

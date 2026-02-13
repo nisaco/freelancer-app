@@ -5,6 +5,7 @@ const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const Dispute = require('../models/Dispute');
 const Message = require('../models/Message');
+const Job = require('../models/Job'); // Added Job model for aggregations
 const { verifyArtisan } = require('../controllers/authController');
 
 // --- SECURITY MIDDLEWARE: ADMIN ONLY ---
@@ -42,24 +43,81 @@ router.get('/stats', protect, adminOnly, async (req, res) => {
       ghanaCardImage: { $exists: true, $ne: '' } 
     }).select('-password').sort({ subscriptionTier: -1, createdAt: 1 });
 
-    // --- FIX: SEND THE ACTUAL VARIABLES INSTEAD OF 0 AND [] ---
     res.json({
       stats: {
         totalArtisans,
         totalClients,
         totalUsers,
-        totalVolume: totalVolume, // Was 0
+        totalVolume: totalVolume,
         revenue: {
-          totalVolume: totalVolume, // Was 0
+          totalVolume: totalVolume,
           monthlyGrowth: 0
         }
       },
       pendingArtisans: pendingArtisansList,
-      recentTransactions: recentTransactions // Was []
+      recentTransactions: recentTransactions
     });
   } catch (err) {
     console.error("Admin Stats Error:", err);
     res.status(500).json({ message: "Failed to load stats" });
+  }
+});
+
+// 2. GET ALL USERS (New Feature for User Management Page)
+router.get('/users', protect, adminOnly, async (req, res) => {
+  try {
+    const users = await User.aggregate([
+      // Join with Jobs to see Client activity
+      {
+        $lookup: {
+          from: "jobs",
+          localField: "_id",
+          foreignField: "client",
+          as: "clientJobs"
+        }
+      },
+      // Join with Jobs to see Artisan activity
+      {
+        $lookup: {
+          from: "jobs",
+          localField: "_id",
+          foreignField: "artisan",
+          as: "artisanJobs"
+        }
+      },
+      // Project the fields needed
+      {
+        $project: {
+          username: 1,
+          email: 1,
+          role: 1,
+          isVerified: 1,
+          createdAt: 1,
+          profilePic: 1,
+          phone: 1,
+          // Count total jobs involved in
+          transactionCount: { $add: [{ $size: "$clientJobs" }, { $size: "$artisanJobs" }] },
+          // Determine last active timestamp
+          lastActive: { $max: ["$updatedAt", { $max: "$clientJobs.createdAt" }, { $max: "$artisanJobs.createdAt" }] }
+        }
+      },
+      { $sort: { createdAt: -1 } }
+    ]);
+
+    res.json(users);
+  } catch (error) {
+    console.error("User List Error:", error);
+    res.status(500).json({ message: 'Failed to fetch users' });
+  }
+});
+
+// 3. DELETE USER (New Feature for User Management)
+router.delete('/user/:id', protect, adminOnly, async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ message: "User removed" });
+  } catch (err) {
+    res.status(500).json({ message: "Delete failed" });
   }
 });
 
@@ -91,10 +149,10 @@ router.get('/artisans', protect, adminOnly, async (req, res) => {
   }
 });
 
-// 5. The Verification Action
+// 6. The Verification Action
 router.put('/verify/:id', protect, adminOnly, verifyArtisan);
 
-// 6. Dispute dashboard summary
+// 7. Dispute dashboard summary
 router.get('/disputes/summary', protect, adminOnly, async (req, res) => {
   try {
     const [open, underReview, resolved] = await Promise.all([
@@ -114,7 +172,7 @@ router.get('/disputes/summary', protect, adminOnly, async (req, res) => {
   }
 });
 
-// 7. Dispute list for admin dashboard
+// 8. Dispute list for admin dashboard
 router.get('/disputes', protect, adminOnly, async (req, res) => {
   try {
     const { status } = req.query;
@@ -137,7 +195,7 @@ router.get('/disputes', protect, adminOnly, async (req, res) => {
   }
 });
 
-// 8. Dispute detail with messages and photos
+// 9. Dispute detail with messages and photos
 router.get('/disputes/:id', protect, adminOnly, async (req, res) => {
   try {
     const dispute = await Dispute.findById(req.params.id)

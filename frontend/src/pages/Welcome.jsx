@@ -88,7 +88,7 @@ const Welcome = () => {
       </div>
 
       {/* --- NAV BAR --- */}
-      <nav className="relative z-50 flex justify-between items-center px-6 md:px-12 py-6 max-w-7xl mx-auto w-full backdrop-blur-md sticky top-0 bg-white/30 dark:bg-black/30 border-b border-white/20 dark:border-white/5 transition-colors">
+      <nav className="relative z-50 flex justify-between items-center px-6 md:px-12 py-6 max-w-7xl mx-auto w-full backdrop-blur-md top-0 bg-white/30 dark:bg-black/30 border-b border-white/20 dark:border-white/5 transition-colors">
         <motion.div 
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}

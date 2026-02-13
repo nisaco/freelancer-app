@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Job = require('../models/Job'); // Import the Job model for intelligence
 const Notification = require('../models/Notification');
+const Transaction = require('../models/Transaction');
 
 // @desc    Get platform metrics, pending artisans, and financial intelligence
 // @route   GET /api/admin/stats
@@ -28,16 +29,7 @@ exports.getAdminStats = async (req, res) => {
         .populate('artisan', 'username')
     ]);
 
-    // Extract total volume safely
     const totalVolume = volumeData.length > 0 ? volumeData[0].total : 0;
-
-    // Format recent transactions for the sophisticated frontend feed
-    const recentTransactions = recentJobs.map(job => ({
-      clientName: job.client?.username || "Guest",
-      artisanName: job.artisan?.username || "Pro",
-      amount: job.amount,
-      createdAt: job.updatedAt
-    }));
 
     res.json({
       stats: {
@@ -47,7 +39,7 @@ exports.getAdminStats = async (req, res) => {
         totalVolume // Now included in the response
       },
       pendingArtisans,
-      recentTransactions // Now included for the Live Feed
+      recentTransactions: recentJobs // Now included for the Live Feed
     });
   } catch (error) {
     console.error("Admin Stats Error:", error);
@@ -78,12 +70,54 @@ exports.verifyArtisan = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
   }
-  // Notify the Artisan
-  await Notification.create({
-    recipient: user._id,
-    message: status === 'approve'
-      ? 'Congratulations! Your professional identity has been verified. You are now live on the marketplace.'
-      : 'Verification not approved yet. Please upload clear documents and submit again.',
-    type: 'SYSTEM'
-  });
-}
+};
+
+// @desc    Get comprehensive list of all users with activity stats
+// @route   GET /api/admin/users
+exports.getUsersList = async (req, res) => {
+  try {
+    const users = await User.aggregate([
+      // 1. Join with Jobs to see Client activity
+      {
+        $lookup: {
+          from: "jobs",
+          localField: "_id",
+          foreignField: "client",
+          as: "clientJobs"
+        }
+      },
+      // 2. Join with Jobs to see Artisan activity
+      {
+        $lookup: {
+          from: "jobs",
+          localField: "_id",
+          foreignField: "artisan",
+          as: "artisanJobs"
+        }
+      },
+      // 3. Project the fields we need
+      {
+        $project: {
+          username: 1,
+          email: 1,
+          role: 1,
+          isVerified: 1,
+          createdAt: 1,
+          profilePic: 1,
+          phone: 1,
+          location: 1,
+          // Count total jobs (Client bookings + Artisan jobs)
+          transactionCount: { $add: [{ $size: "$clientJobs" }, { $size: "$artisanJobs" }] },
+          // Determine last active based on latest job or profile update
+          lastActive: { $max: ["$updatedAt", { $max: "$clientJobs.createdAt" }, { $max: "$artisanJobs.createdAt" }] }
+        }
+      },
+      { $sort: { createdAt: -1 } }
+    ]);
+
+    res.json(users);
+  } catch (error) {
+    console.error("User List Error:", error);
+    res.status(500).json({ message: 'Failed to fetch users' });
+  }
+};
