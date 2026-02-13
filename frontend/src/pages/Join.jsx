@@ -57,7 +57,7 @@ const Join = () => {
               </div>
               <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2">I want to hire</h3>
               <p className="text-gray-500 dark:text-gray-400 font-medium">
-                Find verified artisans, plumbers, and electricians for your projects.
+                Find verified artisans for your projects.
               </p>
             </motion.div>
 
