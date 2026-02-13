@@ -25,6 +25,9 @@ const StatCounter = ({ value, label, suffix = "", prefix = "", decimals = 0 }) =
 
   return (
     <motion.div 
+      initial={{ opacity: 0, scale: 0.5 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
       whileHover={{ scale: 1.1, rotate: 2 }}
       transition={{ type: "spring", stiffness: 300 }}
       className="text-center p-4 cursor-default"
@@ -85,9 +88,10 @@ const Welcome = () => {
       </div>
 
       {/* --- NAV BAR --- */}
-      <nav className="relative z-50 flex justify-between items-center px-6 md:px-12 py-6 max-w-7xl mx-auto w-full backdrop-blur-md top-0 bg-white/30 dark:bg-black/30 border-b border-white/20 dark:border-white/5 transition-colors">
+      <nav className="relative z-50 flex justify-between items-center px-6 md:px-12 py-6 max-w-7xl mx-auto w-full backdrop-blur-md sticky top-0 bg-white/30 dark:bg-black/30 border-b border-white/20 dark:border-white/5 transition-colors">
         <motion.div 
           whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           className="flex items-center gap-2 cursor-pointer"
           onClick={() => navigate('/')}
         >
@@ -98,17 +102,18 @@ const Welcome = () => {
         <div className="flex gap-4 md:gap-8 items-center">
           <Link to="/login">
             <motion.span 
-              whileHover={{ scale: 1.1, color: "#2563EB" }}
-              className="text-xs font-black uppercase tracking-widest text-gray-700 dark:text-gray-300 transition-colors"
+              whileHover={{ scale: 1.1, color: "#2563EB", textShadow: "0px 0px 8px rgba(37,99,235,0.5)" }}
+              whileTap={{ scale: 0.95 }}
+              className="text-xs font-black uppercase tracking-widest text-gray-700 dark:text-gray-300 transition-colors inline-block"
             >
               Log In
             </motion.span>
           </Link>
           <Link to="/join">
             <motion.button 
-              whileHover={{ scale: 1.1 }}
+              whileHover={{ scale: 1.1, boxShadow: "0px 10px 20px rgba(0,0,0,0.2)" }}
               whileTap={{ scale: 0.95 }}
-              className="bg-gray-900 dark:bg-white text-white dark:text-black px-6 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg hover:shadow-blue-500/50 transition-all"
+              className="bg-gray-900 dark:bg-white text-white dark:text-black px-6 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg transition-all"
             >
               Join Now
             </motion.button>
@@ -125,7 +130,7 @@ const Welcome = () => {
           className="max-w-5xl mx-auto"
         >
           <motion.div 
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.05, rotate: -1 }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100/50 dark:bg-blue-900/30 backdrop-blur-sm text-blue-600 dark:text-blue-300 text-[10px] font-black uppercase tracking-[0.2em] mb-8 border border-blue-200 dark:border-blue-500/30 cursor-default shadow-sm hover:shadow-blue-500/20 transition-all"
           >
             <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"/>
@@ -145,18 +150,18 @@ const Welcome = () => {
 
           <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
             <motion.button 
-              whileHover={{ scale: 1.05, y: -2 }}
+              whileHover={{ scale: 1.05, y: -5, boxShadow: "0 20px 25px -5px rgb(37 99 235 / 0.4)" }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/join')}
-              className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl shadow-blue-600/30 transition-all"
+              className="w-full md:w-auto bg-blue-600 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl transition-all"
             >
               Hire a Pro
             </motion.button>
             <motion.button 
-              whileHover={{ scale: 1.05, y: -2 }}
+              whileHover={{ scale: 1.05, y: -5, backgroundColor: "rgba(255,255,255,0.8)" }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/join')}
-              className="w-full md:w-auto bg-white/50 dark:bg-white/10 backdrop-blur-md text-gray-900 dark:text-white border border-gray-200 dark:border-white/10 px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white/80 dark:hover:bg-white/20 transition-all shadow-lg"
+              className="w-full md:w-auto bg-white/50 dark:bg-white/10 backdrop-blur-md text-gray-900 dark:text-white border border-gray-200 dark:border-white/10 px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-lg"
             >
               Earn Money
             </motion.button>
@@ -183,23 +188,36 @@ const Welcome = () => {
                 Popular <span className="text-blue-600">Services</span>
               </h2>
             </div>
-            <Link to="/join" className="hidden md:block text-xs font-black text-blue-600 uppercase tracking-widest hover:underline hover:text-blue-500 transition-colors">View All Categories</Link>
+            <Link to="/join" className="hidden md:block">
+              <motion.span 
+                whileHover={{ x: 5, color: '#2563EB' }}
+                className="text-xs font-black text-blue-600 uppercase tracking-widest inline-block"
+              >
+                View All Categories →
+              </motion.span>
+            </Link>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {categories.map((cat, i) => (
               <motion.div
                 key={i}
-                whileHover={{ scale: 1.05, y: -5, borderColor: '#3B82F6' }}
-                whileTap={{ scale: 0.95 }}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/50 dark:border-white/10 p-6 rounded-[2rem] text-center cursor-pointer transition-colors shadow-lg hover:shadow-2xl hover:shadow-blue-500/20"
+                transition={{ delay: i * 0.1, type: "spring", stiffness: 200 }}
+                whileHover={{ scale: 1.05, y: -10, borderColor: '#3B82F6', boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)" }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/50 dark:border-white/10 p-6 rounded-[2rem] text-center cursor-pointer transition-colors shadow-lg"
                 onClick={() => navigate('/join')}
               >
-                <div className="text-4xl mb-4 transform group-hover:scale-110 transition-transform">{cat.icon}</div>
+                <motion.div 
+                  whileHover={{ rotate: [0, -10, 10, 0] }}
+                  transition={{ duration: 0.5 }}
+                  className="text-4xl mb-4"
+                >
+                  {cat.icon}
+                </motion.div>
                 <h3 className="font-bold text-gray-900 dark:text-white text-sm">{cat.name}</h3>
                 <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase mt-1">{cat.count}</p>
               </motion.div>
@@ -238,12 +256,12 @@ const Welcome = () => {
             ].map((step, i) => (
               <motion.div 
                 key={i} 
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, x: i % 2 === 0 ? -50 : 50 }}
+                whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.2 }}
-                whileHover={{ scale: 1.03, y: -5 }}
-                className="bg-white/60 dark:bg-white/5 backdrop-blur-md p-8 rounded-[2.5rem] relative overflow-hidden border border-white/20 dark:border-white/5 shadow-xl hover:shadow-2xl hover:border-blue-500/30 transition-all"
+                transition={{ delay: i * 0.2, type: "spring" }}
+                whileHover={{ scale: 1.05, rotate: 1 }}
+                className="bg-white/60 dark:bg-white/5 backdrop-blur-md p-8 rounded-[2.5rem] relative overflow-hidden border border-white/20 dark:border-white/5 shadow-xl hover:shadow-2xl hover:border-blue-500/30 transition-all cursor-default"
               >
                 <div className="absolute -right-4 -top-4 text-9xl opacity-5 font-black text-gray-900 dark:text-white select-none">{i+1}</div>
                 <div className="text-5xl mb-6 transform hover:scale-110 transition-transform duration-300">{step.icon}</div>
@@ -263,9 +281,9 @@ const Welcome = () => {
               Featured <span className="text-green-500">Elite Pros</span>
             </h2>
             <div className="flex gap-2">
-              <motion.span whileHover={{ scale: 1.2 }} className="w-3 h-3 rounded-full bg-red-500 cursor-pointer shadow-md"/>
-              <motion.span whileHover={{ scale: 1.2 }} className="w-3 h-3 rounded-full bg-yellow-500 cursor-pointer shadow-md"/>
-              <motion.span whileHover={{ scale: 1.2 }} className="w-3 h-3 rounded-full bg-green-500 cursor-pointer shadow-md"/>
+              <motion.span whileHover={{ scale: 1.5 }} className="w-3 h-3 rounded-full bg-red-500 cursor-pointer shadow-md"/>
+              <motion.span whileHover={{ scale: 1.5 }} className="w-3 h-3 rounded-full bg-yellow-500 cursor-pointer shadow-md"/>
+              <motion.span whileHover={{ scale: 1.5 }} className="w-3 h-3 rounded-full bg-green-500 cursor-pointer shadow-md"/>
             </div>
           </div>
 
@@ -277,15 +295,17 @@ const Welcome = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                whileHover={{ scale: 1.03, y: -5, borderColor: '#3B82F6' }}
+                whileHover={{ scale: 1.03, y: -10, borderColor: '#3B82F6' }}
                 whileTap={{ scale: 0.98 }}
                 className="bg-white/70 dark:bg-white/5 backdrop-blur-md p-6 rounded-[2rem] border border-white/50 dark:border-white/10 hover:border-blue-500 transition-colors group cursor-pointer shadow-lg hover:shadow-2xl hover:shadow-blue-500/20"
               >
                 <div className="relative mb-4 overflow-hidden rounded-2xl h-48">
-                  <img 
+                  <motion.img 
+                    whileHover={{ scale: 1.1 }}
+                    transition={{ duration: 0.5 }}
                     src={artisan.profilePic || "https://via.placeholder.com/150"} 
                     alt={artisan.username} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    className="w-full h-full object-cover"
                   />
                   <div className="absolute top-3 left-3 bg-white/90 dark:bg-black/80 backdrop-blur px-3 py-1 rounded-full shadow-md">
                     <span className="text-[9px] font-black uppercase tracking-widest text-gray-900 dark:text-white">{artisan.category}</span>
@@ -301,7 +321,14 @@ const Welcome = () => {
                 </div>
                 <div className="flex justify-between items-center border-t border-gray-100 dark:border-white/10 pt-4 mt-2">
                   <p className="text-sm font-black text-gray-900 dark:text-white">GHS {artisan.price || 0}<span className="text-[10px] text-gray-500 dark:text-gray-400 font-normal">/hr</span></p>
-                  <Link to="/join" className="text-[10px] font-black uppercase text-blue-600 tracking-widest hover:underline hover:text-blue-500 transition-colors">Hire Me</Link>
+                  <Link to="/join">
+                    <motion.span 
+                      whileHover={{ x: 3, color: '#2563EB' }}
+                      className="text-[10px] font-black uppercase text-blue-600 tracking-widest inline-block"
+                    >
+                      Hire Me
+                    </motion.span>
+                  </Link>
                 </div>
               </motion.div>
             )) : (
@@ -316,10 +343,10 @@ const Welcome = () => {
       {/* --- CTA SECTION --- */}
       <section className="py-24 px-6 relative z-10">
         <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          whileHover={{ scale: 1.02 }}
+          whileHover={{ scale: 1.01 }}
           transition={{ type: "spring", stiffness: 100 }}
           className="max-w-7xl mx-auto bg-gradient-to-r from-blue-900 to-blue-700 rounded-[3rem] p-12 md:p-24 text-center relative overflow-hidden shadow-2xl hover:shadow-blue-600/40"
         >
@@ -348,7 +375,12 @@ const Welcome = () => {
       <footer className="bg-white/80 dark:bg-[#05080F]/80 backdrop-blur-md border-t border-gray-100 dark:border-white/5 pt-20 pb-10 px-6 relative z-10">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           <div className="col-span-1 md:col-span-1">
-            <h3 className="text-2xl font-black text-blue-600 dark:text-white tracking-tighter uppercase italic mb-6">LinkUp</h3>
+            <motion.h3 
+              whileHover={{ scale: 1.05, originX: 0 }}
+              className="text-2xl font-black text-blue-600 dark:text-white tracking-tighter uppercase italic mb-6 cursor-default"
+            >
+              LinkUp
+            </motion.h3>
             <p className="text-xs text-gray-500 leading-relaxed">
               The #1 trusted marketplace for connecting clients with verified artisans in Ghana.
             </p>
@@ -357,18 +389,42 @@ const Welcome = () => {
           <div>
             <h4 className="font-bold text-gray-900 dark:text-white mb-4">Platform</h4>
             <ul className="space-y-2 text-sm text-gray-500">
-              <li><Link to="/join" className="hover:text-blue-600 transition-colors">Find Artisans</Link></li>
-              <li><Link to="/join" className="hover:text-blue-600 transition-colors">Become a Pro</Link></li>
-              <li><Link to="/login" className="hover:text-blue-600 transition-colors">Sign In</Link></li>
+              <li>
+                <Link to="/join">
+                  <motion.span whileHover={{ x: 5, color: '#3B82F6' }} className="inline-block transition-colors">Find Artisans</motion.span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/join">
+                  <motion.span whileHover={{ x: 5, color: '#3B82F6' }} className="inline-block transition-colors">Become a Pro</motion.span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/login">
+                  <motion.span whileHover={{ x: 5, color: '#3B82F6' }} className="inline-block transition-colors">Sign In</motion.span>
+                </Link>
+              </li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-bold text-gray-900 dark:text-white mb-4">Support</h4>
             <ul className="space-y-2 text-sm text-gray-500">
-              <li><a href="#" className="hover:text-blue-600 transition-colors">Help Center</a></li>
-              <li><Link to="/terms" className="hover:text-blue-600 transition-colors">Terms of Service</Link></li>
-              <li><Link to="/privacy" className="hover:text-blue-600 transition-colors">Privacy Policy</Link></li>
+              <li>
+                <a href="#">
+                  <motion.span whileHover={{ x: 5, color: '#3B82F6' }} className="inline-block transition-colors">Help Center</motion.span>
+                </a>
+              </li>
+              <li>
+                <Link to="/terms">
+                  <motion.span whileHover={{ x: 5, color: '#3B82F6' }} className="inline-block transition-colors">Terms of Service</motion.span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy">
+                  <motion.span whileHover={{ x: 5, color: '#3B82F6' }} className="inline-block transition-colors">Privacy Policy</motion.span>
+                </Link>
+              </li>
             </ul>
           </div>
 
