@@ -39,25 +39,24 @@ const Welcome = () => {
   ];
 
   return (
-    <div className="relative min-h-screen flex flex-col overflow-hidden bg-[#FAFBFF] dark:bg-[#0B0F1A] transition-colors duration-700">
+    // Background color removed from container to reveal the living-bg from index.css logic
+    <div className="relative min-h-screen flex flex-col overflow-hidden transition-colors duration-700">
       
-      {/* 1. LIVING BACKGROUND - RESTORED 
-        Removed 'opacity-20' so your CSS in index.css controls the full vibrancy 
-      */}
+      {/* 1. LIVING BACKGROUND */}
       <div className="living-bg">
         <div className="orb orb-1" />
         <div className="orb orb-2" />
       </div>
 
       {/* --- NAV BAR --- */}
-      <nav className="relative z-50 flex justify-between items-center px-6 md:px-12 py-6 max-w-7xl mx-auto w-full backdrop-blur-sm top-0 bg-white/50 dark:bg-[#0B0F1A]/50 border-b border-gray-100 dark:border-white/5">
+      <nav className="relative z-50 flex justify-between items-center px-6 md:px-12 py-6 max-w-7xl mx-auto w-full backdrop-blur-md top-0 bg-white/30 dark:bg-black/30 border-b border-white/20 dark:border-white/5 transition-colors">
         <div className="flex items-center gap-2">
            <h1 className="text-2xl font-black text-blue-600 dark:text-white tracking-tighter uppercase italic">
             LinkUp
           </h1>
         </div>
         <div className="flex gap-4 md:gap-8 items-center">
-          <Link to="/login" className="text-xs font-black uppercase tracking-widest text-gray-500 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white transition-colors">
+          <Link to="/login" className="text-xs font-black uppercase tracking-widest text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white transition-colors">
             Log In
           </Link>
           <Link to="/join">
@@ -76,17 +75,17 @@ const Welcome = () => {
           variants={fadeInUp}
           className="max-w-5xl mx-auto"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 text-[10px] font-black uppercase tracking-[0.2em] mb-8 border border-blue-200 dark:border-blue-500/30">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100/50 dark:bg-blue-900/30 backdrop-blur-sm text-blue-600 dark:text-blue-300 text-[10px] font-black uppercase tracking-[0.2em] mb-8 border border-blue-200 dark:border-blue-500/30">
             <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"/>
             #1 Marketplace for Ghanaian Artisans
           </div>
           
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-900 dark:text-white tracking-tighter leading-[0.9] mb-8">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-900 dark:text-white tracking-tighter leading-[0.9] mb-8 drop-shadow-sm">
             Hire Verified <br className="hidden md:block"/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Professionals</span>
           </h1>
           
-          <p className="text-lg md:text-xl text-gray-500 dark:text-gray-400 font-medium max-w-2xl mx-auto leading-relaxed mb-12">
+          <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 font-medium max-w-2xl mx-auto leading-relaxed mb-12">
             Don't risk your project. Find vetted plumbers, electricians, and carpenters with 
             <span className="text-gray-900 dark:text-white font-bold"> secure escrow payments</span> and
             <span className="text-gray-900 dark:text-white font-bold"> verified Ghana Card IDs</span>.
@@ -101,7 +100,7 @@ const Welcome = () => {
             </button>
             <button 
               onClick={() => navigate('/join')}
-              className="w-full md:w-auto bg-white dark:bg-white/10 text-gray-900 dark:text-white border border-gray-200 dark:border-white/10 px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-50 dark:hover:bg-white/20 transition-all"
+              className="w-full md:w-auto bg-white/50 dark:bg-white/10 backdrop-blur-md text-gray-900 dark:text-white border border-gray-200 dark:border-white/10 px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white/80 dark:hover:bg-white/20 transition-all"
             >
               Earn Money
             </button>
@@ -110,7 +109,7 @@ const Welcome = () => {
       </header>
 
       {/* --- STATS STRIP --- */}
-      <section className="border-y border-gray-100 dark:border-white/5 bg-white/50 dark:bg-black/20 backdrop-blur-sm">
+      <section className="border-y border-white/20 dark:border-white/5 bg-white/30 dark:bg-black/20 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
           {[
             { label: 'Total Pros', value: '500+' },
@@ -120,7 +119,7 @@ const Welcome = () => {
           ].map((stat, i) => (
             <div key={i} className="text-center">
               <p className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-1">{stat.value}</p>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{stat.label}</p>
+              <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{stat.label}</p>
             </div>
           ))}
         </div>
@@ -143,12 +142,12 @@ const Welcome = () => {
               <motion.div
                 key={i}
                 whileHover={{ y: -5 }}
-                className="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/5 p-6 rounded-[2rem] text-center cursor-pointer hover:border-blue-500 transition-colors shadow-sm hover:shadow-xl"
+                className="bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/50 dark:border-white/10 p-6 rounded-[2rem] text-center cursor-pointer hover:border-blue-500 transition-colors shadow-lg hover:shadow-xl"
                 onClick={() => navigate('/join')}
               >
                 <div className="text-4xl mb-4">{cat.icon}</div>
                 <h3 className="font-bold text-gray-900 dark:text-white text-sm">{cat.name}</h3>
-                <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">{cat.count}</p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase mt-1">{cat.count}</p>
               </motion.div>
             ))}
           </div>
@@ -156,13 +155,13 @@ const Welcome = () => {
       </section>
 
       {/* --- HOW IT WORKS --- */}
-      <section className="py-24 px-6 bg-gray-50 dark:bg-black/20 relative z-10">
+      <section className="py-24 px-6 relative z-10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter mb-4">
               How LinkUp <span className="text-blue-600">Works</span>
             </h2>
-            <p className="text-gray-500 max-w-xl mx-auto">Safe, simple, and secure. We protect both the client and the artisan.</p>
+            <p className="text-gray-500 dark:text-gray-400 max-w-xl mx-auto">Safe, simple, and secure. We protect both the client and the artisan.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
@@ -183,11 +182,11 @@ const Welcome = () => {
                 desc: "The artisan completes the work. You approve it, release the funds, and leave a review." 
               }
             ].map((step, i) => (
-              <div key={i} className="bg-white dark:bg-white/5 p-8 rounded-[2.5rem] relative overflow-hidden">
+              <div key={i} className="bg-white/60 dark:bg-white/5 backdrop-blur-md p-8 rounded-[2.5rem] relative overflow-hidden border border-white/20 dark:border-white/5 shadow-xl">
                 <div className="absolute -right-4 -top-4 text-9xl opacity-5 font-black text-gray-900 dark:text-white select-none">{i+1}</div>
                 <div className="text-5xl mb-6">{step.icon}</div>
                 <h3 className="text-xl font-black text-gray-900 dark:text-white mb-3">{step.title}</h3>
-                <p className="text-sm text-gray-500 font-medium leading-relaxed">{step.desc}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 font-medium leading-relaxed">{step.desc}</p>
               </div>
             ))}
           </div>
@@ -215,7 +214,7 @@ const Welcome = () => {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className="bg-white/80 dark:bg-white/5 backdrop-blur-md p-6 rounded-[2rem] border border-gray-100 dark:border-white/5 hover:border-blue-500 transition-colors group cursor-pointer shadow-lg"
+                className="bg-white/70 dark:bg-white/5 backdrop-blur-md p-6 rounded-[2rem] border border-white/50 dark:border-white/10 hover:border-blue-500 transition-colors group cursor-pointer shadow-lg"
               >
                 <div className="relative mb-4 overflow-hidden rounded-2xl h-48">
                   <img 
@@ -233,15 +232,15 @@ const Welcome = () => {
                 <div className="flex items-center gap-1 mt-2 mb-3">
                   <span className="text-yellow-400 text-xs">★</span>
                   <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{Number(artisan.rating || 0).toFixed(1)}</span>
-                  <span className="text-[10px] text-gray-400">({artisan.completedJobs || 0} jobs)</span>
+                  <span className="text-[10px] text-gray-500 dark:text-gray-400">({artisan.completedJobs || 0} jobs)</span>
                 </div>
                 <div className="flex justify-between items-center border-t border-gray-100 dark:border-white/10 pt-4 mt-2">
-                  <p className="text-sm font-black text-gray-900 dark:text-white">GHS {artisan.price || 0}<span className="text-[10px] text-gray-400 font-normal">/hr</span></p>
+                  <p className="text-sm font-black text-gray-900 dark:text-white">GHS {artisan.price || 0}<span className="text-[10px] text-gray-500 dark:text-gray-400 font-normal">/hr</span></p>
                   <Link to="/join" className="text-[10px] font-black uppercase text-blue-600 tracking-widest hover:underline">Hire Me</Link>
                 </div>
               </motion.div>
             )) : (
-              <div className="col-span-full rounded-[2rem] border-2 border-dashed border-gray-200 dark:border-white/10 p-12 text-center">
+              <div className="col-span-full rounded-[2rem] border-2 border-dashed border-gray-200 dark:border-white/10 p-12 text-center bg-white/30 dark:bg-white/5 backdrop-blur-sm">
                 <p className="text-xs font-black uppercase tracking-[0.25em] text-gray-400">Loading Elite Artisans...</p>
               </div>
             )}
@@ -272,7 +271,7 @@ const Welcome = () => {
       </section>
 
       {/* --- FOOTER --- */}
-      <footer className="bg-white dark:bg-[#05080F] border-t border-gray-100 dark:border-white/5 pt-20 pb-10 px-6 relative z-10">
+      <footer className="bg-white/80 dark:bg-[#05080F]/80 backdrop-blur-md border-t border-gray-100 dark:border-white/5 pt-20 pb-10 px-6 relative z-10">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           <div className="col-span-1 md:col-span-1">
             <h3 className="text-2xl font-black text-blue-600 dark:text-white tracking-tighter uppercase italic mb-6">LinkUp</h3>
