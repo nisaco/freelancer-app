@@ -25,7 +25,7 @@ const ArtisanSetup = () => {
     category: '',
     customCategory: '',
     bio: '',
-    experienceLevel: 'Entry', // Entry, Intermediate, Expert
+    experienceLevel: 'Entry',
     yearsExperience: '',
     educationInstitution: '',
     educationStatus: '',
@@ -56,8 +56,6 @@ const ArtisanSetup = () => {
     payload.append('location', formData.location);
     payload.append('price', formData.price);
     payload.append('ghanaCardNumber', formData.ghanaCardNumber);
-    // Extra fields usually stored in bio or specific fields if backend supports them
-    // For now we append them to bio or if your backend schema was updated in User.js (which it was!)
     payload.append('educationInstitution', formData.educationInstitution);
     payload.append('educationStatus', formData.educationStatus);
 
@@ -82,15 +80,22 @@ const ArtisanSetup = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-[#FDFDFF] dark:bg-[#0B0F1A] flex flex-col items-center pt-20 pb-20 px-6">
+      {/* Background color removed to show Living Background */}
+      <div className="min-h-screen flex flex-col items-center pt-20 pb-20 px-6 relative overflow-hidden">
         
+        {/* LIVING BACKGROUND */}
+        <div className="living-bg">
+          <div className="orb orb-1" />
+          <div className="orb orb-2" />
+        </div>
+
         {/* Progress Bar */}
-        <div className="w-full max-w-2xl mb-12">
+        <div className="w-full max-w-2xl mb-12 relative z-10">
           <div className="flex justify-between mb-2">
             <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Step {step} of {totalSteps}</span>
             <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">{Math.round((step/totalSteps)*100)}%</span>
           </div>
-          <div className="h-2 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
+          <div className="h-2 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden">
             <motion.div 
               initial={{ width: 0 }}
               animate={{ width: `${(step/totalSteps)*100}%` }}
@@ -99,7 +104,7 @@ const ArtisanSetup = () => {
           </div>
         </div>
 
-        <div className="w-full max-w-2xl">
+        <div className="w-full max-w-2xl relative z-10">
           <AnimatePresence mode="wait">
             
             {/* STEP 1: CATEGORY */}
@@ -110,25 +115,27 @@ const ArtisanSetup = () => {
                 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {categories.map(cat => (
-                    <div 
+                    <motion.div 
                       key={cat.id}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                       onClick={() => updateField('category', cat.id)}
                       className={`p-6 rounded-3xl border-2 cursor-pointer transition-all ${
                         formData.category === cat.id 
-                          ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20' 
+                          ? 'border-blue-600 bg-blue-50/50 dark:bg-blue-900/20' 
                           : 'border-gray-100 dark:border-white/10 hover:border-blue-300'
-                      }`}
+                      } bg-white/70 dark:bg-white/5 backdrop-blur-md`}
                     >
                       <div className="text-3xl mb-3">{cat.icon}</div>
                       <div className="font-bold text-gray-900 dark:text-white">{cat.label}</div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
                 {formData.category === 'Other' && (
                   <input 
                     type="text" 
                     placeholder="Enter your specialty..."
-                    className="w-full mt-4 p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border-none outline-none font-bold text-gray-900 dark:text-white"
+                    className="w-full mt-4 p-4 bg-white/70 dark:bg-white/5 backdrop-blur-md rounded-2xl border-none outline-none font-bold text-gray-900 dark:text-white shadow-inner"
                     onChange={(e) => updateField('customCategory', e.target.value)}
                   />
                 )}
@@ -136,7 +143,7 @@ const ArtisanSetup = () => {
                    <button 
                      disabled={!formData.category}
                      onClick={handleNext}
-                     className="bg-gray-900 dark:bg-white text-white dark:text-black px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest disabled:opacity-50"
+                     className="bg-gray-900 dark:bg-white text-white dark:text-black px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest disabled:opacity-50 hover:scale-105 transition-transform"
                    >
                      Next Step
                    </button>
@@ -155,7 +162,7 @@ const ArtisanSetup = () => {
                     <label className="text-xs font-black uppercase tracking-widest text-gray-400 ml-2 mb-2 block">Professional Bio</label>
                     <textarea 
                       placeholder="Describe your skills, experience, and what makes you the best choice..."
-                      className="w-full p-5 bg-gray-50 dark:bg-white/5 rounded-3xl border-none outline-none font-medium text-gray-900 dark:text-white h-40 resize-none"
+                      className="w-full p-5 bg-white/70 dark:bg-white/5 backdrop-blur-md rounded-3xl border-none outline-none font-medium text-gray-900 dark:text-white h-40 resize-none shadow-sm"
                       value={formData.bio}
                       onChange={(e) => updateField('bio', e.target.value)}
                     />
@@ -167,7 +174,7 @@ const ArtisanSetup = () => {
                       <input 
                         type="text" 
                         placeholder="e.g. Takoradi Technical Uni"
-                        className="w-full p-5 bg-gray-50 dark:bg-white/5 rounded-3xl border-none outline-none font-bold text-gray-900 dark:text-white"
+                        className="w-full p-5 bg-white/70 dark:bg-white/5 backdrop-blur-md rounded-3xl border-none outline-none font-bold text-gray-900 dark:text-white shadow-sm"
                         value={formData.educationInstitution}
                         onChange={(e) => updateField('educationInstitution', e.target.value)}
                       />
@@ -175,7 +182,7 @@ const ArtisanSetup = () => {
                     <div>
                       <label className="text-xs font-black uppercase tracking-widest text-gray-400 ml-2 mb-2 block">Status</label>
                       <select 
-                        className="w-full p-5 bg-gray-50 dark:bg-white/5 rounded-3xl border-none outline-none font-bold text-gray-900 dark:text-white"
+                        className="w-full p-5 bg-white/70 dark:bg-white/5 backdrop-blur-md rounded-3xl border-none outline-none font-bold text-gray-900 dark:text-white shadow-sm"
                         value={formData.educationStatus}
                         onChange={(e) => updateField('educationStatus', e.target.value)}
                       >
@@ -190,7 +197,7 @@ const ArtisanSetup = () => {
 
                 <div className="mt-10 flex justify-between">
                    <button onClick={handleBack} className="text-gray-400 font-bold uppercase text-xs tracking-widest hover:text-gray-600">Back</button>
-                   <button onClick={handleNext} disabled={!formData.bio} className="bg-gray-900 dark:bg-white text-white dark:text-black px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest disabled:opacity-50">Next Step</button>
+                   <button onClick={handleNext} disabled={!formData.bio} className="bg-gray-900 dark:bg-white text-white dark:text-black px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest disabled:opacity-50 hover:scale-105 transition-transform">Next Step</button>
                 </div>
               </motion.div>
             )}
@@ -207,7 +214,7 @@ const ArtisanSetup = () => {
                     <input 
                       type="text" 
                       placeholder="e.g. East Legon, Accra"
-                      className="w-full p-5 bg-gray-50 dark:bg-white/5 rounded-3xl border-none outline-none font-bold text-gray-900 dark:text-white"
+                      className="w-full p-5 bg-white/70 dark:bg-white/5 backdrop-blur-md rounded-3xl border-none outline-none font-bold text-gray-900 dark:text-white shadow-sm"
                       value={formData.location}
                       onChange={(e) => updateField('location', e.target.value)}
                     />
@@ -220,7 +227,7 @@ const ArtisanSetup = () => {
                        <input 
                          type="number" 
                          placeholder="0.00"
-                         className="w-full p-5 pl-16 bg-gray-50 dark:bg-white/5 rounded-3xl border-none outline-none font-bold text-gray-900 dark:text-white text-xl"
+                         className="w-full p-5 pl-16 bg-white/70 dark:bg-white/5 backdrop-blur-md rounded-3xl border-none outline-none font-bold text-gray-900 dark:text-white text-xl shadow-sm"
                          value={formData.price}
                          onChange={(e) => updateField('price', e.target.value)}
                        />
@@ -231,7 +238,7 @@ const ArtisanSetup = () => {
 
                 <div className="mt-10 flex justify-between">
                    <button onClick={handleBack} className="text-gray-400 font-bold uppercase text-xs tracking-widest hover:text-gray-600">Back</button>
-                   <button onClick={handleNext} disabled={!formData.location || !formData.price} className="bg-gray-900 dark:bg-white text-white dark:text-black px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest disabled:opacity-50">Next Step</button>
+                   <button onClick={handleNext} disabled={!formData.location || !formData.price} className="bg-gray-900 dark:bg-white text-white dark:text-black px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest disabled:opacity-50 hover:scale-105 transition-transform">Next Step</button>
                 </div>
               </motion.div>
             )}
@@ -245,9 +252,9 @@ const ArtisanSetup = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   
                   {/* Profile Photo */}
-                  <div className="bg-gray-50 dark:bg-white/5 p-6 rounded-3xl text-center border-2 border-dashed border-gray-200 dark:border-white/10 hover:border-blue-500 transition-colors relative">
+                  <div className="bg-white/70 dark:bg-white/5 backdrop-blur-md p-6 rounded-3xl text-center border-2 border-dashed border-gray-200 dark:border-white/10 hover:border-blue-500 transition-colors relative">
                     <input type="file" onChange={(e) => updateField('profilePic', e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
-                    <div className="w-20 h-20 bg-gray-200 rounded-full mx-auto mb-4 overflow-hidden">
+                    <div className="w-20 h-20 bg-gray-200 dark:bg-white/10 rounded-full mx-auto mb-4 overflow-hidden">
                       {formData.profilePic && <img src={URL.createObjectURL(formData.profilePic)} className="w-full h-full object-cover" />}
                     </div>
                     <p className="font-bold text-gray-900 dark:text-white">Profile Photo</p>
@@ -255,7 +262,7 @@ const ArtisanSetup = () => {
                   </div>
 
                   {/* Ghana Card */}
-                  <div className="bg-gray-50 dark:bg-white/5 p-6 rounded-3xl text-center border-2 border-dashed border-gray-200 dark:border-white/10 hover:border-blue-500 transition-colors relative">
+                  <div className="bg-white/70 dark:bg-white/5 backdrop-blur-md p-6 rounded-3xl text-center border-2 border-dashed border-gray-200 dark:border-white/10 hover:border-blue-500 transition-colors relative">
                     <input type="file" onChange={(e) => updateField('ghanaCardImage', e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
                     <div className="text-4xl mb-4">🆔</div>
                     <p className="font-bold text-gray-900 dark:text-white">Ghana Card</p>
@@ -270,7 +277,7 @@ const ArtisanSetup = () => {
                    <input 
                      type="text" 
                      placeholder="GHA-000000000-0"
-                     className="w-full p-5 bg-gray-50 dark:bg-white/5 rounded-3xl border-none outline-none font-bold text-gray-900 dark:text-white"
+                     className="w-full p-5 bg-white/70 dark:bg-white/5 backdrop-blur-md rounded-3xl border-none outline-none font-bold text-gray-900 dark:text-white shadow-sm"
                      value={formData.ghanaCardNumber}
                      onChange={(e) => updateField('ghanaCardNumber', e.target.value)}
                    />
@@ -281,7 +288,7 @@ const ArtisanSetup = () => {
                    <button 
                      onClick={handleSubmit} 
                      disabled={loading || !formData.ghanaCardImage || !formData.profilePic}
-                     className="bg-blue-600 text-white px-12 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-500/30 disabled:opacity-50"
+                     className="bg-blue-600 text-white px-12 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-500/30 disabled:opacity-50 hover:scale-105 transition-transform"
                    >
                      {loading ? "Processing..." : "Launch Profile"}
                    </button>
