@@ -301,7 +301,7 @@ const Welcome = () => {
           <div>
              <h4 className="font-bold text-gray-900 dark:text-white mb-4">Contact</h4>
              <p className="text-sm text-gray-500">support@linkupgh.live</p>
-             <p className="text-sm text-gray-500">+233 55 123 4567</p>
+             <p className="text-sm text-gray-500">+233 54 980 0115</p>
              <p className="text-sm text-gray-500 mt-2">Accra, Ghana</p>
           </div>
         </div>
