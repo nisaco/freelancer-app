@@ -16,6 +16,18 @@ const Navbar = () => {
   const user = JSON.parse(localStorage.getItem('user'));
   const token = localStorage.getItem('token');
 
+  
+  // --- DYNAMIC DASHBOARD LINK LOGIC ---
+  const getDashboardRoute = () => {
+    if (!user) return '/login';
+    if (user.role === 'admin') return '/admin-dashboard';
+    if (user.role === 'artisan') return '/artisan-dashboard';
+    return '/dashboard'; // default for client
+  };
+
+  const dashboardRoute = getDashboardRoute();
+
+  
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
     : '/api';
@@ -118,7 +130,12 @@ const Navbar = () => {
         
         {/* NAVIGATION LINKS (HIDDEN ON MOBILE) */}
         <div className="hidden md:flex gap-6 items-center mr-4">
-          <Link to={user?.role === 'artisan' ? '/artisan-dashboard' : '/dashboard'} className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-blue-600 transition-colors">
+         <Link 
+            to={dashboardRoute} 
+            className={`text-xs font-black uppercase tracking-widest hover:text-blue-600 transition-colors ${
+              location.pathname.includes('dashboard') ? 'text-blue-600' : 'text-gray-500 dark:text-gray-400'
+            }`}
+          >
             Dashboard
           </Link>
         </div>

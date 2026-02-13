@@ -96,7 +96,7 @@ const Welcome = () => {
           onClick={() => navigate('/')}
         >
            <h1 className="text-2xl font-black text-blue-600 dark:text-white tracking-tighter uppercase italic">
-            LinkUp
+             LINK<span className="text-blue-600">UP</span>
           </h1>
         </motion.div>
         <div className="flex gap-4 md:gap-8 items-center">
