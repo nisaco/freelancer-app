@@ -1,5 +1,6 @@
 ﻿const Job = require('../models/Job');
 const User = require('../models/User');
+const Bid = require('../models/Bid'); // NEW: Bid Model included
 const ArtisanProfile = require('../models/ArtisanProfile');
 const { createNotification } = require('../utils/notifications');
 const { sendWhatsAppJobAlert } = require('../utils/whatsapp');
@@ -339,7 +340,7 @@ exports.createJob = async (req, res) => {
     }
 
     const job = await Job.create({
-      client: req.user.id,
+      client: req.user.id || req.user._id,
       artisan: artisanId,
       serviceType: serviceType || 'General Service',
       description,
@@ -347,7 +348,7 @@ exports.createJob = async (req, res) => {
       date: new Date(date),
       scheduledStartAt: start,
       scheduledEndAt: end,
-      status: 'pending'
+      status: 'pending_payment' // Fixed: Aligning with Escrow status pattern
     });
 
     await createNotification({
@@ -376,8 +377,9 @@ exports.createJob = async (req, res) => {
 // @desc    Universal Job History
 exports.getMyJobs = async (req, res) => {
   try {
+    const userId = req.user.id || req.user._id;
     const jobs = await Job.find({
-      $or: [{ client: req.user.id }, { artisan: req.user.id }]
+      $or: [{ client: userId }, { artisan: userId }]
     })
       .populate('client', 'username email')
       .populate('artisan', 'username category profilePic isVerified location phone')
@@ -398,7 +400,10 @@ exports.updateJobStatus = async (req, res) => {
 
     if (!job) return res.status(404).json({ message: 'Job not found' });
 
-    if (job.artisan.toString() !== req.user.id && job.client.toString() !== req.user.id) {
+    const userId = req.user.id || req.user._id;
+    
+    // Check auth, allowing for open jobs that have no artisan yet
+    if (job.artisan && job.artisan.toString() !== userId.toString() && job.client.toString() !== userId.toString()) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
@@ -422,28 +427,30 @@ exports.updateJobStatus = async (req, res) => {
         job.reviewComment = feedback;
       }
 
-      const artisan = await User.findById(job.artisan);
-      if (artisan && rating) {
-        const ratedJobs = await Job.find({
-          artisan: job.artisan,
-          status: 'completed',
-          rating: { $exists: true }
-        }).select('rating');
+      if (job.artisan) {
+        const artisan = await User.findById(job.artisan);
+        if (artisan && rating) {
+          const ratedJobs = await Job.find({
+            artisan: job.artisan,
+            status: 'completed',
+            rating: { $exists: true }
+          }).select('rating');
 
-        const totalRatings = ratedJobs.length;
-        const sumRatings = ratedJobs.reduce((acc, curr) => acc + Number(curr.rating || 0), 0);
+          const totalRatings = ratedJobs.length;
+          const sumRatings = ratedJobs.reduce((acc, curr) => acc + Number(curr.rating || 0), 0);
 
-        artisan.rating = totalRatings ? Number((sumRatings / totalRatings).toFixed(1)) : artisan.rating;
-        artisan.reviewCount = totalRatings;
-        await artisan.save();
+          artisan.rating = totalRatings ? Number((sumRatings / totalRatings).toFixed(1)) : artisan.rating;
+          artisan.reviewCount = totalRatings;
+          await artisan.save();
+        }
+
+        await createNotification({
+          recipient: job.artisan,
+          message: `Escrow released for ${job.serviceType}. Funds are now available in wallet.`,
+          type: 'PAYMENT_RECEIVED',
+          relatedId: job._id
+        });
       }
-
-      await createNotification({
-        recipient: job.artisan,
-        message: `Escrow released for ${job.serviceType}. Funds are now available in wallet.`,
-        type: 'PAYMENT_RECEIVED',
-        relatedId: job._id
-      });
     }
 
     await job.save();
@@ -474,7 +481,7 @@ exports.downloadInvoice = async (req, res) => {
       return res.status(400).json({ message: 'Invoice is only available for completed jobs' });
     }
 
-    const requesterId = req.user?._id?.toString();
+    const requesterId = req.user?._id?.toString() || req.user?.id?.toString();
     const isOwner = requesterId &&
       (job.client?._id?.toString() === requesterId || job.artisan?._id?.toString() === requesterId);
     const isAdmin = req.user?.role === 'admin';
@@ -574,3 +581,134 @@ exports.completeJob = async (req, res) => {
   }
 };
 
+// ==========================================
+// NEW: FREELANCER BIDDING SYSTEM LOGIC
+// ==========================================
+
+// @desc    Client posts a new open job to the marketplace
+// @route   POST /api/jobs/open
+exports.postOpenJob = async (req, res) => {
+  try {
+    const { serviceType, description, budget, date, scheduledStartAt, scheduledEndAt } = req.body;
+    const userId = req.user.id || req.user._id;
+
+    const job = await Job.create({
+      client: userId,
+      jobType: 'bidding',
+      serviceType: serviceType || 'General Service',
+      description,
+      budget,
+      date: new Date(date),
+      scheduledStartAt: scheduledStartAt ? new Date(scheduledStartAt) : null,
+      scheduledEndAt: scheduledEndAt ? new Date(scheduledEndAt) : null,
+      status: 'open',
+      amount: 0 // Will be set when bid is accepted
+    });
+    res.status(201).json(job);
+  } catch (err) {
+    console.error("Post Open Job Error:", err);
+    res.status(500).json({ message: "Failed to post job" });
+  }
+};
+
+// @desc    Get all open jobs for artisans to bid on
+// @route   GET /api/jobs/open
+exports.getOpenJobs = async (req, res) => {
+  try {
+    const jobs = await Job.find({ jobType: 'bidding', status: 'open' })
+      .populate('client', 'username profilePic location')
+      .sort({ createdAt: -1 });
+    res.json(jobs);
+  } catch (err) {
+    console.error("Get Open Jobs Error:", err);
+    res.status(500).json({ message: "Failed to fetch open jobs" });
+  }
+};
+
+// @desc    Artisan submits a bid on an open job
+// @route   POST /api/jobs/:id/bid
+exports.submitBid = async (req, res) => {
+  try {
+    const { amount, coverLetter } = req.body;
+    const jobId = req.params.id;
+    const userId = req.user.id || req.user._id;
+
+    const job = await Job.findById(jobId);
+    if (!job || job.status !== 'open') return res.status(400).json({ message: "Job is not open for bidding" });
+
+    // Check if already bid
+    const existingBid = await Bid.findOne({ job: jobId, artisan: userId });
+    if (existingBid) return res.status(400).json({ message: "You have already bid on this job" });
+
+    const bid = await Bid.create({
+      job: jobId,
+      artisan: userId,
+      amount,
+      coverLetter
+    });
+
+    await createNotification({
+      recipient: job.client,
+      type: 'NEW_BID',
+      message: `A new bid of GHS ${amount} was submitted for your project.`,
+      relatedId: job._id
+    });
+
+    res.status(201).json(bid);
+  } catch (err) {
+    console.error("Submit Bid Error:", err);
+    res.status(500).json({ message: "Failed to submit bid" });
+  }
+};
+
+// @desc    Get all bids for a specific job (Client view)
+// @route   GET /api/jobs/:id/bids
+exports.getJobBids = async (req, res) => {
+  try {
+    const bids = await Bid.find({ job: req.params.id })
+      .populate('artisan', 'username profilePic rating reviewCount location isVerified')
+      .sort({ amount: 1 });
+    res.json(bids);
+  } catch (err) {
+    console.error("Get Job Bids Error:", err);
+    res.status(500).json({ message: "Failed to fetch bids" });
+  }
+};
+
+// @desc    Client accepts a bid
+// @route   POST /api/jobs/:id/accept-bid/:bidId
+exports.acceptBid = async (req, res) => {
+  try {
+    const { id, bidId } = req.params;
+    const userId = req.user.id || req.user._id;
+
+    const job = await Job.findById(id);
+    if (job.client.toString() !== userId.toString()) return res.status(403).json({ message: "Not authorized" });
+
+    const bid = await Bid.findById(bidId);
+    if (!bid) return res.status(404).json({ message: "Bid not found" });
+
+    // 1. Update Job (Assign Artisan & Lock Amount for Escrow)
+    job.artisan = bid.artisan;
+    job.amount = bid.amount;
+    job.status = 'pending_payment'; // Ready for Client to fund Escrow
+    await job.save();
+
+    // 2. Update Bids
+    await Bid.updateMany({ job: id }, { status: 'rejected' });
+    bid.status = 'accepted';
+    await bid.save();
+
+    await createNotification({
+      recipient: bid.artisan,
+      type: 'BID_ACCEPTED',
+      message: `Your bid for ${job.serviceType} was accepted! Waiting for client to fund escrow.`,
+      relatedId: job._id
+    });
+
+    res.json({ message: "Bid accepted. Proceed to fund escrow.", job });
+  } catch (err) {
+    console.error("Accept Bid Error:", err);
+    res.status(500).json({ message: "Failed to accept bid" });
+  }
+};

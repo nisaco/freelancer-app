@@ -2,11 +2,13 @@ const mongoose = require('mongoose');
 
 const jobSchema = new mongoose.Schema({
   client: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  artisan: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  amount: { type: Number, required: true },
-  date: { type: Date, required: true },
+  artisan: { type: mongoose.Schema.Types.ObjectId, ref: 'User'}, // Optional initially for open bidding jobs
+  jobType: { type: String, enum: ['direct', 'bidding'], default: 'direct' },
+  serviceType: { type: String, required: true, default: 'General Service' },
   description: { type: String, required: true },
-  serviceType: { type: String, default: 'General Service' },
+  amount: { type: Number, default: 0 }, // Not strictly required at creation for open bids
+  budget: { type: Number }, // Client's estimated budget for open jobs
+  date: { type: Date, required: true },
   scheduledStartAt: { type: Date, default: null },
   scheduledEndAt: { type: Date, default: null },
   paymentReference: { type: String, default: null },
@@ -19,7 +21,11 @@ const jobSchema = new mongoose.Schema({
   invoiceIssuedAt: { type: Date, default: null },
   status: { 
     type: String, 
-    enum: ['pending_payment', 'awaiting_confirmation', 'paid', 'completed', 'cancelled', 'pending'], 
+    // open: Bidding phase
+    // pending_payment: Waiting for client to fund Escrow
+    // funded: Money in Escrow, Artisan is working
+    // completed: Funds released to Admin Payout Queue
+    enum: ['open', 'pending_payment', 'funded', 'in_progress', 'awaiting_confirmation', 'paid', 'completed', 'cancelled', 'disputed',  'pending'], 
     default: 'pending_payment' 
   }
 }, { timestamps: true });

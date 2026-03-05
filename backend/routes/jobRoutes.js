@@ -13,10 +13,26 @@ const {
   createJob,
   getArtisanReviews,
   updateJobStatus,
-  downloadInvoice
+  downloadInvoice,
+  getArtisanJobs,
+  // --- NEW BIDDING IMPORTS ---
+  postOpenJob,
+  getOpenJobs,
+  submitBid,
+  getJobBids,
+  acceptBid
 } = require('../controllers/jobController');
 
 const ARTISAN_EARNINGS_RATIO = 0.8;
+
+// --- 1. OPEN MARKETPLACE (Bidding) ROUTES ---
+router.post('/open', protect, postOpenJob); // Client posts open job
+router.get('/open', protect, getOpenJobs); // Artisan views open jobs
+router.post('/:id/bid', protect, submitBid); // Artisan bids
+router.get('/:id/bids', protect, getJobBids); // Client views bids
+router.post('/:id/accept-bid/:bidId', protect, acceptBid); // Client accepts bid
+
+// --- 2. EXISTING DIRECT ROUTES ---
 
 // Marketplace + artisan profile
 router.get('/available', getAvailableArtisans);
@@ -25,6 +41,7 @@ router.get('/artisan/analytics/me', protect, authorize('artisan'), getArtisanAna
 router.put('/artisan/availability/me', protect, authorize('artisan'), updateMyAvailability);
 router.get('/artisan/:id/availability', getArtisanAvailability);
 router.get('/artisan/:id', getArtisanProfile);
+router.get('/artisan/my-jobs', protect, authorize('artisan'), getArtisanJobs);
 
 // Booking creation
 router.post('/', protect, createJob);
@@ -32,7 +49,8 @@ router.post('/', protect, createJob);
 // Client booking history
 router.get('/client', protect, async (req, res) => {
   try {
-    const jobs = await Job.find({ client: req.user._id })
+    const userId = req.user._id || req.user.id;
+    const jobs = await Job.find({ client: userId })
       .populate('artisan', 'username category price phone profilePic isVerified subscriptionTier subscriptionStatus subscriptionExpiresAt')
       .sort({ createdAt: -1 });
     res.json(jobs);
@@ -44,7 +62,8 @@ router.get('/client', protect, async (req, res) => {
 // Artisan job history
 router.get('/artisan', protect, async (req, res) => {
   try {
-    const jobs = await Job.find({ artisan: req.user._id })
+    const userId = req.user._id || req.user.id;
+    const jobs = await Job.find({ artisan: userId })
       .populate('client', 'username email')
       .sort({ createdAt: -1 });
     res.json(jobs);
@@ -56,7 +75,8 @@ router.get('/artisan', protect, async (req, res) => {
 // Universal job history
 router.get('/my-jobs', protect, async (req, res) => {
   try {
-    const jobs = await Job.find({ $or: [{ client: req.user._id }, { artisan: req.user._id }] })
+    const userId = req.user._id || req.user.id;
+    const jobs = await Job.find({ $or: [{ client: userId }, { artisan: userId }] })
       .populate('client', 'username email')
       .populate('artisan', 'username category price phone profilePic isVerified')
       .sort({ createdAt: -1 });
@@ -69,8 +89,9 @@ router.get('/my-jobs', protect, async (req, res) => {
 // Artisan profile setup
 router.put('/profile-setup', protect, async (req, res) => {
   try {
+    const userId = req.user._id || req.user.id;
     const { phone, bio, price, location } = req.body;
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(userId);
 
     if (phone) user.phone = phone;
     if (bio) user.bio = bio;
@@ -87,9 +108,10 @@ router.put('/profile-setup', protect, async (req, res) => {
 // Artisan marks work done
 router.put('/:id/finish', protect, async (req, res) => {
   try {
+    const userId = req.user._id || req.user.id;
     const job = await Job.findById(req.params.id);
     if (!job) return res.status(404).json({ message: "Job not found" });
-    if (job.artisan.toString() !== req.user._id.toString()) return res.status(401).json({ message: "Unauthorized" });
+    if (job.artisan.toString() !== userId.toString()) return res.status(401).json({ message: "Unauthorized" });
 
     job.status = 'awaiting_confirmation';
     await job.save();
@@ -102,10 +124,11 @@ router.put('/:id/finish', protect, async (req, res) => {
 // Client confirms completion and releases escrow
 router.put('/:id/confirm', protect, async (req, res) => {
   try {
+    const userId = req.user._id || req.user.id;
     const { rating, reviewComment } = req.body;
     const job = await Job.findById(req.params.id);
     if (!job) return res.status(404).json({ message: "Job not found" });
-    if (job.client.toString() !== req.user._id.toString()) {
+    if (job.client.toString() !== userId.toString()) {
       return res.status(401).json({ message: "Only the client can release escrow funds" });
     }
 

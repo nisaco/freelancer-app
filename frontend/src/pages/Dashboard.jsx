@@ -220,12 +220,19 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
-  const [view, setView] = useState("Marketplace"); 
+  const [view, setView] = useState("Marketplace"); // 'Marketplace' | 'Post Project' | 'My Bookings'
   const [filter, setFilter] = useState("All");
   const [selectedArtisan, setSelectedArtisan] = useState(null);
   const [reviewingJob, setReviewingJob] = useState(null); 
   const [disputeJob, setDisputeJob] = useState(null);
   const [activeTheme, setActiveTheme] = useState({ name: 'All', color: '#2563EB', glow: 'rgba(37, 99, 235, 0.15)' });
+
+  // NEW: BIDDING STATE
+  const [postForm, setPostForm] = useState({ serviceType: '', budget: '', date: '', description: '' });
+  const [posting, setPosting] = useState(false);
+  const [viewBidsJob, setViewBidsJob] = useState(null);
+  const [jobBids, setJobBids] = useState([]);
+  const [loadingBids, setLoadingBids] = useState(false);
 
   const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : '/api';
 
@@ -324,6 +331,61 @@ const Dashboard = () => {
     }
   };
 
+  // --- NEW: BIDDING METHODS ---
+  const handlePostProject = async (e) => {
+    e.preventDefault();
+    setPosting(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_BASE}/jobs/open`, postForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Project posted successfully! Artisans can now bid.");
+      setPostForm({ serviceType: '', budget: '', date: '', description: '' });
+      setView('My Bookings');
+      fetchData();
+    } catch (err) {
+      toast.error("Failed to post project.");
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  const handleViewBids = async (job) => {
+    setViewBidsJob(job);
+    setLoadingBids(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_BASE}/jobs/${job._id}/bids`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setJobBids(res.data);
+    } catch (err) {
+      toast.error("Failed to load bids.");
+    } finally {
+      setLoadingBids(false);
+    }
+  };
+
+  const handleAcceptBid = async (bidId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.post(`${API_BASE}/jobs/${viewBidsJob._id}/accept-bid/${bidId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(res.data.message);
+      setViewBidsJob(null);
+      fetchData(); 
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to accept bid.");
+    }
+  };
+
+  const handleFundEscrow = (jobId) => {
+    toast.info("Redirecting to Payment Gateway to fund Escrow...");
+    // Future integration: navigate(`/payment/checkout/${jobId}`);
+  };
+
   const filteredArtisans = artisans.filter(a => {
     const term = search.toLowerCase();
     const matchesSearch =
@@ -348,12 +410,12 @@ const Dashboard = () => {
         <div className="max-w-7xl mx-auto px-4 md:px-6 pt-32 md:pt-40 relative z-10 w-full">
           
           <div className="flex justify-center mb-16">
-            <div className="bg-white/40 dark:bg-white/5 backdrop-blur-xl p-1.5 rounded-[2rem] border border-white/40 dark:border-white/10 shadow-2xl flex gap-1">
-              {["Marketplace", "My Bookings"].map(v => {
-                const isSelected = view === (v === "Marketplace" ? "Marketplace" : "My Jobs");
+            <div className="bg-white/40 dark:bg-white/5 backdrop-blur-xl p-1.5 rounded-[2rem] border border-white/40 dark:border-white/10 shadow-2xl flex gap-1 overflow-x-auto max-w-full custom-scrollbar">
+              {["Marketplace", "Post Project", "My Bookings"].map(v => {
+                const isSelected = view === v;
                 return (
-                  <button key={v} onClick={() => setView(v === "Marketplace" ? "Marketplace" : "My Jobs")} 
-                    className={`px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${isSelected ? 'bg-gray-900 dark:bg-white text-white dark:text-black shadow-xl' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>
+                  <button key={v} onClick={() => setView(v)} 
+                    className={`px-6 md:px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 whitespace-nowrap ${isSelected ? 'bg-gray-900 dark:bg-white text-white dark:text-black shadow-xl' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>
                     {v}
                   </button>
                 )
@@ -362,7 +424,9 @@ const Dashboard = () => {
           </div>
 
           <AnimatePresence mode="wait">
-            {view === "Marketplace" ? (
+            
+            {/* VIEW 1: MARKETPLACE */}
+            {view === "Marketplace" && (
               <motion.div key="market" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                 
                 <div className="max-w-4xl mx-auto mb-12 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -400,34 +464,99 @@ const Dashboard = () => {
                   ))}
                 </motion.div>
               </motion.div>
-            ) : (
+            )}
+
+            {/* VIEW 2: POST PROJECT */}
+            {view === "Post Project" && (
+              <motion.div key="post_project" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="max-w-2xl mx-auto pb-20">
+                <div className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl p-8 md:p-12 rounded-[3rem] border border-white/40 dark:border-white/10 shadow-2xl">
+                  <h2 className="text-3xl font-black uppercase italic text-gray-900 dark:text-white mb-2">Post an <span className="text-blue-600">Open Job</span></h2>
+                  <p className="text-xs font-bold text-gray-500 mb-8 uppercase tracking-widest">Let verified artisans bid on your project.</p>
+                  
+                  <form onSubmit={handlePostProject} className="space-y-6">
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Service Required</label>
+                      <select required value={postForm.serviceType} onChange={e => setPostForm({...postForm, serviceType: e.target.value})} className="w-full p-4 bg-white/50 dark:bg-black/20 rounded-2xl border border-white/20 dark:border-white/5 font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-600 shadow-sm">
+                        <option value="">Select Service...</option>
+                        <option value="Plumber">Plumbing</option>
+                        <option value="Electrician">Electrical</option>
+                        <option value="Carpenter">Carpentry</option>
+                        <option value="Mason">Masonry</option>
+                        <option value="Painter">Painting</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Estimated Budget (GHS)</label>
+                        <input type="number" required placeholder="e.g. 500" value={postForm.budget} onChange={e => setPostForm({...postForm, budget: e.target.value})} className="w-full p-4 bg-white/50 dark:bg-black/20 rounded-2xl border border-white/20 dark:border-white/5 font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-600 shadow-sm" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Target Date</label>
+                        <input type="date" required value={postForm.date} onChange={e => setPostForm({...postForm, date: e.target.value})} className="w-full p-4 bg-white/50 dark:bg-black/20 rounded-2xl border border-white/20 dark:border-white/5 font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-600 shadow-sm" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Project Details</label>
+                      <textarea required placeholder="Describe exactly what you need done..." value={postForm.description} onChange={e => setPostForm({...postForm, description: e.target.value})} className="w-full p-4 bg-white/50 dark:bg-black/20 rounded-2xl border border-white/20 dark:border-white/5 font-medium text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-600 shadow-sm h-32 resize-none" />
+                    </div>
+
+                    <button type="submit" disabled={posting} className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/30 disabled:opacity-50 mt-4">
+                      {posting ? 'Publishing...' : 'Publish Job to Market'}
+                    </button>
+                  </form>
+                </div>
+              </motion.div>
+            )}
+
+            {/* VIEW 3: MY BOOKINGS / JOBS */}
+            {view === "My Bookings" && (
               <motion.div key="jobs" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="max-w-5xl mx-auto space-y-8 pb-20 w-full min-w-0">
                 <h2 className="text-4xl font-black tracking-tighter uppercase mb-12 italic text-gray-900 dark:text-white">Active <span className="text-blue-600">Bookings</span></h2>
                 {myJobs.length > 0 ? myJobs.map(job => (
                   <div key={job._id} className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl p-6 md:p-8 rounded-[2.5rem] border border-white/40 dark:border-white/10 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-5 group hover:shadow-2xl transition-all duration-500 w-full min-w-0">
                     <div className="flex items-center gap-4 md:gap-6 min-w-0 w-full md:w-auto">
-                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-[1.4rem] md:rounded-[2rem] bg-gray-50 dark:bg-gray-800 overflow-hidden border-2 border-white dark:border-white/10 shadow-lg shrink-0">
-                        <img src={job.artisan?.profilePic || `https://ui-avatars.com/api/?name=${job.artisan?.username}`} className="w-full h-full object-cover" />
+                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-[1.4rem] md:rounded-[2rem] bg-gray-50 dark:bg-gray-800 overflow-hidden border-2 border-white dark:border-white/10 shadow-lg shrink-0 flex items-center justify-center text-3xl">
+                        {job.artisan ? (
+                          <img src={job.artisan.profilePic || `https://ui-avatars.com/api/?name=${job.artisan.username}`} className="w-full h-full object-cover" />
+                        ) : (
+                          "🔨"
+                        )}
                       </div>
                       <div className="min-w-0">
-                        <h4 className="text-lg md:text-xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter truncate">{job.artisan?.username || 'Guest Pro'}</h4>
+                        <h4 className="text-lg md:text-xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter truncate">
+                          {job.artisan ? job.artisan.username : 'Open Project'}
+                        </h4>
                         <div className="flex flex-wrap gap-2 md:gap-3 mt-2">
-                           <button onClick={() => navigate(`/messages/${job.artisan?._id}`)} className="text-[8px] font-black uppercase tracking-widest bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-lg">Message</button>
-                           <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.3em] self-center">GHS {job.amount || job.price}</p>
+                           {job.artisan && <button onClick={() => navigate(`/messages/${job.artisan?._id}`)} className="text-[8px] font-black uppercase tracking-widest bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-lg">Message</button>}
+                           <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.3em] self-center">GHS {job.amount || job.budget || job.price}</p>
+                           <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] self-center">{job.serviceType}</p>
                         </div>
                       </div>
                     </div>
-                    <div className="flex flex-col items-start md:items-end gap-3 w-full md:w-auto">
-                        <p className={`text-[9px] font-black uppercase tracking-[0.3em] px-4 py-2 rounded-full ${job.status === 'awaiting_confirmation' ? 'bg-blue-600 text-white animate-pulse shadow-lg shadow-blue-500/30' : 'bg-gray-100 dark:bg-white/10 text-gray-400'}`}>
+                    <div className="flex flex-col items-start md:items-end gap-3 w-full md:w-auto mt-4 md:mt-0">
+                        <p className={`text-[9px] font-black uppercase tracking-[0.3em] px-4 py-2 rounded-full ${
+                          job.status === 'open' ? 'bg-purple-100 text-purple-700' :
+                          job.status === 'awaiting_confirmation' ? 'bg-blue-600 text-white animate-pulse shadow-lg shadow-blue-500/30' : 
+                          'bg-gray-100 dark:bg-white/10 text-gray-400'
+                        }`}>
                           {job.status.replace('_', ' ')}
                         </p>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                          {job.status === 'open' && (
+                            <button onClick={() => handleViewBids(job)} className="flex-1 md:flex-none bg-gray-900 dark:bg-white text-white dark:text-black px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:scale-105 transition-all">Review Bids</button>
+                          )}
+                          {job.status === 'pending_payment' && (
+                            <button onClick={() => handleFundEscrow(job._id)} className="flex-1 md:flex-none bg-orange-500 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-orange-500/30 hover:bg-orange-600 transition-all">Fund Escrow</button>
+                          )}
                           {job.status === 'awaiting_confirmation' && (
                             <motion.button 
                               whileHover={{ scale: 1.05 }} 
                               whileTap={{ scale: 0.95 }} 
                               onClick={() => setReviewingJob(job)} 
-                              className="bg-green-600 text-white px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-green-500/30 hover:bg-black transition-all"
+                              className="flex-1 md:flex-none bg-green-600 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-green-500/30 hover:bg-black transition-all"
                             >
                               Release Funds
                             </motion.button>
@@ -435,15 +564,15 @@ const Dashboard = () => {
                           {job.status === 'completed' && (
                             <button
                               onClick={() => handleDownloadInvoice(job._id)}
-                              className="bg-blue-600 text-white px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest"
+                              className="flex-1 md:flex-none bg-blue-600 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg"
                             >
                               Invoice PDF
                             </button>
                           )}
-                          {job.status !== 'completed' && (
+                          {job.status !== 'completed' && job.status !== 'open' && job.status !== 'pending_payment' && (
                             <button
                               onClick={() => setDisputeJob(job)}
-                              className="bg-red-100 text-red-700 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-red-200"
+                              className="flex-1 md:flex-none bg-red-100 text-red-700 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-red-200 hover:bg-red-200 transition-all"
                             >
                               Raise Dispute
                             </button>
@@ -463,7 +592,7 @@ const Dashboard = () => {
                   </h3>
                   <div className="space-y-3">
                     {myDisputes.length > 0 ? myDisputes.slice(0, 6).map((d) => (
-                      <div key={d._id} className="bg-white/30 dark:bg-white/5 border border-white/20 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+                      <div key={d._id} className="bg-white/30 dark:bg-white/5 border border-white/20 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-sm">
                         <div className="min-w-0">
                           <p className="text-xs font-black text-gray-900 dark:text-white tracking-tight">{d.ticketId}</p>
                           <p className="text-[10px] text-gray-500 font-semibold truncate">{d.reason}</p>
@@ -486,6 +615,68 @@ const Dashboard = () => {
 
         {/* MODAL SECTION */}
         <AnimatePresence>
+          {/* VIEW BIDS MODAL (NEW) */}
+          {viewBidsJob && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white dark:bg-[#151a25] w-full max-w-3xl rounded-[3rem] p-8 md:p-10 shadow-2xl max-h-[90vh] flex flex-col border border-white/10">
+                <div className="flex justify-between items-start mb-6 pb-6 border-b border-gray-100 dark:border-white/10">
+                  <div>
+                    <h2 className="text-3xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter">Project <span className="text-blue-600">Proposals</span></h2>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mt-2">{viewBidsJob.serviceType}</p>
+                  </div>
+                  <button onClick={() => setViewBidsJob(null)} className="text-gray-400 hover:text-gray-900 dark:hover:text-white text-3xl font-light">×</button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-2">
+                  {loadingBids ? (
+                    <p className="text-center text-gray-400 py-10 text-[10px] font-black uppercase tracking-widest animate-pulse">Loading Bids...</p>
+                  ) : jobBids.length > 0 ? (
+                    jobBids.map(bid => (
+                      <div key={bid._id} className="bg-gray-50 dark:bg-black/20 p-6 rounded-[2rem] border border-gray-200 dark:border-white/5 flex flex-col md:flex-row gap-6 items-start md:items-center">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-3">
+                            <img src={bid.artisan?.profilePic || `https://ui-avatars.com/api/?name=${bid.artisan?.username}`} className="w-12 h-12 rounded-full object-cover shadow-sm" />
+                            <div>
+                              <h4 className="font-bold text-gray-900 dark:text-white">{bid.artisan?.username}</h4>
+                              <div className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest text-gray-500">
+                                <span className="text-yellow-500">★ {bid.artisan?.rating?.toFixed(1) || 0}</span>
+                                <span>•</span>
+                                <span>{bid.artisan?.reviewCount || 0} Jobs</span>
+                                {bid.artisan?.isVerified && <span className="text-green-500 bg-green-100 px-2 py-0.5 rounded-full ml-1">Verified</span>}
+                              </div>
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-600 dark:text-gray-300 italic bg-white dark:bg-white/5 p-4 rounded-2xl">"{bid.coverLetter}"</p>
+                        </div>
+                        <div className="w-full md:w-auto flex flex-col gap-3 shrink-0 bg-white dark:bg-white/5 p-5 rounded-[1.5rem] text-center border border-gray-100 dark:border-white/5 shadow-sm">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Bid Amount</p>
+                          <p className="text-2xl font-black text-gray-900 dark:text-white italic tracking-tighter">GHS {bid.amount}</p>
+                          <button 
+                            onClick={() => handleAcceptBid(bid._id)}
+                            className="w-full mt-2 bg-blue-600 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 shadow-lg transition-colors"
+                          >
+                            Accept Bid
+                          </button>
+                          <button 
+                            onClick={() => navigate(`/artisan/${bid.artisan?._id}`)}
+                            className="w-full text-blue-600 text-[10px] font-black uppercase tracking-widest hover:underline mt-1"
+                          >
+                            View Profile
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-20">
+                      <p className="text-gray-500 font-bold text-sm">No proposals received yet.</p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {/* EXISTING MODALS */}
           {selectedArtisan && <BookingModal artisan={selectedArtisan} themeColor={activeTheme.color} onClose={() => setSelectedArtisan(null)} />}
           {reviewingJob && (
             <ReviewModal 
@@ -565,6 +756,3 @@ const ArtisanCard = ({ artisan, index, themeColor, onBook }) => {
 };
 
 export default Dashboard;
-
-
-
