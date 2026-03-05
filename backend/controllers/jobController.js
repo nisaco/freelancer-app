@@ -4,7 +4,7 @@ const Bid = require('../models/Bid'); // NEW: Bid Model
 const ArtisanProfile = require('../models/ArtisanProfile');
 const { createNotification } = require('../utils/notifications');
 const { sendWhatsAppJobAlert } = require('../utils/whatsapp');
-const sendEmail = require('../utils/email'); // Ensure this path points to your sendEmail.js
+const sendEmail = require('../utils/sendEmail');
 
 const ARTISAN_EARNINGS_RATIO = 0.8;
 
