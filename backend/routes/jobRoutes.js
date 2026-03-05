@@ -15,6 +15,7 @@ const {
   updateJobStatus,
   downloadInvoice,
   getArtisanJobs,
+  getMyJobs,
   // --- NEW BIDDING IMPORTS ---
   postOpenJob,
   getOpenJobs,
