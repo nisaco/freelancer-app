@@ -1,9 +1,10 @@
 ﻿const Job = require('../models/Job');
 const User = require('../models/User');
-const Bid = require('../models/Bid'); // NEW: Bid Model included
+const Bid = require('../models/Bid'); // NEW: Bid Model
 const ArtisanProfile = require('../models/ArtisanProfile');
 const { createNotification } = require('../utils/notifications');
 const { sendWhatsAppJobAlert } = require('../utils/whatsapp');
+const sendEmail = require('../utils/email'); // Ensure this path points to your sendEmail.js
 
 const ARTISAN_EARNINGS_RATIO = 0.8;
 
@@ -313,7 +314,7 @@ exports.getArtisanAnalytics = async (req, res) => {
   }
 };
 
-// @desc    Create a new job request
+// @desc    Create a new job request (Direct Booking)
 exports.createJob = async (req, res) => {
   const { artisanId, serviceType, description, date, amount, scheduledStartAt, scheduledEndAt } = req.body;
   try {
@@ -348,7 +349,7 @@ exports.createJob = async (req, res) => {
       date: new Date(date),
       scheduledStartAt: start,
       scheduledEndAt: end,
-      status: 'pending_payment' // Fixed: Aligning with Escrow status pattern
+      status: 'pending_payment'
     });
 
     await createNotification({
@@ -402,7 +403,7 @@ exports.updateJobStatus = async (req, res) => {
 
     const userId = req.user.id || req.user._id;
     
-    // Check auth, allowing for open jobs that have no artisan yet
+    // Bypass security check if no artisan assigned yet for open jobs, or if user is involved
     if (job.artisan && job.artisan.toString() !== userId.toString() && job.client.toString() !== userId.toString()) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
@@ -604,6 +605,50 @@ exports.postOpenJob = async (req, res) => {
       status: 'open',
       amount: 0 // Will be set when bid is accepted
     });
+
+    // --- NEW LOGIC: NOTIFY MATCHING ARTISANS ---
+    // Find all verified artisans whose category matches the required service
+    const matchingArtisans = await User.find({
+      role: 'artisan',
+      category: serviceType,
+      isVerified: true
+    }).select('_id email username');
+
+    // Loop through matches to send notifications and emails
+    for (const artisan of matchingArtisans) {
+      // 1. In-App Notification
+      await createNotification({
+        recipient: artisan._id,
+        type: 'NEW_JOB_MATCH',
+        message: `New ${serviceType} project posted! Budget: GHS ${budget}. Submit your bid now.`,
+        relatedId: job._id
+      });
+
+      // 2. Email Notification using your precise Brevo structure
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+          <h2 style="color: #2563EB;">New Job Alert: ${serviceType}</h2>
+          <p>Hi ${artisan.username},</p>
+          <p>A client just posted a new project that matches your skills on LinkUp!</p>
+          <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <p><strong>Description:</strong> ${description}</p>
+            <p><strong>Estimated Budget:</strong> GHS ${budget}</p>
+            <p><strong>Target Date:</strong> ${new Date(date).toLocaleDateString()}</p>
+          </div>
+          <p>Log in to your Artisan Dashboard to submit your proposal and win the job.</p>
+          <a href="${process.env.FRONTEND_URL}/artisan-dashboard" style="background-color: #2563EB; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; margin-top: 10px;">View Job & Bid</a>
+          <p style="margin-top: 30px; font-size: 12px; color: #888;">The LinkUp Team</p>
+        </div>
+      `;
+
+      // Call your sendEmail module passing 'to', 'subject', and 'html'
+      await sendEmail({
+        to: artisan.email,
+        subject: `New ${serviceType} Project Available on LinkUp!`,
+        html: emailHtml
+      });
+    }
+
     res.status(201).json(job);
   } catch (err) {
     console.error("Post Open Job Error:", err);

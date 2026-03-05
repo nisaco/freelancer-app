@@ -14,7 +14,7 @@ const sendEmail = async (options) => {
 
   // 2. Define the Email
   const mailOptions = {
-    from: `"ArtisanConnect" <${process.env.EMAIL_FROM}>`, // Must be your verified sender
+    from: `"LinkUpGh" <${process.env.EMAIL_FROM}>`, // Must be your verified sender
     to: options.to,
     subject: options.subject,
     html: options.html,
