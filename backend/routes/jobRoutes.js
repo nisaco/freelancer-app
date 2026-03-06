@@ -3,49 +3,60 @@ const router = express.Router();
 const Job = require('../models/Job');
 const User = require('../models/User');
 const { protect, authorize } = require('../middleware/authMiddleware');
-const {
-  getAvailableArtisans,
-  getFeaturedArtisans,
-  getArtisanProfile,
-  getArtisanAnalytics,
-  getArtisanAvailability,
-  updateMyAvailability,
-  createJob,
-  getArtisanReviews,
-  updateJobStatus,
-  downloadInvoice,
-  getArtisanJobs,
-  getMyJobs,
-  // --- NEW BIDDING IMPORTS ---
-  postOpenJob,
-  getOpenJobs,
-  submitBid,
-  getJobBids,
-  acceptBid
-} = require('../controllers/jobController');
+const jobController = require('../controllers/jobController');
 
 const ARTISAN_EARNINGS_RATIO = 0.8;
 
+// --- FAIL-SAFE WRAPPERS ---
+// These wrappers prevent the server from crashing at boot time (TypeError) 
+// if a controller function is missing or delayed during deployment.
+const safe = (handlerName) => {
+  return (req, res, next) => {
+    const handler = jobController[handlerName];
+    if (typeof handler !== 'function') {
+      console.error(`CRITICAL: ${handlerName} is missing from jobController.js!`);
+      return res.status(500).json({ message: `Server error: ${handlerName} is currently unavailable.` });
+    }
+    return handler(req, res, next);
+  };
+};
+
+const safeAuthorize = (role) => {
+  return (req, res, next) => {
+    if (typeof authorize === 'function') {
+      const middleware = authorize(role);
+      if (typeof middleware === 'function') return middleware(req, res, next);
+    }
+    // Fallback role check
+    if (req.user && req.user.role === role) return next();
+    return res.status(403).json({ message: 'Access denied. Invalid role.' });
+  };
+};
+
 // --- 1. OPEN MARKETPLACE (Bidding) ROUTES ---
-router.post('/open', protect, postOpenJob); // Client posts open job
-router.get('/open', protect, getOpenJobs); // Artisan views open jobs
-router.post('/:id/bid', protect, submitBid); // Artisan bids
-router.get('/:id/bids', protect, getJobBids); // Client views bids
-router.post('/:id/accept-bid/:bidId', protect, acceptBid); // Client accepts bid
+router.post('/open', protect, safe('postOpenJob')); // Client posts open job
+router.get('/open', protect, safe('getOpenJobs')); // Artisan views open jobs
+router.post('/:id/bid', protect, safe('submitBid')); // Artisan bids
+router.get('/:id/bids', protect, safe('getJobBids')); // Client views bids
+router.post('/:id/accept-bid/:bidId', protect, safe('acceptBid')); // Client accepts bid
 
 // --- 2. EXISTING DIRECT ROUTES ---
 
-// Marketplace + artisan profile
-router.get('/available', getAvailableArtisans);
-router.get('/featured', getFeaturedArtisans);
-router.get('/artisan/analytics/me', protect, authorize('artisan'), getArtisanAnalytics);
-router.put('/artisan/availability/me', protect, authorize('artisan'), updateMyAvailability);
-router.get('/artisan/:id/availability', getArtisanAvailability);
-router.get('/artisan/:id', getArtisanProfile);
-router.get('/artisan/my-jobs', protect, authorize('artisan'), getArtisanJobs);
+// Marketplace 
+router.get('/available', safe('getAvailableArtisans'));
+router.get('/featured', safe('getFeaturedArtisans'));
+
+// Specific Artisan Routes (Must be declared BEFORE /:id routes)
+router.get('/artisan/analytics/me', protect, safeAuthorize('artisan'), safe('getArtisanAnalytics'));
+router.put('/artisan/availability/me', protect, safeAuthorize('artisan'), safe('updateMyAvailability'));
+router.get('/artisan/my-jobs', protect, safe('getMyJobs'));
+
+// Dynamic Artisan ID Routes
+router.get('/artisan/:id/availability', safe('getArtisanAvailability'));
+router.get('/artisan/:id', safe('getArtisanProfile'));
 
 // Booking creation
-router.post('/', protect, createJob);
+router.post('/', protect, safe('createJob'));
 
 // Client booking history
 router.get('/client', protect, async (req, res) => {
@@ -74,18 +85,7 @@ router.get('/artisan', protect, async (req, res) => {
 });
 
 // Universal job history
-router.get('/my-jobs', protect, async (req, res) => {
-  try {
-    const userId = req.user._id || req.user.id;
-    const jobs = await Job.find({ $or: [{ client: userId }, { artisan: userId }] })
-      .populate('client', 'username email')
-      .populate('artisan', 'username category price phone profilePic isVerified')
-      .sort({ createdAt: -1 });
-    res.json(jobs);
-  } catch (err) {
-    res.status(500).json({ message: "Error" });
-  }
-});
+router.get('/my-jobs', protect, safe('getMyJobs'));
 
 // Artisan profile setup
 router.put('/profile-setup', protect, async (req, res) => {
@@ -166,12 +166,12 @@ router.put('/:id/confirm', protect, async (req, res) => {
 });
 
 // PDF invoice
-router.get('/:id/invoice', protect, downloadInvoice);
+router.get('/:id/invoice', protect, safe('downloadInvoice'));
 
 // Status update
-router.put('/:id', protect, updateJobStatus);
+router.put('/:id', protect, safe('updateJobStatus'));
 
 // Reviews
-router.get('/reviews/:id', getArtisanReviews);
+router.get('/reviews/:id', safe('getArtisanReviews'));
 
 module.exports = router;
