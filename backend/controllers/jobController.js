@@ -6,7 +6,7 @@ const { createNotification } = require('../utils/notifications');
 const { sendWhatsAppJobAlert } = require('../utils/whatsapp');
 const sendEmail = require('../utils/sendEmail'); // Your Brevo Email Utility
 
-const ARTISAN_EARNINGS_RATIO = 0.7; // Artisans earn 70% of the job amount, platform takes 30%
+const ARTISAN_EARNINGS_RATIO = 0.8;
 
 const isSameCalendarDay = (left, right) => {
   if (!left || !right) return false;
@@ -581,7 +581,6 @@ exports.completeJob = async (req, res) => {
   }
 };
 
-
 // ==========================================
 // NEW: FREELANCER BIDDING SYSTEM LOGIC
 // ==========================================
@@ -607,53 +606,54 @@ exports.postOpenJob = async (req, res) => {
       status: 'open'
     });
 
-    // 2. Background Tasks (Wrapped in try-catch so they don't crash the main request)
-    try {
-      // Find all verified artisans whose category matches the required service
-      const matchingArtisans = await User.find({
-        role: 'artisan',
-        category: serviceType,
-        isVerified: true
-      }).select('_id email username');
+    // 2. FIRE AND FORGET: Background Tasks
+    // Run asynchronously so the client gets an immediate success response
+    (async () => {
+      try {
+        const matchingArtisans = await User.find({
+          role: 'artisan',
+          category: serviceType,
+          isVerified: true
+        }).select('_id email username');
 
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
 
-      for (const artisan of matchingArtisans) {
-        // In-App Notification (Catching individual errors to not stop the loop)
-        await createNotification({
-          recipient: artisan._id,
-          type: 'NEW_JOB_MATCH',
-          message: `New ${serviceType} project posted! Budget: GHS ${budget}.`,
-          relatedId: job._id
-        }).catch(err => console.error(`Notification failed for ${artisan.username}:`, err.message));
+        for (const artisan of matchingArtisans) {
+          // In-App Notification
+          await createNotification({
+            recipient: artisan._id,
+            type: 'NEW_JOB_MATCH',
+            message: `New ${serviceType} project posted! Budget: GHS ${budget}.`,
+            relatedId: job._id
+          }).catch(err => console.error(`[BG] Notification failed for ${artisan.username}:`, err.message));
 
-        // Email Notification using your exact Brevo structure
-        const emailHtml = `
-          <div style="font-family: sans-serif; padding: 20px; color: #333;">
-            <h2 style="color: #2563EB;">New Job Alert: ${serviceType}</h2>
-            <p>Hi ${artisan.username}, a new project matching your skills was just posted on LinkUp.</p>
-            <div style="background: #f3f4f6; padding: 15px; border-radius: 10px; margin: 15px 0;">
-              <p><strong>Estimated Budget:</strong> GHS ${budget}</p>
-              <p><strong>Description:</strong> ${description}</p>
+          // Email Notification using your precise Brevo setup
+          const emailHtml = `
+            <div style="font-family: sans-serif; padding: 20px; color: #333;">
+              <h2 style="color: #2563EB;">New Job Alert: ${serviceType}</h2>
+              <p>Hi ${artisan.username}, a new project matching your skills was just posted on LinkUp.</p>
+              <div style="background: #f3f4f6; padding: 15px; border-radius: 10px; margin: 15px 0;">
+                <p><strong>Estimated Budget:</strong> GHS ${budget}</p>
+                <p><strong>Description:</strong> ${description}</p>
+              </div>
+              <a href="${frontendUrl}/artisan-dashboard" style="background: #2563EB; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View Job & Submit Proposal</a>
             </div>
-            <a href="${frontendUrl}/artisan-dashboard" style="background: #2563EB; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View Job & Submit Proposal</a>
-          </div>
-        `;
+          `;
 
-        if (artisan.email) {
-          await sendEmail({
-            to: artisan.email,
-            subject: `New Job Opportunity: ${serviceType}`,
-            html: emailHtml
-          }).catch(err => console.error(`Email failed for ${artisan.email}:`, err.message));
+          if (artisan.email) {
+            await sendEmail({
+              to: artisan.email,
+              subject: `New Job Opportunity: ${serviceType}`,
+              html: emailHtml
+            }).catch(err => console.error(`[BG] Email failed for ${artisan.email}:`, err.message));
+          }
         }
+      } catch (bgError) {
+        console.error("[BG] System error processing notifications:", bgError.message);
       }
-    } catch (backgroundError) {
-      console.error("Background notification system error:", backgroundError.message);
-      // We don't return res.status(500) here because the job was already created successfully!
-    }
+    })(); // This immediately invokes the async block but doesn't 'await' it holding up the response.
 
-    // Return success since the job record is live
+    // 3. Return success immediately since the job is saved securely
     res.status(201).json(job);
 
   } catch (err) {
