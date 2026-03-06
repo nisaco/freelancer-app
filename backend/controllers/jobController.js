@@ -1,12 +1,12 @@
 ﻿const Job = require('../models/Job');
 const User = require('../models/User');
-const Bid = require('../models/Bid'); // NEW: Bid Model
+const Bid = require('../models/Bid'); 
 const ArtisanProfile = require('../models/ArtisanProfile');
 const { createNotification } = require('../utils/notifications');
 const { sendWhatsAppJobAlert } = require('../utils/whatsapp');
-const sendEmail = require('../utils/sendEmail');
+const sendEmail = require('../utils/sendEmail'); // Your Brevo Email Utility
 
-const ARTISAN_EARNINGS_RATIO = 0.8;
+const ARTISAN_EARNINGS_RATIO = 0.7; // Artisans earn 70% of the job amount, platform takes 30%
 
 const isSameCalendarDay = (left, right) => {
   if (!left || !right) return false;
@@ -463,7 +463,6 @@ exports.updateJobStatus = async (req, res) => {
 };
 
 // @desc    Generate PDF invoice/receipt for completed jobs
-// @route   GET /api/jobs/:id/invoice
 exports.downloadInvoice = async (req, res) => {
   try {
     let PDFDocument;
@@ -582,6 +581,7 @@ exports.completeJob = async (req, res) => {
   }
 };
 
+
 // ==========================================
 // NEW: FREELANCER BIDDING SYSTEM LOGIC
 // ==========================================
@@ -593,66 +593,72 @@ exports.postOpenJob = async (req, res) => {
     const { serviceType, description, budget, date, scheduledStartAt, scheduledEndAt } = req.body;
     const userId = req.user.id || req.user._id;
 
+    // 1. Create the Job First (Essential logic)
     const job = await Job.create({
       client: userId,
       jobType: 'bidding',
       serviceType: serviceType || 'General Service',
       description,
-      budget,
+      budget: Number(budget) || 0,
+      amount: 0, // IMPORTANT: Meets strict schema requirement for 'amount'
       date: new Date(date),
       scheduledStartAt: scheduledStartAt ? new Date(scheduledStartAt) : null,
       scheduledEndAt: scheduledEndAt ? new Date(scheduledEndAt) : null,
-      status: 'open',
-      amount: 0 // Will be set when bid is accepted
+      status: 'open'
     });
 
-    // --- NEW LOGIC: NOTIFY MATCHING ARTISANS ---
-    // Find all verified artisans whose category matches the required service
-    const matchingArtisans = await User.find({
-      role: 'artisan',
-      category: serviceType,
-      isVerified: true
-    }).select('_id email username');
+    // 2. Background Tasks (Wrapped in try-catch so they don't crash the main request)
+    try {
+      // Find all verified artisans whose category matches the required service
+      const matchingArtisans = await User.find({
+        role: 'artisan',
+        category: serviceType,
+        isVerified: true
+      }).select('_id email username');
 
-    // Loop through matches to send notifications and emails
-    for (const artisan of matchingArtisans) {
-      // 1. In-App Notification
-      await createNotification({
-        recipient: artisan._id,
-        type: 'NEW_JOB_MATCH',
-        message: `New ${serviceType} project posted! Budget: GHS ${budget}. Submit your bid now.`,
-        relatedId: job._id
-      });
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
 
-      // 2. Email Notification using your precise Brevo structure
-      const emailHtml = `
-        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-          <h2 style="color: #2563EB;">New Job Alert: ${serviceType}</h2>
-          <p>Hi ${artisan.username},</p>
-          <p>A client just posted a new project that matches your skills on LinkUp!</p>
-          <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 15px 0;">
-            <p><strong>Description:</strong> ${description}</p>
-            <p><strong>Estimated Budget:</strong> GHS ${budget}</p>
-            <p><strong>Target Date:</strong> ${new Date(date).toLocaleDateString()}</p>
+      for (const artisan of matchingArtisans) {
+        // In-App Notification (Catching individual errors to not stop the loop)
+        await createNotification({
+          recipient: artisan._id,
+          type: 'NEW_JOB_MATCH',
+          message: `New ${serviceType} project posted! Budget: GHS ${budget}.`,
+          relatedId: job._id
+        }).catch(err => console.error(`Notification failed for ${artisan.username}:`, err.message));
+
+        // Email Notification using your exact Brevo structure
+        const emailHtml = `
+          <div style="font-family: sans-serif; padding: 20px; color: #333;">
+            <h2 style="color: #2563EB;">New Job Alert: ${serviceType}</h2>
+            <p>Hi ${artisan.username}, a new project matching your skills was just posted on LinkUp.</p>
+            <div style="background: #f3f4f6; padding: 15px; border-radius: 10px; margin: 15px 0;">
+              <p><strong>Estimated Budget:</strong> GHS ${budget}</p>
+              <p><strong>Description:</strong> ${description}</p>
+            </div>
+            <a href="${frontendUrl}/artisan-dashboard" style="background: #2563EB; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View Job & Submit Proposal</a>
           </div>
-          <p>Log in to your Artisan Dashboard to submit your proposal and win the job.</p>
-          <a href="${process.env.FRONTEND_URL}/artisan-dashboard" style="background-color: #2563EB; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; margin-top: 10px;">View Job & Bid</a>
-          <p style="margin-top: 30px; font-size: 12px; color: #888;">The LinkUp Team</p>
-        </div>
-      `;
+        `;
 
-      // Call your sendEmail module passing 'to', 'subject', and 'html'
-      await sendEmail({
-        to: artisan.email,
-        subject: `New ${serviceType} Project Available on LinkUp!`,
-        html: emailHtml
-      });
+        if (artisan.email) {
+          await sendEmail({
+            to: artisan.email,
+            subject: `New Job Opportunity: ${serviceType}`,
+            html: emailHtml
+          }).catch(err => console.error(`Email failed for ${artisan.email}:`, err.message));
+        }
+      }
+    } catch (backgroundError) {
+      console.error("Background notification system error:", backgroundError.message);
+      // We don't return res.status(500) here because the job was already created successfully!
     }
 
+    // Return success since the job record is live
     res.status(201).json(job);
+
   } catch (err) {
-    console.error("Post Open Job Error:", err);
-    res.status(500).json({ message: "Failed to post job" });
+    console.error("Post Open Job Main Error:", err);
+    res.status(500).json({ message: "Failed to post job. Please check your inputs." });
   }
 };
 
