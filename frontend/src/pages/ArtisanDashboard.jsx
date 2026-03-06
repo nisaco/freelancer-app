@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts';
@@ -91,6 +91,12 @@ const ArtisanDashboard = () => {
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
   const [transactions, setTransactions] = useState([]); 
 
+  // --- NEW: MARKETPLACE / BIDDING ADDITIONS ---
+  const [openJobs, setOpenJobs] = useState([]);
+  const [biddingJob, setBiddingJob] = useState(null);
+  const [bidForm, setBidForm] = useState({ amount: '', coverLetter: '' });
+  const [submittingBid, setSubmittingBid] = useState(false);
+
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
     : '/api';
@@ -121,11 +127,12 @@ const ArtisanDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       
-      const [jobRes, profileRes, transRes, analyticsRes] = await Promise.all([
+      const [jobRes, profileRes, transRes, analyticsRes, openJobsRes] = await Promise.all([
         axios.get(`${API_BASE}/jobs/my-jobs`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API_BASE}/auth/profile`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API_BASE}/transactions/my-transactions`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${API_BASE}/jobs/artisan/analytics/me`, { headers: { Authorization: `Bearer ${token}` } })
+        axios.get(`${API_BASE}/jobs/artisan/analytics/me`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_BASE}/jobs/open`, { headers: { Authorization: `Bearer ${token}` } }) // Fetch Open Jobs
       ]);
       
       const artisanJobs = jobRes.data;
@@ -134,6 +141,7 @@ const ArtisanDashboard = () => {
       setJobs(artisanJobs);
       setTransactions(transRes.data);
       setAnalytics(analyticsRes.data || {});
+      setOpenJobs(openJobsRes.data || []);
       setUser(freshUser); 
       localStorage.setItem('user', JSON.stringify(freshUser)); 
 
@@ -151,6 +159,29 @@ const ArtisanDashboard = () => {
       toast.error("Dashboard sync failed"); 
     } finally { 
       setLoading(false); 
+    }
+  };
+
+  // --- NEW: SUBMIT BID HANDLER ---
+  const handleSubmitBid = async (e) => {
+    e.preventDefault();
+    if (!user?.isVerified) {
+      return toast.error("You must be verified by an Admin to submit proposals.");
+    }
+    setSubmittingBid(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_BASE}/jobs/${biddingJob._id}/bid`, bidForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Proposal submitted successfully!");
+      setBiddingJob(null);
+      setBidForm({ amount: '', coverLetter: '' });
+      fetchArtisanData(); // Refresh data to reflect any changes
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to submit proposal");
+    } finally {
+      setSubmittingBid(false);
     }
   };
 
@@ -461,6 +492,74 @@ const ArtisanDashboard = () => {
             )}
           </motion.div>
 
+          {/* --- NEW: PROJECT MARKETPLACE --- */}
+          <motion.div variants={itemVariants} className="flex justify-between items-end mb-6 mt-10">
+            <div>
+              <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter">Project <span className="text-blue-600">Marketplace</span></h3>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">Open jobs matching your skills</p>
+            </div>
+          </motion.div>
+
+          {!verification.isVerified && (
+            <motion.div variants={itemVariants} className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 p-4 rounded-2xl mb-8">
+              <p className="text-yellow-700 dark:text-yellow-400 text-xs font-bold uppercase tracking-widest">⚠️ You must be verified by an Admin to submit proposals.</p>
+            </motion.div>
+          )}
+
+          <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
+            <AnimatePresence>
+              {openJobs.length > 0 ? openJobs.map(job => (
+                <motion.div 
+                  layout key={job._id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="bg-white/40 dark:bg-white/5 backdrop-blur-3xl p-8 rounded-[3rem] border border-white/40 dark:border-white/10 shadow-xl flex flex-col justify-between h-full hover:border-blue-500 transition-colors group"
+                >
+                  {/* Match Indicator */}
+                  {user?.category === job.serviceType && (
+                    <div className="absolute top-0 right-8 bg-green-500 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-b-xl shadow-lg">
+                      Perfect Match
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-2">{job.serviceType}</p>
+                    <h4 className="font-bold text-gray-900 dark:text-white mb-4 text-sm line-clamp-3 leading-relaxed">
+                      "{job.description}"
+                    </h4>
+                    
+                    <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
+                      <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden shrink-0">
+                        <img src={job.client?.profilePic || `https://ui-avatars.com/api/?name=${job.client?.username}`} className="w-full h-full object-cover" alt="" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-900 dark:text-white">{job.client?.username}</p>
+                        <p className="text-[10px] text-gray-500">{new Date(job.createdAt).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-8 flex items-center justify-between">
+                    <div>
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Est. Budget</p>
+                      <p className="text-lg font-black text-gray-900 dark:text-white italic">GHS {job.budget}</p>
+                    </div>
+                    <button 
+                      onClick={() => setBiddingJob(job)}
+                      className="bg-gray-900 dark:bg-white text-white dark:text-black px-5 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-transform shadow-lg"
+                    >
+                      Bid Now
+                    </button>
+                  </div>
+                </motion.div>
+              )) : (
+                <div className="col-span-full py-16 text-center bg-white/10 rounded-[3rem] border border-dashed border-white/20 italic text-gray-400 uppercase font-black text-[10px] tracking-widest">
+                  No open jobs right now
+                </div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+
           <motion.h3 variants={itemVariants} className="text-2xl font-black text-gray-900 dark:text-white uppercase italic mb-10 tracking-tighter">Live <span className="text-blue-600">Engagements</span></motion.h3>
           
           <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
@@ -555,6 +654,42 @@ const ArtisanDashboard = () => {
           )}
           {isWithdrawOpen && (
             <WithdrawModal isOpen={isWithdrawOpen} onClose={() => setIsWithdrawOpen(false)} onConfirm={handleWithdrawal} />
+          )}
+
+          {/* --- NEW: BIDDING MODAL --- */}
+          {biddingJob && (
+            <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/70 backdrop-blur-lg p-6">
+              <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-[3rem] p-10 shadow-2xl relative border border-white/10">
+                <button onClick={() => setBiddingJob(null)} className="absolute top-8 right-8 text-gray-400 hover:text-white text-2xl font-light">×</button>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter mb-1">Submit Proposal</h2>
+                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-6">Client Budget: GHS {biddingJob.budget}</p>
+
+                <form onSubmit={handleSubmitBid} className="space-y-4">
+                  <input 
+                    type="number" 
+                    required 
+                    placeholder="Your Bid Amount (GHS)" 
+                    value={bidForm.amount} 
+                    onChange={e => setBidForm({...bidForm, amount: e.target.value})} 
+                    className="w-full p-5 bg-gray-50 dark:bg-black/20 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 dark:text-white font-bold" 
+                  />
+                  <textarea 
+                    required 
+                    placeholder="Cover Letter: Detail why you're the best fit..." 
+                    value={bidForm.coverLetter} 
+                    onChange={e => setBidForm({...bidForm, coverLetter: e.target.value})} 
+                    className="w-full p-5 bg-gray-50 dark:bg-black/20 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 dark:text-white font-medium h-32 resize-none" 
+                  />
+                  <button 
+                    type="submit" 
+                    disabled={submittingBid} 
+                    className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl mt-4 disabled:opacity-50 transition-all"
+                  >
+                    {submittingBid ? 'Sending...' : 'Submit Proposal'}
+                  </button>
+                </form>
+              </motion.div>
+            </div>
           )}
         </AnimatePresence>
       </div>
@@ -734,6 +869,3 @@ const SettingsDrawer = ({ user, setUser, onClose, API_BASE, handlePhotoUpload, u
 };
 
 export default ArtisanDashboard;
-
-
-
